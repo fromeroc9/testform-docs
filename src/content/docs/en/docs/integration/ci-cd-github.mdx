@@ -84,3 +84,12 @@ jobs:
         run: npx testform apply -auto-approve
 ```
 
+:::caution[Important: GitHub Actions Token & GitHub Projects V2]
+The default token generated automatically by GitHub Actions (`secrets.GITHUB_TOKEN`) has permissions limited to the current repository and **cannot mutate organization or user-level GitHub Projects (Projects V2)** boards.
+
+If your workspace uses `provider: github` synchronized with GitHub Projects:
+1. Generate a **Personal Access Token (PAT)** with `repo` and `project` scopes.
+2. Store it as a GitHub Secret in your repository (for example, `TESTFORM_GITHUB_TOKEN`).
+3. Replace `${{ secrets.GITHUB_TOKEN }}` with `${{ secrets.TESTFORM_GITHUB_TOKEN }}` in the `plan` and `apply` steps.
+:::
+

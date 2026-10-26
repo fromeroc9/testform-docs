@@ -7,10 +7,66 @@ Learn how to install Testform globally, initialize your workspace, and understan
 
 ## Prerequisites
 
-Before getting started, ensure you have:
+### 1. Base Runtime Environment
+Before getting started, ensure your environment has:
 - **Node.js:** version 18.0.0 or higher installed (`node -v`).
 - **Git:** an active Git repository initialized in your workspace (`git status`).
-- **NPM:** package manager to install the global Testform binary.
+- **NPM:** package manager to install the global Testform binary (`npm -v`).
+
+### 2. Operational Modes and Providers
+
+Testform supports two primary operational modes depending on your team's workflow:
+
+#### Local / Offline Mode (`provider: local`)
+When configuring `provider: local` and `backend: local`, **no external accounts, tokens, or network connectivity are required**. Testform operates 100% offline out-of-the-box, storing your test management ledger locally in `testform.state` or directly committed to Git.
+
+#### GitHub Provider Mode (`provider: github`)
+When integrating Testform with GitHub to synchronize test cases, execution runs, and suites into GitHub Issues and GitHub Projects, your repository and organization must meet the following prerequisites:
+
+1. **GitHub Project (Projects V2):**
+   - An active GitHub Project (organization or user level) linked to your target test repository.
+   - A single-select field named strictly **`Status`**, configured with the following exact option values:
+     - `Todo`
+     - `Done`
+     - `passed`
+     - `failed`
+     - `blocked`
+     - `skipped`
+     - `unexecuted`
+
+2. **Repository Labels:**
+   - The target repository requires the following 5 labels to categorize and track issues:
+     - `bug`
+     - `testcase`
+     - `testplan`
+     - `testreport`
+     - `testrun`
+
+3. **Authentication & Token Permissions:**
+   - A **Personal Access Token (PAT)** configured with:
+     - **Classic PAT:** `repo` (Full control of private repositories) and `project` (Read and write projects) scopes.
+     - **Fine-Grained PAT:** Repository permissions (`Issues: Read and write`) and Organization permissions (`Projects: Read and write`).
+   - Exported as an environment variable (e.g. `export GITHUB_TOKEN="ghp_..."`) or configured via `testform login`.
+
+   :::note
+   **💡 GitHub Actions Recommendation:** The default `GITHUB_TOKEN` provided by Actions lacks the necessary permissions to manipulate organization-level GitHub Projects (V2). In automated CI/CD pipelines, configure a dedicated repository secret with a custom PAT (e.g., `secrets.TESTFORM_GITHUB_TOKEN`) so test runs can transition issue states and sync project boards.
+   :::
+
+4. **🚀 Automated Setup Workflow (Recommended):**
+   To automate the setup of labels and project board in seconds, we recommend using the official **Install Testform Labels and Project** workflow (`.github/workflows/install.yml`). It automatically:
+   - Creates the 5 required labels (`bug`, `testcase`, `testplan`, `testreport`, `testrun`).
+   - Clones the official [Testform Template Project](https://github.com/users/fromeroc9/projects/4) into your account or organization and links it to your repository.
+   - Configures the `Status` single-select field with all QA options and status colors.
+   - Installs the `close-issue.yml` workflow to automate issue closing and state transitions.
+
+### 3. Optional Binary Report Drivers (Word & Excel)
+To maintain an ultra-compact binary footprint (~1 MB), binary document generators (`docx` and `exceljs`) are decoupled as optional peer dependencies. If you plan to generate Word (`.docx`) or Excel (`.xlsx`) execution reports, install them on demand:
+
+```bash
+npm install -g docx exceljs
+# Or locally in your project:
+npm install --save-dev docx exceljs
+```
 
 ## Step 1: Global Installation
 
@@ -71,7 +127,7 @@ Following Terraform's architecture, **`testform init` generates only the configu
 
 ```text
 my-project/
-â””â”€â”€ main.yml            # Primary workspace configuration manifest
+└── main.yml            # Primary workspace configuration manifest
 ```
 
 ### Lifecycle in Local Backend (`backend: local`)
@@ -89,9 +145,9 @@ When using the default local backend, state files are created dynamically as you
 
 ```text
 my-project/
-â”œâ”€â”€ main.yml            # Primary workspace configuration manifest
-â”œâ”€â”€ testform.state          # Active state (created after first apply)
-â””â”€â”€ testform.state.backup   # Automatic snapshot backup (created from second apply onwards)
+├── main.yml            # Primary workspace configuration manifest
+├── testform.state          # Active state (created after first apply)
+└── testform.state.backup   # Automatic snapshot backup (created from second apply onwards)
 ```
 
 ### Lifecycle in Remote Cloud Backends (`s3`, `oci`, `azurerm`, `gcs`)
@@ -100,7 +156,7 @@ When configuring a remote cloud backend in `main.yml`:
 
 ```text
 my-project/
-â””â”€â”€ main.yml            # Primary workspace configuration manifest
+└── main.yml            # Primary workspace configuration manifest
 ```
 
 - **No local state files:** At no point are `testform.state` or `testform.state.backup` written to your local disk.

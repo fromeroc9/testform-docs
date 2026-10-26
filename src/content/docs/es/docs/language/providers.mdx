@@ -50,6 +50,45 @@ provider:
 
 ---
 
+## Configuración Detallada de GitHub Provider (`provider: github`)
+
+Cuando utilizas GitHub como proveedor de gestión de calidad, Testform interactúa con la API GraphQL de **GitHub Projects (Projects V2)** y la API REST de **GitHub Issues**. Para garantizar la sincronización bidireccional, el repositorio y la organización deben configurarse con las siguientes especificaciones:
+
+### 1. Tablero GitHub Projects (Projects V2)
+- Debe existir un proyecto de GitHub Projects V2 (a nivel de organización o usuario) vinculado al repositorio.
+- El proyecto debe contener un campo de tipo selección única (*Single-select*) denominado exactamente **`Status`**.
+- El campo `Status` debe incluir obligatoriamente los siguientes valores de opción:
+  - `Todo`
+  - `Done`
+  - `passed`
+  - `failed`
+  - `blocked`
+  - `skipped`
+  - `unexecuted`
+
+### 2. Etiquetas Requeridas (Labels)
+Testform mapea los recursos declarativos (`testcase`, `testrun`, `testplan`, etc.) con etiquetas en las incidencias de GitHub. Las siguientes 5 etiquetas son obligatorias:
+- `bug`
+- `testcase`
+- `testplan`
+- `testreport`
+- `testrun`
+
+### 3. Permisos de Autenticación (PAT)
+El token de autenticación configurado (`token_env` o `testform login`) debe contar con los siguientes alcances:
+- **Classic Personal Access Token (PAT):**
+  - Scope `repo` (Acceso completo a repositorios privados/públicos).
+  - Scope `project` (Lectura y escritura en proyectos de GitHub).
+- **Fine-Grained Personal Access Token:**
+  - Repositorio: Permiso `Issues` en modo **Read and write**.
+  - Organización: Permiso `Projects` en modo **Read and write**.
+
+:::tip[Automatización Rápida]
+Puedes aprovisionar todas las etiquetas, el proyecto de GitHub Projects V2 y los workflows de sincronización automáticamente ejecutando la acción [Install Testform Labels and Project](https://github.com/fromeroc9/testform/blob/main/.github/workflows/install.yml) en tu repositorio.
+:::
+
+---
+
 ## Inicialización del Provider (`testform init`)
 
 Antes de ejecutar un plan, `testform init` autentica y valida el provider configurado:
@@ -62,4 +101,3 @@ Durante el `init`:
 1. Verifica las credenciales de acceso (tokens de entorno como `GITHUB_TOKEN` o `GITLAB_TOKEN`).
 2. Configura el backend de estado y el archivo de bloqueo concurrente (`.lock`).
 3. Comprueba el acceso al repositorio y a los tableros del proyecto.
-

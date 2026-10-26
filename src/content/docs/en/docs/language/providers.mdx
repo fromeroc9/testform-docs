@@ -50,6 +50,45 @@ provider:
 
 ---
 
+## GitHub Provider Detailed Setup (`provider: github`)
+
+When using GitHub as your test management platform, Testform interfaces with the GraphQL API of **GitHub Projects (Projects V2)** and the REST API of **GitHub Issues**. To guarantee seamless two-way synchronization, your target repository and organization must meet the following configuration requirements:
+
+### 1. GitHub Projects (Projects V2) Board
+- An active GitHub Projects V2 board (at organization or user level) linked to the target repository.
+- The project board must contain a **Single-select** field named strictly **`Status`**.
+- The `Status` field must contain the following exact option values:
+  - `Todo`
+  - `Done`
+  - `passed`
+  - `failed`
+  - `blocked`
+  - `skipped`
+  - `unexecuted`
+
+### 2. Required Labels
+Testform maps declarative resources (`testcase`, `testrun`, `testplan`, etc.) to issue labels. The following 5 labels are mandatory:
+- `bug`
+- `testcase`
+- `testplan`
+- `testreport`
+- `testrun`
+
+### 3. Authentication & Token Permissions (PAT)
+The authentication token configured via `token_env` or `testform login` must have the appropriate scopes:
+- **Classic Personal Access Token (PAT):**
+  - Scope `repo` (Full control of private and public repositories).
+  - Scope `project` (Read and write GitHub projects).
+- **Fine-Grained Personal Access Token:**
+  - Repository permission: `Issues` set to **Read and write**.
+  - Organization permission: `Projects` set to **Read and write**.
+
+:::tip[Rapid Automated Setup]
+You can provision all required labels, the GitHub Projects V2 board, and synchronization workflows in seconds by triggering the official [Install Testform Labels and Project](https://github.com/fromeroc9/testform/blob/main/.github/workflows/install.yml) action in your repository.
+:::
+
+---
+
 ## Provider Initialization (`testform init`)
 
 Before running a plan, `testform init` validates credentials and sets up the workspace:
@@ -62,4 +101,3 @@ During initialization:
 1. Verifies access tokens (e.g. `GITHUB_TOKEN` or `GITLAB_TOKEN`).
 2. Configures the state backend and creates the state lock file (`.lock`).
 3. Verifies repository access and project boards.
-

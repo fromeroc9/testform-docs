@@ -6,10 +6,66 @@ Aprende a instalar Testform globalmente, inicializar tu espacio de trabajo y com
 
 ## Requisitos Previos
 
-Antes de comenzar, asegúrate de contar con:
+### 1. Entorno de Ejecución Base
+Antes de comenzar, asegúrate de contar con el entorno local:
 - **Node.js:** versión 18.0.0 o superior instalada (`node -v`).
 - **Git:** repositorio Git inicializado en tu espacio de trabajo (`git status`).
-- **NPM:** gestor de paquetes para instalar el binario global de Testform.
+- **NPM:** gestor de paquetes para instalar el binario global de Testform (`npm -v`).
+
+### 2. Modos de Operación y Proveedores
+
+Testform se adapta a dos modalidades operativas según la infraestructura de tu equipo:
+
+#### Modo Local / Offline (`provider: local`)
+Si utilizas el proveedor local (`provider: local` y `backend: local`), **no requieres ninguna cuenta externa, token ni conexión a internet**. Testform opera de forma 100% autónoma y offline, guardando el ledger de pruebas en tu archivo local `testform.state` o en tu repositorio Git.
+
+#### Modo GitHub Provider (`provider: github`)
+Al conectar Testform con GitHub para sincronizar casos de prueba, ejecuciones y suites en GitHub Issues y tableros de proyectos, tu organización y repositorio deben cumplir con los siguientes requisitos:
+
+1. **GitHub Project (Projects V2):**
+   - Un proyecto de GitHub activo (a nivel de organización o usuario) vinculado al repositorio de pruebas.
+   - Un campo de selección única (*Single-select field*) denominado estrictamente **`Status`**, configurado con las siguientes opciones exactas:
+     - `Todo`
+     - `Done`
+     - `passed`
+     - `failed`
+     - `blocked`
+     - `skipped`
+     - `unexecuted`
+
+2. **Etiquetas del Repositorio (Labels):**
+   - El repositorio requiere las siguientes 5 etiquetas para clasificar automáticamente las incidencias:
+     - `bug`
+     - `testcase`
+     - `testplan`
+     - `testreport`
+     - `testrun`
+
+3. **Autenticación y Permisos del Token (PAT):**
+   - Un **Personal Access Token (PAT)** con los permisos adecuados:
+     - **Classic PAT:** Scopes `repo` (control total de repositorios) y `project` (lectura y escritura de proyectos).
+     - **Fine-Grained PAT:** Permisos de repositorio (`Issues: Read and write`) y permisos de organización (`Projects: Read and write`).
+   - El token debe exportarse en tu terminal como variable de entorno (por ejemplo, `export GITHUB_TOKEN="ghp_..."`) o configurarse mediante `testform login`.
+   
+   :::note
+   **💡 Nota sobre GitHub Actions:** El token por defecto `GITHUB_TOKEN` que proporciona GitHub Actions carece de permisos para manipular GitHub Projects V2 a nivel de organización. En tus pipelines de CI/CD, configura un GitHub Secret con un PAT dedicado (ej. `secrets.TESTFORM_GITHUB_TOKEN`) para permitir la sincronización automática de tableros y transiciones de estado.
+   :::
+
+4. **🚀 Configuración Automatizada con Workflow (Recomendado):**
+   Para automatizar la creación de etiquetas y la vinculación del proyecto en cuestión de segundos, recomendamos utilizar el workflow oficial **Install Testform Labels and Project** (`.github/workflows/install.yml`). Este flujo automatizado:
+   - Crea automáticamente las 5 etiquetas requeridas (`bug`, `testcase`, `testplan`, `testreport`, `testrun`).
+   - Clona el [Proyecto Plantilla de Testform](https://github.com/users/fromeroc9/projects/4) en tu cuenta u organización y lo vincula a tu repositorio.
+   - Configura el campo `Status` con todas las opciones y colores oficiales de QA.
+   - Instala el workflow `close-issue.yml` para gestionar el cierre automático y transiciones de incidencias.
+
+### 3. Drivers Opcionales para Reportes (Word y Excel)
+Para preservar un binario ultra-ligero (~1 MB), los motores generadores de documentos binarios (`docx` y `exceljs`) están desacoplados como dependencias opcionales. Si vas a generar reportes en Word (`.docx`) o Excel (`.xlsx`), instálalos bajo demanda:
+
+```bash
+npm install -g docx exceljs
+# O como dependencia de desarrollo en tu proyecto local:
+npm install --save-dev docx exceljs
+```
 
 ## Paso 1: Instalación Global
 
@@ -70,7 +126,7 @@ Al igual que en Terraform, **`testform init` genera unicamente el archivo de con
 
 ```text
 mi-proyecto/
-â””â”€â”€ main.yml            # Manifiesto principal de configuracion
+└── main.yml            # Manifiesto principal de configuracion
 ```
 
 ### Ciclo de Vida en Backend Local (`backend: local`)
@@ -88,9 +144,9 @@ Cuando utilizas el backend local por defecto, los archivos de estado se crean di
 
 ```text
 mi-proyecto/
-â”œâ”€â”€ main.yml            # Manifiesto principal de configuracion
-â”œâ”€â”€ testform.state          # Estado activo (creado tras el primer apply)
-â””â”€â”€ testform.state.backup   # Respaldo automatico (creado a partir del segundo apply)
+├── main.yml            # Manifiesto principal de configuracion
+├── testform.state          # Estado activo (creado tras el primer apply)
+└── testform.state.backup   # Respaldo automatico (creado a partir del segundo apply)
 ```
 
 ### Ciclo de Vida en Backends Remotos (`s3`, `oci`, `azurerm`, `gcs`)
@@ -99,7 +155,7 @@ Cuando configuras un backend en la nube en tu `main.yml`:
 
 ```text
 mi-proyecto/
-â””â”€â”€ main.yml            # Manifiesto principal de configuracion
+└── main.yml            # Manifiesto principal de configuracion
 ```
 
 - **Sin archivos de estado locales:** En ningun momento se generan archivos `testform.state` ni `testform.state.backup` en tu disco local.
