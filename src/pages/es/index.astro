@@ -1,5 +1,6 @@
 ---
 // Standalone landing page for testform in Spanish
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 <!DOCTYPE html>
 <html class="dark" lang="es">
@@ -9,9 +10,9 @@
   <title>testform - Declarative Test as Code Platform</title>
   <meta name="description" content="Orquestador declarativo de pruebas de software: sin servidores SaaS obligatorios y sin Test Drift. Gestiona el ciclo de vida completo de QA en Git." />
   
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+  <link rel="icon" type="image/x-icon" href={`${base}/favicon.ico`} />
+  <link rel="apple-touch-icon" href={`${base}/apple-touch-icon.png`} />
   
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -160,7 +161,7 @@
       
       <!-- Brand Name (zero gap between testform and dot) -->
       <div class="flex items-center gap-space-md">
-        <a class="flex items-center gap-2 text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="/es/">
+        <a class="flex items-center gap-2 text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href={`${base}/es/`}>
           <span class="font-headline-sm text-headline-sm tracking-tight font-bold">testform<span class="text-blue-600 dark:text-blue-400 font-extrabold">.</span></span>
           <span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/60 dark:text-blue-400 dark:border-blue-800/80 tracking-widest uppercase">TaC</span>
         </a>
@@ -168,9 +169,9 @@
 
       <!-- Clean Text Navigation Links (NOT buttons) -->
       <nav class="hidden md:flex items-center gap-8 font-label-md text-label-md">
-        <a class="text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 font-medium transition-colors" href="/es/docs/">Docs</a>
-        <a class="text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 font-medium transition-colors" href="/es/cli/">CLI</a>
-        <a class="text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 font-medium transition-colors" href="/es/api/">API</a>
+        <a class="text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 font-medium transition-colors" href={`${base}/es/docs/`}>Docs</a>
+        <a class="text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 font-medium transition-colors" href={`${base}/es/cli/`}>CLI</a>
+        <a class="text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 font-medium transition-colors" href={`${base}/es/api/`}>API</a>
       </nav>
 
       <!-- Right Header Actions: Pure Icons (GitHub, Theme Mode, Language) -->
@@ -220,7 +221,7 @@
 
         <!-- Language Toggle Icon Button (Icon only) -->
         <a
-          href="/en/"
+          href={`${base}/en/`}
           class="flex items-center justify-center w-9 h-9 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
           aria-label="Cambiar idioma a English"
           title="Cambiar idioma a English"
@@ -982,11 +983,11 @@
 
           <!-- Action Links Row (clean links, not bulky buttons) -->
           <div class="flex flex-wrap items-center justify-center gap-6">
-            <a class="text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-400 font-label-md text-label-md transition-colors flex items-center gap-1.5 font-medium" href="/es/docs/">
+            <a class="text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-400 font-label-md text-label-md transition-colors flex items-center gap-1.5 font-medium" href={`${base}/es/docs/`}>
               <span class="material-symbols-outlined text-[18px] text-blue-600 dark:text-blue-400">menu_book</span>
               <span>Leer Documentación</span>
             </a>
-            <a class="text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-400 font-label-md text-label-md transition-colors flex items-center gap-1.5 font-medium" href="/es/cli/">
+            <a class="text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-400 font-label-md text-label-md transition-colors flex items-center gap-1.5 font-medium" href={`${base}/es/cli/`}>
               <span class="material-symbols-outlined text-[18px] text-blue-600 dark:text-blue-400">code</span>
               <span>CLI Reference</span>
             </a>
@@ -1029,18 +1030,18 @@
         <div class="space-y-space-sm">
           <div class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-slate-900 dark:text-white">Arquitectura</div>
           <ul class="space-y-space-xs font-label-md text-label-md">
-            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="/es/docs/test-as-code/gherkin/">Gherkin Declarativo (TMaC)</a></li>
-            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="/es/docs/guides/lifecycle/">Pipeline First Engine</a></li>
-            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="/es/docs/guides/drift-detection/">Detección de Drift</a></li>
+            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href={`${base}/es/docs/test-as-code/gherkin/`}>Gherkin Declarativo (TMaC)</a></li>
+            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href={`${base}/es/docs/guides/lifecycle/`}>Pipeline First Engine</a></li>
+            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href={`${base}/es/docs/guides/drift-detection/`}>Detección de Drift</a></li>
           </ul>
         </div>
 
         <div class="space-y-space-sm">
           <div class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-slate-900 dark:text-white">Documentación</div>
           <ul class="space-y-space-xs font-label-md text-label-md">
-            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="/es/docs/getting-started/">Primeros Pasos</a></li>
-            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="/es/cli/">Referencia del CLI</a></li>
-            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="/es/api/">Especificación API</a></li>
+            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href={`${base}/es/docs/getting-started/`}>Primeros Pasos</a></li>
+            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href={`${base}/es/cli/`}>Referencia del CLI</a></li>
+            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href={`${base}/es/api/`}>Especificación API</a></li>
           </ul>
         </div>
 
