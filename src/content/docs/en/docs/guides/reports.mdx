@@ -188,3 +188,9 @@ testform report testrun-summary -format=slack -out=dist/slack-payload.json
 | **Word** | `-format=docx` | `.docx` | Formatted binary | Executive compliance audits, formal client deliverables. |
 | **Excel** | `-format=xlsx` | `.xlsx` | Structured binary | Quantitative analysis, complex coverage matrices. |
 
+:::tip[On-Demand Binary Drivers]
+To maintain Testform's minimal package size, binary generators are optional peer dependencies:
+- Word: `npm install -g docx` (or `npm install --save-dev docx`)
+- Excel: `npm install -g exceljs` (or `npm install --save-dev exceljs`)
+:::
+

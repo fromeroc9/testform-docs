@@ -141,6 +141,18 @@ testform report testrun-detailed -target="@tp-2" -filter "status=failed"
 
 ## 🎨 Native Output Formats
 
+:::note[Optional Packages for Word & Excel]
+To keep Testform's core package lightweight and ultra fast to download, binary generators for Word (`docx`) and Excel (`exceljs`) are managed as **optional peer dependencies**. When you wish to output these formats, simply install the required driver globally or in your project:
+
+```bash
+# For Word (.docx) reports
+npm install -g docx
+
+# For Excel (.xlsx) reports
+npm install -g exceljs
+```
+:::
+
 ### Markdown (`-format=md`)
 Generates standard Markdown tables with metric highlights. Ideal for `stdout`, CI/CD build consoles, or GitHub Actions PR summaries.
 

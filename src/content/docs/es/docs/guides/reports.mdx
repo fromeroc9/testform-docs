@@ -185,3 +185,9 @@ testform report testrun-summary -format=slack -out=dist/slack-payload.json
 | **Word** | `-format=docx` | `.docx` | Binario formateado | Auditorías de entrega, informes ejecutivos para stakeholders. |
 | **Excel** | `-format=xlsx` | `.xlsx` | Binario estructurado | Análisis cuantitativo avanzado, matrices de cobertura complejas. |
 
+:::tip[Instalación Bajo Demanda de Generadores Binarios]
+Para mantener Testform ligero, los formatos binarios son opcionales y solo requieren instalar el generador respectivo:
+- Word: `npm install -g docx` (o `npm install --save-dev docx`)
+- Excel: `npm install -g exceljs` (o `npm install --save-dev exceljs`)
+:::
+

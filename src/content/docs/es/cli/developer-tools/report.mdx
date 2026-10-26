@@ -141,6 +141,18 @@ testform report testrun-detailed -target="@tp-2" -filter "status=failed"
 
 ## 🎨 Formatos Nativos de Salida
 
+:::note[Paquetes Opcionales para Word y Excel]
+Para mantener la instalación de Testform ultra ligera y sin dependencias pesadas, los motores de generación de Word (`docx`) y Excel (`exceljs`) están configurados como **dependencias opcionales** (*peer dependencies*). Si deseas utilizar estos formatos binarios, solo necesitas instalar el paquete correspondiente de forma global o local:
+
+```bash
+# Para reportes en Word (.docx)
+npm install -g docx
+
+# Para reportes en Excel (.xlsx)
+npm install -g exceljs
+```
+:::
+
 ### Markdown (`-format=md`)
 Genera tablas Markdown estándar con bloques de métricas clave. Ideal para `stdout`, consolas de CI/CD o resúmenes de PR.
 
