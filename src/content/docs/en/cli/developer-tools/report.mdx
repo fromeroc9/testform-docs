@@ -1,39 +1,235 @@
 ---
 title: "testform report"
+description: "Testform's modular and multi-dimensional reporting and analytics engine."
 ---
 
-
 ```bash
-testform [global options] report [options]
+testform [global options] report <type> [options]
 ```
 
-The `testform report` command generates comprehensive, multi-dimensional quality reports and execution analytics by analyzing state history and Provider outcomes.
+The `testform report` command compiles multi-dimensional analytical reports from the execution ledger (`testform.state`). It features a decoupled architecture that separates metric aggregation from output rendering, offering native export to **Markdown**, **JSON**, **CSV**, **Word (`.docx`)**, and **Excel (`.xlsx`)**, along with dynamic template patching and convention-based autoloading.
+
+:::tip[Terraform Parity: Zero-Pollution]
+Unlike legacy tools requiring dedicated reporting blocks in `main.yml`, Testform uses automated discovery from `.testform/reports/` for custom reports, formats, and templates without configuration overhead.
+:::
+
+---
 
 ## Command Options
 
 | Option | Default | Description |
 | :--- | :--- | :--- |
-| `-format=<format>` | `console` | Output format (`console`, `html`, `json`, `markdown`). |
-| `-out=path` | â€” | Writes the report to a specified file. |
-| `-scope=<scope>` | `all` | Filters metrics to `testrun`, `testcase`, or `testplan`. |
-| `-milestone=<name>` | â€” | Filters analytics to a specific milestone. |
+| `<type>` | *(Required)* | Report type identifier to execute (see Report Catalog). |
+| `-format=<format>` | `md` | Output format: `md`, `json`, `csv`, `xlsx`, `docx`, or custom format. |
+| `-out=path` | `stdout` | Destination file path to save the generated report. |
+| `-filter=<query>` | — | Unified filter by attribute (`key=val`) or inferred free-text. Can be repeated. |
+| `-target=<resource>` | — | Scopes the report to a specific resource (`@tr-N`, `@tp-N`, path). When targeting a testplan, automatically expands all linked test runs. |
+| `-groupBy=<field>` | — | Groups results dynamically by a specified field (`status`, `label`, `assignee`, etc.). |
+| `-template=path` | — | Path to a custom template file (Word `.docx`, Excel `.xlsx`, or text). |
+| `-var='k=v'` | — | Injects or overrides variable values for template interpolation. |
+| `-var-file=path` | — | Loads variable values from a YAML file (`vars.yml`). |
 
-## Metrics Provided
+---
 
-- **Pass / Fail / Blocked Rates**: Percentage distribution across execution runs.
-- **Flakiness Detection**: Scenarios that alternate between passed and failed across consecutive runs without code changes.
-- **Execution Duration**: Historical trends and slow-test identification.
-- **Test Coverage**: Breakdown of test cases by functional area and tags.
+## 📦 Core Report Catalog
 
-## Generating an HTML Dashboard
+Testform includes 9 built-in report types categorized by scope, plus a raw data extractor (`raw`):
+
+### 1. Scope: Test Cases (`testcase`)
+
+- **`testcase-summary`**: Complete inventory of test cases with status, labels, assignee, and priority.
+- **`test-case-activity`**: Chronological activity log, recent executions, and test case trends.
+
+### 2. Scope: Test Runs (`testrun`)
+
+- **`testrun-summary`**: High-level execution analytics (`Total Test Runs`, `Passed`, `Failed`, `Blocked`, `Skipped`, `Unexecuted`) and pass rate percentage (`passRate`).
+- **`testrun-detailed`**: Granular, step-by-step breakdown of individual test runs and associated scenarios.
+
+### 3. Scope: Test Plans (`testplan`)
+
+- **`testplan-summary`**: Overall progress across test plans and consolidated status of linked test runs.
+
+### 4. Cross-Scope & Quality Metrics
+
+- **`defects`**: Audit list of failed and blocked tests, linking defect tags and issue trackers.
+- **`traceability`**: Bidirectional traceability matrix between requirements/business tags and test runs.
+- **`coverage`**: Percentage of coverage and passed tests grouped by functional tags or components.
+- **`two-dimensional`**: Cross-tabulation contingency matrix (e.g. Status vs. Priority or Component).
+- **`raw`**: Direct dump of the filtered item collection for custom external pipelines.
+
+---
+
+## 🔍 Unified Filtering & Grouping (`StateQuery`)
+
+The `report` command shares the query engine with `testform query`:
+
+### 1. Filtering by Attributes (`key=value`)
 
 ```bash
-testform report -format=html -out=qa-report.html
+# Filter failed executions only
+testform report testcase-summary -filter "status=failed"
+
+# Filter by label and assignee simultaneously
+testform report testrun-summary -filter "label=@smoke" -filter "assignee=flavio"
 ```
-Generates a standalone, interactive HTML report with charts and breakdown tables suitable for stakeholders.
 
-## Exit Codes
+### 2. Filtering by Custom Fields (`main.yml`)
 
-- `0`: Report generated successfully.
-- `1`: Error processing state records or generating output.
+If your project defines custom scenario fields such as `priority`, `sprint`, or `component`:
 
+```bash
+testform report testcase-summary -filter "priority=high" -filter "sprint=SP-24"
+```
+
+### 3. Inferred Free-Text Search (without `=`)
+
+Any query without an `=` operator is automatically evaluated as a text search across IDs, titles, and tags:
+
+```bash
+testform report testcase-summary -filter "login"
+```
+
+### 4. Dynamic Grouping (`-groupBy`)
+
+Automatically groups table rows by the specified attribute:
+
+```bash
+testform report testcase-summary -groupBy status
+testform report coverage -groupBy label
+```
+
+---
+
+## 🎯 Target Scoping (`-target`)
+
+The `-target` flag limits the scope of the report to a specific entity and its execution dependencies:
+
+### 1. Targeting a Test Run (`-target="@tr-N"`)
+Generates the report considering exclusively the designated test run and its executed test cases:
+
+```bash
+# Step-by-step detail for test run @tr-1 only
+testform report testrun-detailed -target="@tr-1"
+
+# Summary of test cases executed in sprint1.run.feature
+testform report testcase-summary -target="sprint1.run.feature"
+```
+
+### 2. Targeting a Test Plan with Multiple Runs (`-target="@tp-N"`)
+When targeting a test plan (`testplan`), Testform inspects linked runs (`attributes.testruns`), automatically discovers **all associated test runs**, and includes all test case executions belonging to them:
+
+```bash
+# Summary of all test runs belonging to test plan @tp-1
+testform report testrun-summary -target="@tp-1"
+
+# Defect report isolated to test plan @tp-1
+testform report defects -target="@tp-1"
+
+# Coverage matrix for release plan
+testform report coverage -target="tests/plans/release-v2.plan.feature"
+```
+
+### 3. Combining `-target` with `-filter`
+You can combine `-target` to anchor the plan/run and `-filter` to refine the output:
+
+```bash
+# View only failed scenarios within plan @tp-2
+testform report testrun-detailed -target="@tp-2" -filter "status=failed"
+```
+
+---
+
+## 🎨 Native Output Formats
+
+### Markdown (`-format=md`)
+Generates standard Markdown tables with metric highlights. Ideal for `stdout`, CI/CD build consoles, or GitHub Actions PR summaries.
+
+```bash
+testform report testrun-summary -format=md
+```
+
+### JSON (`-format=json`)
+Outputs a normalized data structure with `title`, `metrics`, `headers`, and `rows`. Suitable for dashboard ingestion or downstream scripts.
+
+```bash
+testform report defects -format=json -out=dist/defects.json
+```
+
+### CSV (`-format=csv`)
+Exports tabular data conforming to RFC 4180 standards for spreadsheet import or BI analytics.
+
+```bash
+testform report traceability -format=csv -out=traceability.csv
+```
+
+### Word Document (`-format=docx`)
+Generates an executive Word document with styled headings, highlighted metric callouts, and formatted tables.
+
+```bash
+testform report testrun-summary -format=docx -out=executive-report.docx
+```
+
+### Excel Workbook (`-format=xlsx`)
+Generates a spreadsheet workbook with automatic column width adjustment, styled metric cards, and table borders.
+
+```bash
+testform report coverage -format=xlsx -out=coverage.xlsx
+```
+
+---
+
+## 📑 Dynamic Templates with `${...}` Syntax
+
+To maintain complete consistency with Testform variable resolution and avoid syntax collisions, **all Word and Excel templates use standard `${...}` placeholders**:
+
+| Placeholder | Description | Example Resolution |
+| :--- | :--- | :--- |
+| `${var.<name>}` | Environment or project variable loaded from `vars.yml` or `-var`. | `${var.company}` ➔ `ACME Corp` |
+| `${report.title}` | Active report title. | `${report.title}` ➔ `Test Run Summary` |
+| `${date}` | Report generation timestamp. | `${date}` ➔ `2026-10-26 14:30:00` |
+| `${<metric>}` | Key-value report metric (`total`, `passed`, `failed`, etc.). | `${total}` ➔ `45` |
+| `${table}` or `${report.table}` | **Dynamic table anchor**. Replaced by the generated dataset table. | *Table with headers and rows* |
+
+```bash
+testform report testrun-summary -format=docx -template=templates/qa-report.docx -var="company=FinTech Corp" -out=report.docx
+```
+
+---
+
+## 🔌 Extensibility: Autoloading from `.testform/reports/`
+
+You can register custom reports, custom output formats, or default project templates without touching `main.yml`:
+
+```
+my-project/
+├── .testform/
+│   └── reports/
+│       ├── report.docx              # Default Word template for the project
+│       ├── report.xlsx              # Default Excel template for the project
+│       ├── sprint-metrics.ts        # Custom report: "testform report sprint-metrics"
+│       └── slack.format.ts          # Custom format: "testform report ... -format=slack"
+├── main.yml
+└── tests/
+```
+
+See the [Modular Reports Guide](../../docs/guides/reports) for complete implementation details and developer interfaces.
+
+---
+
+## 🤖 CI/CD Integration (GitHub Actions)
+
+```yaml
+- name: Generate QA Report
+  run: |
+    # Publish Markdown summary to GitHub Job Summary
+    testform report testrun-summary -format=md >> $GITHUB_STEP_SUMMARY
+
+    # Generate formal executive Word document
+    testform report testrun-summary -format=docx -out=dist/executive-report.docx
+
+- name: Upload Executive Report
+  uses: actions/upload-artifact@v4
+  with:
+    name: executive-qa-report
+    path: dist/executive-report.docx
+```

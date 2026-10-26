@@ -1,0 +1,135 @@
+---
+title: "Reports: IReport & IReportFormat"
+description: "Programmatic API reference for implementing modular reports and formats in Testform."
+---
+
+The reports module exposes the core interfaces and data structures required to build custom analytics reports and output formats in Testform.
+
+---
+
+## 📋 Core Types & Interfaces
+
+```typescript
+import type { 
+  IReport, 
+  IReportFormat, 
+  ReportContext, 
+  ReportData,
+  QueryResultItem,
+  ReportStats 
+} from '@fromeroc9/testform';
+```
+
+---
+
+## `IReport`
+
+Defines the contract for creating a custom analytics report.
+
+```typescript
+export interface IReport {
+  /** Unique identifier for the report (e.g., "testcase-summary", "team-velocity") */
+  readonly name: string;
+
+  /** Brief description shown in CLI help outputs */
+  readonly description?: string;
+
+  /** 
+   * Extracts and processes state items into a structured ReportData object.
+   */
+  collect(context: ReportContext): ReportData | Promise<ReportData>;
+
+  /** 
+   * Optional default template path or Buffer associated with this report.
+   */
+  template?: string | Buffer | ((format: string) => string | Buffer);
+}
+```
+
+---
+
+## `IReportFormat`
+
+Defines the contract for implementing a custom output format renderer.
+
+```typescript
+export interface IReportFormat {
+  /** Format identifier (e.g., "md", "json", "docx", "slack") */
+  readonly name: string;
+
+  /** Corresponding file extension (e.g., ".md", ".docx", ".json") */
+  readonly extension: string;
+
+  /** Specifies whether output is a binary Buffer (true) or UTF-8 string (false) */
+  readonly isBinary?: boolean;
+
+  /**
+   * Renders tabular data and metrics into the target format.
+   */
+  render(data: ReportData, context: ReportContext): Promise<string | Buffer>;
+}
+```
+
+---
+
+## `ReportData`
+
+Standardized data payload returned by `IReport.collect()`:
+
+```typescript
+export interface ReportData {
+  /** Main report title */
+  title: string;
+
+  /** Key-value metrics and KPIs */
+  metrics?: Record<string, string | number>;
+
+  /** Column names for the tabular dataset */
+  headers: string[];
+
+  /** Rows representing the body of the report */
+  rows: (string | number)[][];
+
+  /** Optional raw or supplementary metadata */
+  metadata?: Record<string, any>;
+}
+```
+
+---
+
+## `ReportContext`
+
+Execution context provided by the engine to `collect()` and `render()`:
+
+```typescript
+export interface ReportContext {
+  /** Filtered state items that matched active criteria (-filter) */
+  items: QueryResultItem[];
+
+  /** Precomputed statistics across the filtered items */
+  stats: ReportStats;
+
+  /** Active variable map (${var.*}) from vars.yml and CLI flags */
+  variables: Record<string, string>;
+
+  /** Dynamic group-by field if specified (-groupBy) */
+  groupBy?: string;
+
+  /** Command-line options passed during invocation */
+  options: Record<string, any>;
+}
+```
+
+---
+
+## 🛠️ Utility Functions
+
+### `formatReportTable`
+
+```typescript
+import { formatReportTable } from '@fromeroc9/testform';
+
+const asciiTable = formatReportTable(headers, rows);
+```
+Renders an aligned ASCII table with styled borders and headers for console output.
+

@@ -1,0 +1,136 @@
+---
+title: "Reportes: IReport e IReportFormat"
+description: "Referencia de la API programática para implementar reportes y formatos modulares en Testform."
+---
+
+El módulo de reportes expone las interfaces y estructuras de datos necesarias para crear nuevos tipos de reportes analíticos y formatos de exportación en Testform.
+
+---
+
+## 📋 Tipos e Interfaces Principales
+
+```typescript
+import type { 
+  IReport, 
+  IReportFormat, 
+  ReportContext, 
+  ReportData,
+  QueryResultItem,
+  ReportStats 
+} from '@fromeroc9/testform';
+```
+
+---
+
+## `IReport`
+
+Define el contrato para implementar un tipo de reporte analítico.
+
+```typescript
+export interface IReport {
+  /** Identificador único del reporte (ej. "testcase-summary", "team-velocity") */
+  readonly name: string;
+
+  /** Descripción breve visible en la ayuda del CLI */
+  readonly description?: string;
+
+  /** 
+   * Extrae y procesa los datos del contexto de estado.
+   * Retorna una estructura ReportData tabular con métricas y filas.
+   */
+  collect(context: ReportContext): ReportData | Promise<ReportData>;
+
+  /** 
+   * Ruta o Buffer de plantilla por defecto asociada a este reporte (opcional).
+   */
+  template?: string | Buffer | ((format: string) => string | Buffer);
+}
+```
+
+---
+
+## `IReportFormat`
+
+Define el contrato para implementar un renderizador de formato de salida.
+
+```typescript
+export interface IReportFormat {
+  /** Identificador del formato (ej. "md", "json", "docx", "slack") */
+  readonly name: string;
+
+  /** Extensión de archivo correspondiente (ej. ".md", ".docx", ".json") */
+  readonly extension: string;
+
+  /** Indica si la salida generada es un Buffer binario (true) o texto UTF-8 (false) */
+  readonly isBinary?: boolean;
+
+  /**
+   * Renderiza los datos tabulares y métricas hacia el formato de salida.
+   */
+  render(data: ReportData, context: ReportContext): Promise<string | Buffer>;
+}
+```
+
+---
+
+## `ReportData`
+
+Estructura de datos normalizada retornada por `IReport.collect()`:
+
+```typescript
+export interface ReportData {
+  /** Título principal del informe */
+  title: string;
+
+  /** Métricas y KPIs clave expresados como pares clave-valor */
+  metrics?: Record<string, string | number>;
+
+  /** Nombres de las columnas de la tabla de datos */
+  headers: string[];
+
+  /** Filas de datos que componen el cuerpo del informe */
+  rows: (string | number)[][];
+
+  /** Metadatos adicionales o datos sin procesar */
+  metadata?: Record<string, any>;
+}
+```
+
+---
+
+## `ReportContext`
+
+Contexto de ejecución inyectado por el motor hacia `collect()` y `render()`:
+
+```typescript
+export interface ReportContext {
+  /** Elementos del estado que superaron los filtros activos (-filter) */
+  items: QueryResultItem[];
+
+  /** Estadísticas precalculadas sobre los elementos filtrados */
+  stats: ReportStats;
+
+  /** Mapa de variables activas (${var.*}) procedentes de vars.yml y flags CLI */
+  variables: Record<string, string>;
+
+  /** Campo de agrupación dinámico si fue especificado (-groupBy) */
+  groupBy?: string;
+
+  /** Opciones de línea de comandos proporcionadas en la ejecución */
+  options: Record<string, any>;
+}
+```
+
+---
+
+## 🛠️ Métodos Utilitarios
+
+### `formatReportTable`
+
+```typescript
+import { formatReportTable } from '@fromeroc9/testform';
+
+const asciiTable = formatReportTable(headers, rows);
+```
+Genera una tabla ASCII alineada con bordes y cabeceras contrastadas para salidas por consola.
+

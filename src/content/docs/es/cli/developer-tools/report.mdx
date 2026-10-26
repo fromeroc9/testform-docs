@@ -1,38 +1,235 @@
 ---
 title: "testform report"
+description: "Motor de reportería y analítica modular multidimensional de Testform."
 ---
 
 ```bash
-testform [opciones globales] report [opciones]
+testform [opciones globales] report <tipo> [opciones]
 ```
 
-El comando `testform report` compila informes multidimensionales de calidad y análisis de ejecución procesando el histórico del estado y las respuestas registradas por los Providers.
+El comando `testform report` compila informes analíticos multidimensionales a partir del estado de ejecución (`testform.state`). Integra un motor desacoplado que separa la recolección de métricas del renderizado de formatos, soportando exportación nativa a **Markdown**, **JSON**, **CSV**, **Word (`.docx`)** y **Excel (`.xlsx`)**, con capacidades de plantillas dinámicas y autocarga por convención.
+
+:::tip[Paridad con Terraform: Cero Polución]
+A diferencia de herramientas que requieren ensuciar `main.yml` con bloques de configuración de reportes, Testform utiliza autocarga automática desde `.testform/reports/` para reportes, formatos y plantillas personalizadas.
+:::
+
+---
 
 ## Opciones del Comando
 
 | Opción | Por Defecto | Descripción |
 | :--- | :--- | :--- |
-| `-format=<formato>` | `console` | Formato del reporte (`console`, `html`, `json`, `markdown`). |
-| `-out=path` | — | Escribe el reporte en la ruta indicada. |
-| `-scope=<scope>` | `all` | Filtra las métricas por `testrun`, `testcase` o `testplan`. |
-| `-milestone=<nombre>` | — | Filtra la analítica hacia un milestone particular. |
+| `<tipo>` | *(Requerido)* | Nombre del reporte a generar (ver catálogo de reportes). |
+| `-format=<formato>` | `md` | Formato de salida: `md`, `json`, `csv`, `xlsx`, `docx` o formato personalizado. |
+| `-out=path` | `stdout` | Ruta del archivo de destino donde guardar el reporte. |
+| `-filter=<query>` | — | Filtro unificado por clave-valor (`campo=valor`) o texto libre. Puede repetirse. |
+| `-target=<recurso>` | — | Acota el reporte a un recurso específico (`@tr-N`, `@tp-N`, ruta). En un testplan expande automáticamente todas sus corridas vinculadas. |
+| `-groupBy=<campo>` | — | Agrupa los resultados dinámicamente por un campo (`status`, `label`, `assignee`, etc.). |
+| `-template=path` | — | Ruta a plantilla personalizada (Word `.docx`, Excel `.xlsx` o texto). |
+| `-var='k=v'` | — | Inyecta o sobrescribe variables para interpolación en plantillas. |
+| `-var-file=path` | — | Carga variables de interpolación desde un archivo YAML (`vars.yml`). |
 
-## Métricas Proporcionadas
+---
 
-- **Tasas de Aprobación, Fallo y Bloqueo**: Distribución porcentual en cada ciclo de ejecución.
-- **Detección de Fragilidad (Flakiness)**: Identifica escenarios que alternan entre aprobados y fallidos en ejecuciones consecutivas sin cambios de código.
-- **Tiempos de Ejecución**: Evolución histórica y detección de pruebas con lentitud anómala.
-- **Cobertura de Pruebas**: Distribución de casos de prueba según módulos y etiquetas.
+## 📦 Catálogo de Reportes del Core
 
-## Generación de un Tablero Interactivo en HTML
+Testform incluye 9 tipos de reportes predefinidos organizados por alcance (*scope*), más un extractor de datos puros (`raw`):
+
+### 1. Alcance: Casos de Prueba (`testcase`)
+
+- **`testcase-summary`**: Inventario de casos de prueba registrados con su estado actual, etiquetas, responsable y prioridad.
+- **`test-case-activity`**: Registro cronológico de actividad, ejecuciones recientes y tendencias de casos de prueba.
+
+### 2. Alcance: Ejecuciones de Prueba (`testrun`)
+
+- **`testrun-summary`**: Resumen analítico de ejecuciones con métricas globales (`Total Test Runs`, `Passed`, `Failed`, `Blocked`, `Skipped`, `Unexecuted`) y tasa de aprobación (`passRate`).
+- **`testrun-detailed`**: Vista granular y detallada paso a paso de ejecuciones individuales y sus escenarios.
+
+### 3. Alcance: Planes de Prueba (`testplan`)
+
+- **`testplan-summary`**: Progreso global de planes de prueba y estado consolidado de los test runs vinculados.
+
+### 4. Multidimensional y Calidad Cruzada
+
+- **`defects`**: Listado de pruebas con fallo (`failed`) o bloqueo (`blocked`), vinculando tags de defectos e incidencias.
+- **`traceability`**: Matriz de trazabilidad entre requerimientos de negocio/etiquetas y ejecuciones reales.
+- **`coverage`**: Porcentaje de cobertura y casos ejecutados agrupados por módulos o componentes.
+- **`two-dimensional`**: Matriz de contingencia bidimensional (ej. Estado vs. Prioridad o Componente).
+- **`raw`**: Volcado directo de la colección filtrada en formato de datos estructurados para integraciones externas.
+
+---
+
+## 🔍 Filtrado y Agrupación Unificados (`StateQuery`)
+
+El comando `report` comparte el mismo motor de consulta que `testform query`:
+
+### 1. Filtrado por Atributos Nativos (`clave=valor`)
 
 ```bash
-testform report -format=html -out=reporte-qa.html
+# Filtrar solo ejecuciones fallidas
+testform report testcase-summary -filter "status=failed"
+
+# Filtrar por etiqueta y responsable simultáneamente
+testform report testrun-summary -filter "label=@smoke" -filter "assignee=flavio"
 ```
-Crea un documento HTML interactivo con gráficos y tablas de resumen apto para presentación ante stakeholders y comités de release.
 
-## Códigos de Salida
+### 2. Filtrado por Campos Personalizados (`main.yml`)
 
-- `0`: Reporte generado exitosamente.
-- `1`: Error al procesar los registros de estado o al generar el archivo.
+Si tu configuración define campos como `priority`, `sprint` o `component`:
 
+```bash
+testform report testcase-summary -filter "priority=high" -filter "sprint=SP-24"
+```
+
+### 3. Búsqueda de Texto Libre Inferida (sin `=`)
+
+Cualquier término que no contenga `=` se evalúa automáticamente como búsqueda difusa sobre el ID, título o tags:
+
+```bash
+testform report testcase-summary -filter "login"
+```
+
+### 4. Agrupación Dinámica (`-groupBy`)
+
+Reorganiza las filas de datos automáticamente según el campo indicado:
+
+```bash
+testform report testcase-summary -groupBy status
+testform report coverage -groupBy label
+```
+
+---
+
+## 🎯 Alcance por Target (`-target`)
+
+El flag `-target` permite limitar el universo de datos del reporte a una entidad específica y sus dependencias de ejecución:
+
+### 1. Target a un Test Run (`-target="@tr-N"`)
+Genera el reporte considerando únicamente la corrida de prueba indicada y los casos ejecutados en ella:
+
+```bash
+# Detalle paso a paso solo de la corrida @tr-1
+testform report testrun-detailed -target="@tr-1"
+
+# Resumen de casos de prueba ejecutados en sprint1.run.feature
+testform report testcase-summary -target="sprint1.run.feature"
+```
+
+### 2. Target a un Test Plan con Múltiples Runs (`-target="@tp-N"`)
+Cuando se apunta a un plan de pruebas (`testplan`), Testform inspecciona las corridas vinculadas (`attributes.testruns`), localiza automáticamente **todas las corridas asociadas** e incluye todos los casos de prueba ejecutados en ellas:
+
+```bash
+# Resumen de las corridas pertenecientes al plan @tp-1
+testform report testrun-summary -target="@tp-1"
+
+# Listado de defectos detectados exclusivamente dentro del plan @tp-1
+testform report defects -target="@tp-1"
+
+# Matriz de cobertura del plan de release
+testform report coverage -target="tests/plans/release-v2.plan.feature"
+```
+
+### 3. Combinación de `-target` con `-filter`
+Puedes combinar `-target` para fijar el plan o corrida y `-filter` para afinar la búsqueda:
+
+```bash
+# Ver solo casos fallidos dentro del plan @tp-2
+testform report testrun-detailed -target="@tp-2" -filter "status=failed"
+```
+
+---
+
+## 🎨 Formatos Nativos de Salida
+
+### Markdown (`-format=md`)
+Genera tablas Markdown estándar con bloques de métricas clave. Ideal para `stdout`, consolas de CI/CD o resúmenes de PR.
+
+```bash
+testform report testrun-summary -format=md
+```
+
+### JSON (`-format=json`)
+Genera una estructura de datos normalizada con `title`, `metrics`, `headers` y `rows`. Ideal para integraciones con dashboards o ingesta en bases de datos.
+
+```bash
+testform report defects -format=json -out=dist/defects.json
+```
+
+### CSV (`-format=csv`)
+Exporta filas tabulares con escape estándar RFC 4180 para análisis en herramientas de BI o spreadsheets.
+
+```bash
+testform report traceability -format=csv -out=traceability.csv
+```
+
+### Documento Word (`-format=docx`)
+Genera un documento Word corporativo con estilos profesionales, métricas destacadas y tablas coloreadas.
+
+```bash
+testform report testrun-summary -format=docx -out=informe-ejecutivo.docx
+```
+
+### Libro Excel (`-format=xlsx`)
+Genera un archivo Excel profesional con auto-ajuste de columnas, celdas de métricas estilizadas y formato de celdas.
+
+```bash
+testform report coverage -format=xlsx -out=cobertura.xlsx
+```
+
+---
+
+## 📑 Plantillas Dinámicas con Marcadores `${...}`
+
+Para mantener total consistencia con el sistema de variables de Testform y evitar colisiones sintácticas, **todas las plantillas Word y Excel utilizan marcadores `${...}`**:
+
+| Marcador | Descripción | Ejemplo de Resolución |
+| :--- | :--- | :--- |
+| `${var.<nombre>}` | Variable de entorno o proyecto cargada desde `vars.yml` o `-var`. | `${var.company}` ➔ `ACME Corp` |
+| `${report.title}` | Título del reporte activo. | `${report.title}` ➔ `Test Run Summary` |
+| `${date}` | Fecha y hora de generación. | `${date}` ➔ `2026-10-26 14:30:00` |
+| `${<metrica>}` | Métricas del reporte (`total`, `passed`, `failed`, etc.). | `${total}` ➔ `45` |
+| `${table}` o `${report.table}` | **Punto de anclaje de la tabla dinámica**. Se sustituye por la tabla completa generada. | *Tabla con cabeceras y filas* |
+
+```bash
+testform report testrun-summary -format=docx -template=templates/informe-qa.docx -var="company=FinTech SAC" -out=informe.docx
+```
+
+---
+
+## 🔌 Extensibilidad: Autocarga desde `.testform/reports/`
+
+Puedes incorporar nuevos reportes, nuevos formatos o plantillas corporativas sin modificar `main.yml`:
+
+```
+mi-proyecto/
+├── .testform/
+│   └── reports/
+│       ├── report.docx              # Plantilla Word por defecto para el proyecto
+│       ├── report.xlsx              # Plantilla Excel por defecto para el proyecto
+│       ├── sprint-metrics.ts        # Nuevo reporte: "testform report sprint-metrics"
+│       └── slack.format.ts          # Nuevo formato: "testform report ... -format=slack"
+├── main.yml
+└── tests/
+```
+
+Consulta la [Guía de Reportes Modulares](../../docs/guides/reports) para ver ejemplos de código y contratos de desarrollo.
+
+---
+
+## 🤖 Integración con CI/CD (GitHub Actions)
+
+```yaml
+- name: Generar Reporte de Pruebas
+  run: |
+    # Publicar resumen Markdown en el Job Summary de GitHub
+    testform report testrun-summary -format=md >> $GITHUB_STEP_SUMMARY
+
+    # Generar informe Word formal para entrega
+    testform report testrun-summary -format=docx -out=dist/informe-qa.docx
+
+- name: Subir Informe Ejecutivo
+  uses: actions/upload-artifact@v4
+  with:
+    name: informe-qa-word
+    path: dist/informe-qa.docx
+```

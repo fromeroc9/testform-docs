@@ -144,6 +144,7 @@ export default defineConfig({
                 { slug: 'api/providers', label: 'Proveedores (IProvider)', translations: { en: 'Providers (IProvider)' } },
                 { slug: 'api/expressions', label: 'Expresiones (Evaluator)', translations: { en: 'Expressions (Evaluator)' } },
                 { slug: 'api/state', label: 'Gestión de Estado (State)', translations: { en: 'State Management (State)' } },
+                { slug: 'api/reports', label: 'Reportes (IReport)', translations: { en: 'Reports (IReport)' } },
               ],
             },
             {

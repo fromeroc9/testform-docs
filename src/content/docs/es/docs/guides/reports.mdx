@@ -1,0 +1,187 @@
+---
+title: "Reportes y Analítica Modular"
+description: "Guía completa de arquitectura, plantillas Word/Excel con marcadores ${...} y extensibilidad en Testform."
+---
+
+El motor de reportes de Testform proporciona una plataforma de análisis y reportería diseñada bajo principios de desacoplamiento arquitectónico, permitiendo extraer métricas a partir del archivo de estado (`testform.state`) y representarlas en múltiples formatos de salida.
+
+---
+
+## 🏛️ Arquitectura del Motor
+
+El sistema de reportes divide la responsabilidad en tres capas independientes:
+
+```
+┌─────────────────────────┐
+│     testform.state      │
+└────────────┬────────────┘
+             │
+             ▼
+┌─────────────────────────┐
+│   StateQuery Engine     │ ◀── -filter "key=val", texto libre, -groupBy
+└────────────┬────────────┘
+             │
+             ▼ (ReportContext)
+┌─────────────────────────┐
+│    IReport.collect()    │ (Core: 9 reportes / Custom: .testform/reports/*.ts)
+└────────────┬────────────┘
+             │
+             ▼ (ReportData)
+┌─────────────────────────┐
+│  IReportFormat.render   │ (md, json, csv, xlsx, docx / *.format.ts)
+└────────────┬────────────┘
+             │
+             ▼
+┌─────────────────────────┐
+│     stdout o Archivo    │ (-out=...)
+└─────────────────────────┘
+```
+
+1. **Consulta y Normalización (`StateQuery`):** Filtra los recursos del estado respetando tags, atributos de escenario, estados de ejecución y campos personalizados de `main.yml`. Produce una colección normalizada de `QueryResultItem[]`.
+2. **Extracción y Agregación (`IReport`):** Recibe el contexto de ejecución (`ReportContext`) y calcula las métricas, cabeceras y filas tabulares (`ReportData`).
+3. **Renderizado e Interpolación (`IReportFormat`):** Recibe los datos y los proyecta al formato de destino, realizando la interpolación de expresiones `${...}` y parcheando plantillas binarias o textuales.
+
+---
+
+## 📑 Plantillas Dinámicas en Word y Excel
+
+Testform permite personalizar visualmente los informes ejecutivos mediante plantillas preconfiguradas. Para evitar discrepancias con el motor de variables de Testform, **todas las plantillas utilizan delimitadores estándar `${...}`**.
+
+### Marcadores de Interpolación
+
+| Expresión | Descripción | Valor Inyectado |
+| :--- | :--- | :--- |
+| `${var.<nombre>}` | Variable de configuración o CLI. | Resuelto contra `vars.yml` o `-var`. |
+| `${report.title}` | Título generado por el reporte. | Ej. `Test Run Summary` |
+| `${date}` | Marca temporal de compilación. | Fecha y hora en formato legible. |
+| `${<metrica>}` | Métricas clave del reporte (`total`, `passed`, etc.). | Valor numérico o porcentual. |
+| `${table}` / `${report.table}` | **Marcador de inserción de tabla**. | Reemplazado por la tabla de datos completa. |
+
+### Cómo Crear una Plantilla Word (.docx)
+
+1. En Microsoft Word, diseña la portada o encabezado de tu empresa.
+2. Agrega párrafos con variables como:
+   - `Proyecto: ${var.project_name}`
+   - `Informe: ${report.title}`
+   - `Fecha: ${date}`
+3. En el lugar donde deba situarse la tabla de datos, escribe el texto `${table}` en un párrafo independiente.
+4. Guarda el archivo como `report.docx` en `.testform/reports/` (se usará automáticamente) o pásalo vía `-template=ruta.docx`.
+
+### Cómo Crear una Plantilla Excel (.xlsx)
+
+1. En Excel, diseña las celdas de encabezado con los logotipos o títulos de tu organización.
+2. En las celdas de información, utiliza expresiones como `${var.environment}` o `Total: ${total}`.
+3. En la celda exacta donde comenzará la tabla de datos (ejemplo `B10`), escribe `${table}`.
+4. El motor detectará la coordenada `(fila, columna)`, escribirá las cabeceras con estilo corporativo y desplegará las filas de datos con auto-ajuste de ancho de columnas.
+
+---
+
+## 🔌 Extensibilidad sin Configuración (Zero-Pollution)
+
+En línea con el diseño de Terraform, la extensión de Testform no requiere registrar módulos ni modificar `main.yml`. Toda extensión se realiza por convención dentro del directorio `.testform/reports/`:
+
+```
+.testform/
+└── reports/
+    ├── report.docx              # Plantilla Word institucional por defecto
+    ├── report.xlsx              # Plantilla Excel institucional por defecto
+    ├── team-velocity.ts         # Reporte personalizado: "testform report team-velocity"
+    └── slack.format.ts          # Formato personalizado: "testform report ... -format=slack"
+```
+
+### Ejemplo 1: Crear un Reporte Personalizado
+
+Crea el archivo `.testform/reports/team-velocity.ts`:
+
+```typescript
+import type { IReport, ReportContext, ReportData } from '@fromeroc9/testform';
+
+export const TeamVelocityReport: IReport = {
+  name: 'team-velocity',
+  description: 'Métricas de productividad de pruebas por equipo',
+
+  async collect(ctx: ReportContext): Promise<ReportData> {
+    const total = ctx.items.length;
+    const passed = ctx.items.filter(i => i.status === 'passed').length;
+    const team = ctx.variables['team'] || 'QA Team';
+
+    return {
+      title: `Velocidad y Calidad - ${team}`,
+      metrics: {
+        'Equipo': team,
+        'Total Casos': total,
+        'Aprobados': passed,
+        'Efectividad': total > 0 ? `${Math.round((passed / total) * 100)}%` : '0%'
+      },
+      headers: ['ID', 'Escenario', 'Responsable', 'Estado'],
+      rows: ctx.items.map(item => [
+        item.id,
+        item.title,
+        item.assignee || 'Sin asignar',
+        item.status
+      ])
+    };
+  }
+};
+
+export default TeamVelocityReport;
+```
+
+Ejecuta el reporte directamente:
+```bash
+testform report team-velocity -format=md
+testform report team-velocity -format=docx -out=velocidad.docx -var="team=Core Banking"
+```
+
+---
+
+### Ejemplo 2: Crear un Formato de Salida Personalizado
+
+Crea el archivo `.testform/reports/slack.format.ts`:
+
+```typescript
+import type { IReportFormat, ReportData, ReportContext } from '@fromeroc9/testform';
+
+export const SlackFormat: IReportFormat = {
+  name: 'slack',
+  extension: '.json',
+
+  async render(data: ReportData, ctx: ReportContext): Promise<string> {
+    const blocks = [
+      {
+        type: 'header',
+        text: { type: 'plain_text', text: `📊 ${data.title}` }
+      },
+      {
+        type: 'section',
+        fields: Object.entries(data.metrics || {}).map(([k, v]) => ({
+          type: 'mrkdwn',
+          text: `*${k}:*\n${v}`
+        }))
+      }
+    ];
+
+    return JSON.stringify({ blocks }, null, 2);
+  }
+};
+
+export default SlackFormat;
+```
+
+Genera cualquier reporte en el nuevo formato:
+```bash
+testform report testrun-summary -format=slack -out=dist/slack-payload.json
+```
+
+---
+
+## 🧭 Tabla de Comparación de Formatos Nativos
+
+| Formato | Flag | Extensión | Naturaleza | Caso de Uso Recomendado |
+| :--- | :--- | :--- | :--- | :--- |
+| **Markdown** | `-format=md` | `.md` | Texto plano | Consolas CI/CD, GitHub Step Summary, terminales. |
+| **JSON** | `-format=json` | `.json` | Texto estructurado | Ingesta de datos, APIs, scripts de integración. |
+| **CSV** | `-format=csv` | `.csv` | Texto tabular | Hojas de cálculo simples, herramientas de BI. |
+| **Word** | `-format=docx` | `.docx` | Binario formateado | Auditorías de entrega, informes ejecutivos para stakeholders. |
+| **Excel** | `-format=xlsx` | `.xlsx` | Binario estructurado | Análisis cuantitativo avanzado, matrices de cobertura complejas. |
+
