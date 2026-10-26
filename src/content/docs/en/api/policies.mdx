@@ -1,0 +1,169 @@
+---
+title: "Policies: registerPolicy"
+description: "Programmatic API reference for authoring and managing quality policies in Testform."
+---
+
+The policy module statically audits Gherkin files (`*.feature`) during `testform plan`, `testform validate`, and `testform apply` operations.
+
+---
+
+## 🚀 Function Signature
+
+```typescript
+import { registerPolicy, PolicyDefinition } from '@fromeroc9/testform';
+
+function registerPolicy(policyDefinition: PolicyDefinition): void;
+```
+
+---
+
+## 📋 Types & Interfaces
+
+### `PolicyDefinition`
+
+Defines the identifier, applicable scopes, and the audit callback:
+
+```typescript
+import { IScope, ParserScenario, PolicyRule } from '@fromeroc9/testform';
+
+export interface PolicyDefinition {
+  /** Unique policy identifier in kebab-case */
+  id: string;
+
+  /** Scopes where this rule applies */
+  scope: ('testcase' | 'testrun' | 'testplan')[];
+
+  /** Human-readable summary displayed in 'testform policy' */
+  description?: string;
+
+  /** Audit function evaluated against each scenario in scope */
+  action: (
+    scenarios: ParserScenario[],
+    rules: PolicyRule[],
+    scope: 'testcase' | 'testrun' | 'testplan'
+  ) => void;
+}
+```
+
+### `PolicyRule` (Diagnostic Item)
+
+The warning or error diagnostic added to the `rules` collection:
+
+```typescript
+export interface PolicyRule {
+  /** Rule or sub-rule identifier */
+  id: string;
+
+  /** Severity ('error' blocks execution; 'warning' logs an alert) */
+  type?: 'error' | 'warning';
+
+  /** Short diagnostic title */
+  title: string;
+
+  /** In-depth explanation of the violation and how to resolve it */
+  detail: string;
+
+  /** File path of the violating .feature */
+  uri: string;
+
+  /** Name of the violating scenario (optional) */
+  scenario?: string;
+
+  /** Exact line number in the Gherkin file */
+  line?: number;
+}
+```
+
+### `ParserScenario` (AST Node)
+
+Represents a parsed Gherkin scenario:
+
+| Property | Type | Description |
+| :--- | :--- | :--- |
+| `name` | `string` | Scenario header title (`Scenario: User login`). |
+| `tags` | `string[]` | Array of scenario tags (`['@tc-101', '@smoke']`). |
+| `uri` | `string` | Relative path to the feature file (`tests/auth.case.feature`). |
+| `location` | `number` | Line number where the scenario starts. |
+| `steps` | `ParserStep[]` | Array of steps (`keyword`, `text`). |
+| `feature` | `ParserFeature` | Parent `Feature:` block metadata. |
+
+---
+
+## 🛠️ Implementation Examples
+
+### 1. Mandatory Jira Linkage Policy
+
+Create `.testform/policies/jira-enforce.js`:
+
+```javascript
+// .testform/policies/jira-enforce.js
+module.exports = {
+  id: 'jira-ticket-enforcement',
+  scope: ['testcase'],
+  description: 'Requires every testcase scenario to have a Jira issue tag (@jira:PROJ-XXX)',
+  action: (scenarios, rules) => {
+    const JIRA_REGEX = /^@jira:[A-Z]+-\d+$/;
+
+    for (const scenario of scenarios) {
+      const hasJira = scenario.tags.some(tag => JIRA_REGEX.test(tag));
+      if (!hasJira) {
+        rules.push({
+          id: 'missing-jira-link',
+          type: 'error',
+          title: `Scenario "${scenario.name}" missing Jira ticket`,
+          detail: 'All testcases must link to a Jira ticket using format @jira:PROJ-123.',
+          uri: scenario.uri,
+          scenario: scenario.name,
+          line: scenario.location,
+        });
+      }
+    }
+  }
+};
+```
+
+### 2. Factory Function Export
+
+```javascript
+module.exports = ({ registerPolicy }) => {
+  registerPolicy({
+    id: 'max-steps-limit',
+    scope: ['testcase'],
+    description: 'Enforces a maximum threshold of 15 steps per scenario',
+    action: (scenarios, rules) => {
+      for (const scenario of scenarios) {
+        if (scenario.steps && scenario.steps.length > 15) {
+          rules.push({
+            id: 'scenario-too-long',
+            type: 'warning',
+            title: `Scenario "${scenario.name}" has ${scenario.steps.length} steps`,
+            detail: 'Consider decomposing large scenarios into modular reusable components.',
+            uri: scenario.uri,
+            line: scenario.location,
+          });
+        }
+      }
+    }
+  });
+};
+```
+
+---
+
+## ⚙️ Programmatic Control (`policy`)
+
+The `policy` singleton allows programmatic management at runtime:
+
+```typescript
+import { policy } from '@fromeroc9/testform';
+
+// Toggle in runtime
+policy.disable('identity-unique');
+policy.enable('required-gherkin');
+
+// Check status
+const isEnabled = policy.isEnabled('identity-unique'); // false
+
+// Retrieve all policies
+const allPolicies = policy.getAll();
+```

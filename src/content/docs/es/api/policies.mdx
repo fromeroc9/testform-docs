@@ -1,0 +1,171 @@
+---
+title: "Políticas: registerPolicy"
+description: "Referencia de la API programática para registrar y gestionar políticas de calidad en Testform."
+---
+
+El módulo de políticas permite auditar de forma estática los archivos Gherkin (`*.feature`) durante las operaciones de `testform plan`, `testform validate` y `testform apply`.
+
+---
+
+## 🚀 Firma de la Función
+
+```typescript
+import { registerPolicy, PolicyDefinition } from '@fromeroc9/testform';
+
+function registerPolicy(policyDefinition: PolicyDefinition): void;
+```
+
+---
+
+## 📋 Tipos e Interfaces
+
+### `PolicyDefinition`
+
+Define el identificador, los alcances (*scopes*) aplicables y la función de evaluación:
+
+```typescript
+import { IScope, ParserScenario, PolicyRule } from '@fromeroc9/testform';
+
+export interface PolicyDefinition {
+  /** Identificador único de la política en kebab-case */
+  id: string;
+
+  /** Ámbitos a los que aplica la regla */
+  scope: ('testcase' | 'testrun' | 'testplan')[];
+
+  /** Descripción legible mostrada en el CLI 'testform policy' */
+  description?: string;
+
+  /** Función callback ejecutada sobre cada escenario del scope */
+  action: (
+    scenarios: ParserScenario[],
+    rules: PolicyRule[],
+    scope: 'testcase' | 'testrun' | 'testplan'
+  ) => void;
+}
+```
+
+### `PolicyRule` (Diagnóstico)
+
+Estructura de error o advertencia que tu política agrega al arreglo `rules`:
+
+```typescript
+export interface PolicyRule {
+  /** Identificador de la regla o subregla */
+  id: string;
+
+  /** Nivel de severidad ('error' bloquea el plan; 'warning' solo alerta) */
+  type?: 'error' | 'warning';
+
+  /** Título conciso del diagnóstico */
+  title: string;
+
+  /** Explicación detallada de la violación y cómo resolverla */
+  detail: string;
+
+  /** Ruta del archivo .feature infractor */
+  uri: string;
+
+  /** Nombre del escenario infractor (opcional) */
+  scenario?: string;
+
+  /** Número de línea exacto en el archivo Gherkin */
+  line?: number;
+}
+```
+
+### `ParserScenario` (Nodo AST)
+
+Estructura que representa un escenario parseado:
+
+| Propiedad | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `name` | `string` | Título del escenario (`Scenario: Iniciar sesión`). |
+| `tags` | `string[]` | Lista de etiquetas presentes (`['@tc-101', '@smoke']`). |
+| `uri` | `string` | Ruta relativa al feature (`tests/auth.case.feature`). |
+| `location` | `number` | Línea donde inicia el escenario. |
+| `steps` | `ParserStep[]` | Lista de pasos (`keyword`, `text`). |
+| `feature` | `ParserFeature` | Metadatos del bloque `Feature:`. |
+
+---
+
+## 🛠️ Ejemplos de Implementación
+
+### 1. Política de Enlace a Jira
+
+Crea `.testform/policies/jira-enforce.js`:
+
+```javascript
+// .testform/policies/jira-enforce.js
+module.exports = {
+  id: 'jira-ticket-enforcement',
+  scope: ['testcase'],
+  description: 'Requiere que cada escenario tenga un tag de Jira (@jira:PROJ-XXX)',
+  action: (scenarios, rules) => {
+    const JIRA_REGEX = /^@jira:[A-Z]+-\d+$/;
+
+    for (const scenario of scenarios) {
+      const hasJira = scenario.tags.some(tag => JIRA_REGEX.test(tag));
+      if (!hasJira) {
+        rules.push({
+          id: 'missing-jira-link',
+          type: 'error',
+          title: `Escenario "${scenario.name}" sin ticket de Jira`,
+          detail: 'Todo testcase debe vincularse a una historia de Jira con el formato @jira:PROJ-123.',
+          uri: scenario.uri,
+          scenario: scenario.name,
+          line: scenario.location,
+        });
+      }
+    }
+  }
+};
+```
+
+### 2. Exportación con Función Fábrica
+
+Si prefieres usar la función fábrica con TypeScript o CommonJS:
+
+```javascript
+module.exports = ({ registerPolicy }) => {
+  registerPolicy({
+    id: 'max-steps-limit',
+    scope: ['testcase'],
+    description: 'Evita escenarios excesivamente largos (máx 15 pasos)',
+    action: (scenarios, rules) => {
+      for (const scenario of scenarios) {
+        if (scenario.steps && scenario.steps.length > 15) {
+          rules.push({
+            id: 'scenario-too-long',
+            type: 'warning',
+            title: `Escenario "${scenario.name}" tiene ${scenario.steps.length} pasos`,
+            detail: 'Se recomienda modularizar escenarios de más de 15 pasos para mantener la legibilidad.',
+            uri: scenario.uri,
+            line: scenario.location,
+          });
+        }
+      }
+    }
+  });
+};
+```
+
+---
+
+## ⚙️ Control Programático (`policy`)
+
+La instancia singleton `policy` permite manipular el registro en tiempo de ejecución:
+
+```typescript
+import { policy } from '@fromeroc9/testform';
+
+// Habilitar / Deshabilitar en runtime
+policy.disable('identity-unique');
+policy.enable('required-gherkin');
+
+// Consultar estado
+const isEnabled = policy.isEnabled('identity-unique'); // false
+
+// Obtener todas las políticas registradas
+const allPolicies = policy.getAll();
+```

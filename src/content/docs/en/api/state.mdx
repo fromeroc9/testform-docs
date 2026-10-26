@@ -1,0 +1,77 @@
+---
+title: "State: State Class"
+description: "Programmatic API reference for managing, inspecting, and locking Testform state files."
+---
+
+The `State` class serves as the engine powering Testform's state machine. It handles deserialization, integrity checks, distributed locking, and persistent writes for `testform.state`.
+
+---
+
+## 🚀 Signature & Constructor
+
+```typescript
+import { State } from '@fromeroc9/testform';
+
+const state = new State(
+  dir: string,
+  customStatePath?: string,
+  customBackupPath?: string,
+  disableBackend?: boolean,
+  backendConfigRaw?: string | string[],
+  explicitBackendConfig?: any
+);
+```
+
+---
+
+## 📋 Primary Methods
+
+| Method | Return | Description |
+| :--- | :--- | :--- |
+| `hasState()` | `Promise<boolean>` | Checks if a state file exists in the configured backend. |
+| `init()` | `Promise<void>` | Loads and validates state schema from the backend. |
+| `acquireLock(enabled, timeout)` | `Promise<void>` | Acquires the distributed lock before state mutations. |
+| `releaseLock()` | `Promise<void>` | Releases the concurrency lock upon operation completion. |
+| `getState()` | `Readonly<IState>` | Returns an immutable snapshot of in-memory state. |
+| `getResources(type?)` | `StateResource[]` | Returns all tracked resources, optionally filtered by type. |
+| `getResource(identity, type?)` | `StateResource \| undefined` | Looks up a resource by its address identity (`@tc-101`). |
+| `getOutputs()` | `Record<string, StateOutput>` | Returns exported output attributes dictionary. |
+| `save()` | `Promise<void>` | Increments serial, purges redundant attributes, and saves state. |
+| `replaceState(newState)` | `void` | Overwrites in-memory state (used by state migration tools). |
+| `clean()` | `{ beforeBytes, afterBytes, resourcesCleaned }` | Optimizes and compresses redundant attributes. |
+
+---
+
+## 🛠️ Programmatic Usage Example
+
+```typescript
+import { State } from '@fromeroc9/testform';
+
+async function auditRepositoryState(projectDir: string) {
+  const stateManager = new State(projectDir);
+
+  // 1. Verify and initialize state
+  if (!await stateManager.hasState()) {
+    console.log('No state file found.');
+    return;
+  }
+
+  await stateManager.init();
+
+  // 2. Inspect state metadata
+  const state = stateManager.getState();
+  console.log(`Lineage: ${state.lineage}`);
+  console.log(`Current Serial: ${state.serial}`);
+  console.log(`Last Sync: ${state.lastSync}`);
+
+  // 3. Query tracked testcases
+  const testcases = stateManager.getResources('testcase');
+  console.log(`Managed testcases count: ${testcases.length}`);
+
+  for (const tc of testcases) {
+    console.log(` - [${tc.identity}] Issue #${tc.attributes.issueNumber}: ${tc.attributes.title}`);
+  }
+}
+
+auditRepositoryState(process.cwd());
+```

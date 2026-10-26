@@ -1,0 +1,77 @@
+---
+title: "Estado: Clase State"
+description: "Referencia de la API programática para manipular, inspeccionar y bloquear el archivo de estado de Testform."
+---
+
+La clase `State` es el núcleo de la máquina de estados de Testform. Gestiona la deserialización, validación criptográfica, control de concurrencia y persistencia de `testform.state`.
+
+---
+
+## 🚀 Firma y Constructor
+
+```typescript
+import { State } from '@fromeroc9/testform';
+
+const state = new State(
+  dir: string,
+  customStatePath?: string,
+  customBackupPath?: string,
+  disableBackend?: boolean,
+  backendConfigRaw?: string | string[],
+  explicitBackendConfig?: any
+);
+```
+
+---
+
+## 📋 Métodos Principales
+
+| Método | Retorno | Descripción |
+| :--- | :--- | :--- |
+| `hasState()` | `Promise<boolean>` | Verifica si el archivo de estado existe en el backend actual. |
+| `init()` | `Promise<void>` | Carga y valida el esquema del estado desde el backend. |
+| `acquireLock(enabled, timeout)` | `Promise<void>` | Adquiere el bloqueo distribuido antes de una mutación. |
+| `releaseLock()` | `Promise<void>` | Libera el bloqueo al finalizar la transacción. |
+| `getState()` | `Readonly<IState>` | Devuelve una copia de sólo lectura del estado en memoria. |
+| `getResources(type?)` | `StateResource[]` | Lista los recursos registrados, opcionalmente filtrados por tipo. |
+| `getResource(identity, type?)` | `StateResource \| undefined` | Busca un recurso específico por su identidad (`@tc-101`). |
+| `getOutputs()` | `Record<string, StateOutput>` | Retorna el diccionario de salidas exportadas. |
+| `save()` | `Promise<void>` | Incrementa el serial, limpia campos redundantes y persiste el estado. |
+| `replaceState(newState)` | `void` | Sustituye el estado completo (usado en migraciones). |
+| `clean()` | `{ beforeBytes, afterBytes, resourcesCleaned }` | Optimiza y comprime atributos innecesarios. |
+
+---
+
+## 🛠️ Ejemplo de Uso Programático
+
+```typescript
+import { State } from '@fromeroc9/testform';
+
+async function auditRepositoryState(projectDir: string) {
+  const stateManager = new State(projectDir);
+
+  // 1. Verificar existencia y cargar estado
+  if (!await stateManager.hasState()) {
+    console.log('No se encontró archivo de estado.');
+    return;
+  }
+
+  await stateManager.init();
+
+  // 2. Inspeccionar metadatos globales
+  const state = stateManager.getState();
+  console.log(`Linaje: ${state.lineage}`);
+  console.log(`Serial actual: ${state.serial}`);
+  console.log(`Última sincronización: ${state.lastSync}`);
+
+  // 3. Consultar casos de prueba reconciliados
+  const testcases = stateManager.getResources('testcase');
+  console.log(`Casos de prueba gestionados: ${testcases.length}`);
+
+  for (const tc of testcases) {
+    console.log(` - [${tc.identity}] Issue #${tc.attributes.issueNumber}: ${tc.attributes.title}`);
+  }
+}
+
+auditRepositoryState(process.cwd());
+```

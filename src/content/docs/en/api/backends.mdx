@@ -1,0 +1,186 @@
+---
+title: "Backends: IBackend Interface"
+description: "Programmatic API reference for implementing custom distributed state backends in Testform."
+---
+
+Testform utilizes a unified contract called `IBackend` to persist state files (`testform.state`) and coordinate distributed state locking across parallel CI/CD agents and runners.
+
+You can author custom state storage connectors (Redis, DynamoDB, MongoDB, SQLite, or internal microservices) by implementing this contract.
+
+---
+
+## 📋 The `IBackend` Interface Contract
+
+Every custom backend class must fulfill the following TypeScript interface:
+
+```typescript
+import { IState } from '@fromeroc9/testform';
+
+export interface IBackend {
+  /** Reads and parses the current state for the active workspace */
+  read(): Promise<IState>;
+
+  /** Verifies if a state record exists for the active workspace */
+  exists(): Promise<boolean>;
+
+  /** Writes updated state with incremented serial version */
+  write(state: IState): Promise<void>;
+
+  /** Acquires distributed concurrency lock */
+  lock(timeout: string): Promise<boolean>;
+
+  /** Releases concurrency lock */
+  unlock(): Promise<boolean>;
+
+  /** Breaks an orphaned or stuck lock using its lock ID */
+  forceUnlock(lockId: string): Promise<{
+    success: boolean;
+    error?: string;
+    currentLockId?: string;
+  }>;
+
+  /** Checks whether the state is currently locked */
+  isLocked(): Promise<boolean>;
+
+  /** Lists all available stored workspaces */
+  listWorkspaces(): Promise<string[]>;
+
+  /** Deletes state associated with a workspace */
+  deleteWorkspace(name: string): Promise<boolean>;
+}
+```
+
+---
+
+## 🏛️ State Object Schema (`IState`)
+
+The state object returned by `read()` and accepted by `write()` adheres to this schema:
+
+```typescript
+export interface IState {
+  /** Testform state schema version (e.g., '1.0.0') */
+  version: string;
+
+  /** Monotonically increasing counter preventing race conditions */
+  serial: number;
+
+  /** Immutable UUID uniquely identifying the repository's state lineage */
+  lineage: string;
+
+  /** ISO 8601 timestamp of the last successful synchronization */
+  lastSync: string;
+
+  /** Primary provider identifier (e.g., 'github', 'azure', 'local') */
+  provider?: string;
+
+  /** Reconciled test resources */
+  resources: StateResource[];
+
+  /** Exported outputs available to upstream environments */
+  outputs?: Record<string, StateOutput>;
+}
+```
+
+---
+
+## 🛠️ Authoring a Custom Backend Class
+
+Create a JavaScript or TypeScript file (e.g. `./backends/redis-backend.js`) exporting your backend class:
+
+```javascript
+// ./backends/redis-backend.js
+const { createClient } = require('redis');
+
+class RedisBackend {
+  /**
+   * @param {Record<string, any>} config Free-form options defined in main.yml
+   * @param {string} workspace Active workspace name ('default', 'qa-1', etc.)
+   * @param {string} dir Workspace root directory path
+   */
+  constructor(config, workspace, dir) {
+    this.workspace = workspace;
+    this.key = `testform:state:${workspace}`;
+    this.lockKey = `testform:lock:${workspace}`;
+    this.client = createClient({ url: config.url || 'redis://localhost:6379' });
+  }
+
+  async connect() {
+    if (!this.client.isOpen) await this.client.connect();
+  }
+
+  async exists() {
+    await this.connect();
+    return (await this.client.exists(this.key)) === 1;
+  }
+
+  async read() {
+    await this.connect();
+    const raw = await this.client.get(this.key);
+    if (!raw) {
+      throw new Error(`State for workspace "${this.workspace}" not found.`);
+    }
+    return JSON.parse(raw);
+  }
+
+  async write(state) {
+    await this.connect();
+    await this.client.set(this.key, JSON.stringify(state, null, 2));
+  }
+
+  async lock(timeout) {
+    await this.connect();
+    const lockId = Math.random().toString(36).substring(2);
+    // SET NX PX atomic distributed locking
+    const res = await this.client.set(this.lockKey, lockId, { NX: true, EX: 300 });
+    return res === 'OK';
+  }
+
+  async unlock() {
+    await this.connect();
+    await this.client.del(this.lockKey);
+    return true;
+  }
+
+  async forceUnlock(lockId) {
+    await this.connect();
+    await this.client.del(this.lockKey);
+    return { success: true };
+  }
+
+  async isLocked() {
+    await this.connect();
+    return (await this.client.exists(this.lockKey)) === 1;
+  }
+
+  async listWorkspaces() {
+    await this.connect();
+    const keys = await this.client.keys('testform:state:*');
+    return keys.map(k => k.replace('testform:state:', ''));
+  }
+
+  async deleteWorkspace(name) {
+    await this.connect();
+    await this.client.del(`testform:state:${name}`);
+    await this.client.del(`testform:lock:${name}`);
+    return true;
+  }
+}
+
+module.exports = RedisBackend;
+```
+
+---
+
+## ⚙️ Configuration in `main.yml`
+
+Reference your backend module via `backend.custom:` using dictionary mode:
+
+```yaml
+# main.yml
+backend:
+  custom:
+    source: "./backends/redis-backend.js"
+    url: "redis://cache.internal.company.com:6379"
+```
+
+Running `testform init` initializes your custom backend directly without requiring modifications or rebuilds of Testform core.

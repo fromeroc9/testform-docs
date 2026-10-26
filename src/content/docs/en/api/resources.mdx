@@ -1,0 +1,123 @@
+---
+title: "Resources: registerResource"
+description: "Programmatic API reference for defining custom test resource mapping templates in Testform."
+---
+
+The resources module defines how Gherkin scenarios (`Scenario:`) are mapped into structured attributes recognized by test management systems (Jira, Zephyr, Azure DevOps, TestRail, or proprietary APIs).
+
+---
+
+## 🚀 Function Signature
+
+```typescript
+import { registerResource, ResourceTemplate } from '@fromeroc9/testform';
+
+function registerResource(template: ResourceTemplate): void;
+```
+
+---
+
+## 📋 Types & Interfaces
+
+### `ResourceTemplate`
+
+Defines field mappings and execution comment generators for a resource type:
+
+```typescript
+export interface ResourceTemplate {
+  /** Unique resource type name (e.g., 'jira_testcase', 'azure_testrun') */
+  type: string;
+
+  /** List of fields extracted from the Gherkin scenario */
+  fields: ResourceField[];
+
+  /** Optional generator producing execution evidence and test comments */
+  comments?: (
+    scenario: any,
+    context?: any
+  ) => Array<{
+    identity: string;
+    status: string;
+    body: string;
+    title: string;
+  }>;
+}
+```
+
+### `ResourceField`
+
+Describes an individual attribute mapping:
+
+```typescript
+export interface ResourceField {
+  /** Field name expected by the remote provider or target schema */
+  name: string;
+
+  /** Static value or extractor function receiving the scenario and context */
+  value: ((scenario: any, context?: any) => string | string[]) | string | string[];
+
+  /** True if the value is generated remotely during apply (e.g., remote ID) */
+  knownAfterApply?: boolean;
+}
+```
+
+---
+
+## 🛠️ Implementation Example
+
+Create `.testform/resources/azure-devops.js`:
+
+```javascript
+// .testform/resources/azure-devops.js
+module.exports = {
+  type: 'azure_testcase',
+  fields: [
+    {
+      name: 'title',
+      value: (scenario) => scenario.name,
+    },
+    {
+      name: 'description',
+      value: (scenario) => scenario.description || 'No description provided',
+    },
+    {
+      name: 'priority',
+      value: (scenario) => scenario.custom?.fields?.priority || '2',
+    },
+    {
+      name: 'steps_count',
+      value: (scenario) => String(scenario.steps?.length || 0),
+    },
+    {
+      name: 'tags',
+      value: (scenario) => scenario.tags.filter(t => !t.startsWith('@tc-')),
+    },
+    {
+      name: 'remote_work_item_id',
+      value: () => '(known after apply)',
+      knownAfterApply: true,
+    }
+  ],
+  comments: (scenario, context) => [
+    {
+      identity: scenario.custom?.identity || scenario.name,
+      status: scenario.custom?.fields?.status || 'passed',
+      title: `CI/CD Run #${context?.buildId || 'local'}`,
+      body: `Automated test run dispatched on environment: ${context?.environment || 'staging'}`
+    }
+  ]
+};
+```
+
+---
+
+## ⚙️ Runtime Registration (`resource`)
+
+The `resource` singleton enables runtime inspection and template registration:
+
+```typescript
+import { resource } from '@fromeroc9/testform';
+
+// Register programmatically in Node.js scripts
+resource.registry(myCustomTemplate, 'user');
+```

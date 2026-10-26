@@ -1,30 +1,76 @@
 ---
-title: "Referencia de API y Proveedores"
+title: "Referencia del SDK y API Programática"
+description: "Visión general de la API de JavaScript/TypeScript de Testform, contratos de arquitectura y extensiones."
 ---
 
-La especificación de **API & Providers** detalla los contratos de comunicación entre el motor central de Testform, los adaptadores de sincronización (*Providers*) y los motores de almacenamiento distribuido (*Backends*).
+El paquete `@fromeroc9/testform` expone una **API programática de TypeScript / JavaScript** diseñada para desarrolladores, ingenieros de plataforma QA y creadores de extensiones.
 
----
-
-## 🔌 Arquitectura de Proveedores
-
-Testform se comunica con plataformas externas a través de proveedores modulares desacoplados:
-
-- **GitHub Provider:** Sincronización bidireccional mediante GraphQL v4 y REST v3 con issues, hitos (*milestones*) y GitHub Projects V2.
-- **GitLab Provider:** Mapeo de casos y estados hacia GitLab Issues e Issue Boards.
-- **Local Provider:** Proveedor de simulación 100% offline para pruebas deterministas sin tokens ni conexión de red.
-- **Custom Provider:** Soporte para conectar cualquier gestor de calidad interno vía HTTP REST o CLI bridge.
+Permite registrar políticas de calidad personalizadas, plantillas de recursos de pruebas, backends de almacenamiento distribuido, adaptadores de proveedores y evaluar expresiones de configuración de forma programática.
 
 ---
 
-## 🪣 Arquitectura de Backends de Estado
+## 📦 Instalación del SDK
 
-El estado de los recursos se conserva en un ledger inmutable con validación criptográfica SHA-256:
+Para interactuar con la API de Testform en tus scripts de automatización o paquetes de plugins:
 
-- **GitHub Bucket:** Almacenamiento en rama Git nativa (`testform-state`) con optimistic locking.
-- **AWS S3 + DynamoDB:** Almacenamiento en buckets S3 con control de concurrencia mediante DynamoDB table lock.
-- **Azure Blob Storage:** Almacenamiento en contenedores Blob con leases distribuidos.
-- **Google Cloud Storage (GCS):** Almacenamiento de alta disponibilidad en buckets de GCP.
-- **Local:** Ledger en disco (`testform.state`).
+```bash
+npm install @fromeroc9/testform --save-dev
+```
 
+O si usas Yarn / pnpm:
 
+```bash
+pnpm add -D @fromeroc9/testform
+```
+
+---
+
+## 🔌 Exportaciones Principales
+
+```typescript
+import {
+  // Políticas y Reglas de Calidad
+  registerPolicy,
+  policy,
+
+  // Plantillas de Recursos (Gherkin -> QA Management)
+  registerResource,
+  resource,
+
+  // Motor de Expresiones y Variables
+  evaluateExpression,
+  interpolateExpressions,
+  VariableParser,
+
+  // Configuración y Estado
+  Config,
+  State,
+} from '@fromeroc9/testform';
+```
+
+---
+
+## 🏛️ Módulos de la API
+
+La API de Testform está dividida en los siguientes bloques funcionales:
+
+### 1. [Políticas (`registerPolicy`)](/es/api/policies)
+Extiende el analizador estático para validar convenciones de nomenclatura, tags obligatorios, estructura de escenarios Gherkin o integración con tickets corporativos antes de generar planes.
+
+### 2. [Recursos (`registerResource`)](/es/api/resources)
+Registra mapeadores personalizados para traducir escenarios Gherkin a entidades externas (Jira, Zephyr, Azure DevOps, TestRail o servicios propietarios).
+
+### 3. [Backends (`IBackend`)](/es/api/backends)
+Implementa conectores de almacenamiento de estado personalizados (`backend.custom`) para guardar el archivo `testform.state` y controlar bloqueos concurrentes en cualquier sistema distribuido (Vault, Redis, Firestore, etc.).
+
+### 4. [Proveedores (`IProvider`)](/es/api/providers)
+Implementa conectores para sincronizar el ciclo de vida de casos de prueba, corridas y planes contra APIs de gestión de proyectos.
+
+### 5. [Evaluador de Expresiones (`evaluateExpression`)](/es/api/expressions)
+Evalúa expresiones tipo HCL `${...}`, llamadas a funciones estándar y lógica condicional programáticamente en Node.js.
+
+### 6. [Gestor de Estado (`State`)](/es/api/state)
+Lee, inspecciona, bloquea y actualiza el archivo `testform.state` con control de linaje (*lineage*) y números de serie.
+
+### 7. [Funciones Integradas](/es/functions)
+Catálogo completo de funciones matemáticas, cadenas, colecciones y utilidades del sistema (`uuid()`, `trim()`, `jsonencode()`, etc.).

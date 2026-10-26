@@ -1,29 +1,76 @@
 ---
-title: "API & Providers Reference"
+title: "Programmatic SDK & API Reference"
+description: "Overview of Testform's JavaScript/TypeScript API, architectural contracts, and extensibility points."
 ---
 
-The **API & Providers** specification details the communication contracts between the Testform core reconciliation engine, synchronization adapters (*Providers*), and distributed storage systems (*Backends*).
+The `@fromeroc9/testform` package exposes a **programmatic TypeScript / JavaScript API** designed for developers, QA platform engineers, and plugin authors.
 
----
-
-## 🔌 Provider Architecture
-
-Testform communicates with external platforms via modular, decoupled providers:
-
-- **GitHub Provider:** Two-way sync using GraphQL v4 and REST v3 with issues, milestones, and GitHub Projects V2.
-- **GitLab Provider:** Maps test cases, runs, and execution status to GitLab Issues and Issue Boards.
-- **Local Provider:** 100% offline simulation provider for deterministic testing without credentials or network access.
-- **Custom Provider:** Interface for integrating custom internal test management platforms via HTTP REST or CLI bridge.
+It allows registering custom quality policies, test resource templates, distributed storage backends, external platform providers, and evaluating configuration expressions directly from code.
 
 ---
 
-## 🪣 State Backend Architecture
+## 📦 SDK Installation
 
-Resource state is stored in an immutable ledger with SHA-256 cryptographic verification:
+To interact with the Testform API in your automation scripts or custom plugin packages:
 
-- **GitHub Bucket:** Stored in a native Git branch (`testform-state`) with optimistic locking.
-- **AWS S3 + DynamoDB:** S3 bucket storage with distributed concurrency control via DynamoDB table lock.
-- **Azure Blob Storage:** Blob container storage with distributed leases.
-- **Google Cloud Storage (GCS):** High-availability bucket storage on GCP.
-- **Local:** Local disk ledger (`testform.state`).
+```bash
+npm install @fromeroc9/testform --save-dev
+```
 
+Or using Yarn / pnpm:
+
+```bash
+pnpm add -D @fromeroc9/testform
+```
+
+---
+
+## 🔌 Primary Exports
+
+```typescript
+import {
+  // Quality Policies & Rules
+  registerPolicy,
+  policy,
+
+  // Resource Templates (Gherkin -> QA Management)
+  registerResource,
+  resource,
+
+  // Expression Engine & Variables
+  evaluateExpression,
+  interpolateExpressions,
+  VariableParser,
+
+  // Configuration & State Management
+  Config,
+  State,
+} from '@fromeroc9/testform';
+```
+
+---
+
+## 🏛️ API Architecture Modules
+
+The Testform API is organized into the following functional areas:
+
+### 1. [Policies (`registerPolicy`)](/en/api/policies)
+Extends the static analyzer to enforce naming conventions, mandatory tags, required Gherkin steps, or enterprise ticket linkages before computing execution plans.
+
+### 2. [Resources (`registerResource`)](/en/api/resources)
+Registers custom mapping templates translating Gherkin scenarios into external test entities (Jira, Zephyr, Azure DevOps, TestRail, or proprietary QA backends).
+
+### 3. [Backends (`IBackend`)](/en/api/backends)
+Implements custom distributed state storage backends (`backend.custom`) to persist `testform.state` and manage distributed concurrency locks on any infrastructure (Vault, Redis, Firestore, etc.).
+
+### 4. [Providers (`IProvider`)](/en/api/providers)
+Implements lifecycle connectors synchronizing testcases, runs, and plans against external project management APIs.
+
+### 5. [Expression Evaluator (`evaluateExpression`)](/en/api/expressions)
+Evaluates HCL-style `${...}` expressions, built-in function calls, and conditional logic programmatically in Node.js.
+
+### 6. [State Management (`State`)](/en/api/state)
+Inspects, loads, locks, and updates `testform.state` files with lineage tracking and serial increments.
+
+### 7. [Built-in Functions](/en/functions)
+Comprehensive catalog of expression functions for strings, collections, and system utilities (`uuid()`, `trim()`, `jsonencode()`, etc.).

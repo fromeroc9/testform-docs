@@ -1,0 +1,100 @@
+---
+title: "Expresiones: evaluateExpression"
+description: "Referencia de la API programática para evaluar e interpolar expresiones HCL de Testform."
+---
+
+El motor de expresiones de Testform permite interpretar dinámicamente sintaxis de configuración `${...}`, operadores lógicos, ternarios y llamadas a funciones estándar en tiempo de ejecución.
+
+---
+
+## 🚀 Funciones Exportadas
+
+```typescript
+import { evaluateExpression, interpolateExpressions } from '@fromeroc9/testform';
+
+/** Evalúa una expresión individual y devuelve el resultado tipado */
+function evaluateExpression(expr: string, context?: EvaluationContext): any;
+
+/** Reemplaza todas las interpolaciones ${...} dentro de una cadena de texto */
+function interpolateExpressions(template: string, context?: EvaluationContext): string;
+```
+
+---
+
+## 📋 Contexto de Evaluación (`EvaluationContext`)
+
+El objeto `context` suministra las tablas de símbolos accesibles durante la evaluación:
+
+```typescript
+export interface EvaluationContext {
+  /** Variables declaradas en vars.yml o vía CLI (var.<name>) */
+  vars?: Record<string, any>;
+
+  /** Valores locales definidos en local.yml (local.<name>) */
+  locals?: Record<string, any>;
+
+  /** Datos estáticos o dinámicos cargados (data.<source>.<key>) */
+  data?: Record<string, any>;
+
+  /** Salidas exportadas por módulos hijos (module.<name>.<output>) */
+  modules?: Record<string, Record<string, any>>;
+
+  /** Valores del entorno de ejecución activo */
+  env?: Record<string, string>;
+}
+```
+
+---
+
+## 🛠️ Ejemplos de Uso Programático
+
+### 1. `evaluateExpression` (Evaluación Tipada)
+
+Permite calcular aserciones, transformaciones o valores lógicos:
+
+```typescript
+import { evaluateExpression } from '@fromeroc9/testform';
+
+const context = {
+  vars: {
+    environment: 'STAGING',
+    port: 8080,
+    features: ['auth', 'billing']
+  }
+};
+
+// Evaluación de funciones y conversiones
+const envLower = evaluateExpression('lower(var.environment)', context);
+console.log(envLower); // 'staging'
+
+// Operadores de comparación y longitud
+const hasMultipleFeatures = evaluateExpression('length(var.features) > 1', context);
+console.log(hasMultipleFeatures); // true
+
+// Operador ternario
+const host = evaluateExpression(
+  'var.environment == "PROD" ? "api.corp.com" : "staging.api.corp.com"',
+  context
+);
+console.log(host); // 'staging.api.corp.com'
+```
+
+### 2. `interpolateExpressions` (Plantillas de Texto)
+
+Interpolación de múltiples tokens en URLs, encabezados o payloads:
+
+```typescript
+import { interpolateExpressions } from '@fromeroc9/testform';
+
+const template = 'https://${lower(var.environment)}.service.internal:${var.port}/health';
+
+const resolvedUrl = interpolateExpressions(template, {
+  vars: {
+    environment: 'QA-WEST',
+    port: 9000
+  }
+});
+
+console.log(resolvedUrl);
+// Resultado: "https://qa-west.service.internal:9000/health"
+```

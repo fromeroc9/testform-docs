@@ -116,6 +116,18 @@ export default defineConfig({
           items: [
             { slug: 'api' },
             {
+              label: 'Módulos del SDK',
+              translations: { en: 'SDK Modules' },
+              items: [
+                { slug: 'api/policies', label: 'Políticas (registerPolicy)', translations: { en: 'Policies (registerPolicy)' } },
+                { slug: 'api/resources', label: 'Recursos (registerResource)', translations: { en: 'Resources (registerResource)' } },
+                { slug: 'api/backends', label: 'Backends (IBackend)', translations: { en: 'Backends (IBackend)' } },
+                { slug: 'api/providers', label: 'Proveedores (IProvider)', translations: { en: 'Providers (IProvider)' } },
+                { slug: 'api/expressions', label: 'Expresiones (Evaluator)', translations: { en: 'Expressions (Evaluator)' } },
+                { slug: 'api/state', label: 'Gestión de Estado (State)', translations: { en: 'State Management (State)' } },
+              ],
+            },
+            {
               label: 'Funciones Integradas',
               translations: { en: 'Built-in Functions' },
               items: [{ autogenerate: { directory: 'functions' } }],

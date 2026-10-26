@@ -1,0 +1,215 @@
+---
+title: "Proveedores: Interfaz IProvider"
+description: "Referencia de la API programática para desarrollar adaptadores de integración de proveedores en Testform."
+---
+
+Los proveedores (*Providers*) en Testform son adaptadores que traducen las intenciones de sincronización de pruebas hacia plataformas remotas (GitHub, GitLab, Jira, TestRail o APIs internas).
+
+Cualquier proveedor personalizado debe satisfacer el contrato de interfaz `IProvider`.
+
+---
+
+## 📋 Contrato de la Interfaz `IProvider`
+
+```typescript
+export interface IProvider {
+  /** Crea un elemento o caso de prueba remoto */
+  createIssue(payload: IProviderIssuePayload): Promise<IProviderIssueResult>;
+
+  /** Actualiza campos o títulos de un elemento existente */
+  updateIssue(
+    issueId: number | string,
+    payload: Partial<IProviderIssuePayload>
+  ): Promise<IProviderIssueResult>;
+
+  /** Cierra o archiva un elemento remoto */
+  closeIssue(issueId: number | string): Promise<void>;
+
+  /** Obtiene los datos remotos de un elemento por su ID o número */
+  getIssue(issueId: number | string): Promise<IProviderIssueResult | null>;
+
+  /** Lista elementos remotos filtrados por etiqueta */
+  listIssuesByLabel(label: string): Promise<IProviderIssueResult[]>;
+
+  /** Resuelve el ID o clave de un hito o ciclo por su título */
+  getMilestoneByTitle(title: string): Promise<number | string | undefined>;
+
+  /** Publica un comentario o traza de ejecución sobre el elemento */
+  createIssueComment(
+    issueId: number | string,
+    body: string
+  ): Promise<{ id: number | string }>;
+
+  /** Actualiza un comentario existente */
+  updateIssueComment(commentId: number | string, body: string): Promise<void>;
+
+  /** Lista el historial de comentarios y evidencias de un elemento */
+  listIssueComments(
+    issueId: number | string
+  ): Promise<{ id: number | string; body: string }[]>;
+
+  /** Asocia el elemento a un tablero o proyecto corporativo (opcional) */
+  addToProject?(issueId: string | number): Promise<string | undefined>;
+
+  /** Modifica campos personalizados de un ítem de proyecto (opcional) */
+  updateProjectItemFields?(
+    itemId: string,
+    customFields: Record<string, string>
+  ): Promise<void>;
+
+  /** Consulta campos personalizados de un ítem de proyecto (opcional) */
+  getProjectItemFields?(
+    issueId: string | number
+  ): Promise<Record<string, string>>;
+}
+```
+
+---
+
+## 📦 Payloads y Resultados
+
+```typescript
+export interface IProviderIssuePayload {
+  title: string;
+  body: string;
+  labels: string[];
+  assignees?: string[];
+  milestone?: number | string;
+  state?: string;
+}
+
+export interface IProviderIssueResult {
+  id: number | string;
+  number: number;
+  title: string;
+  body?: string;
+  state: string;
+  node_id?: string;
+  labels?: string[];
+  assignees?: string[];
+  milestone?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+```
+
+---
+
+## 🛠️ Creación de un Proveedor Personalizado
+
+Crea `./providers/jira-provider.js`:
+
+```javascript
+// ./providers/jira-provider.js
+class JiraProvider {
+  /**
+   * @param {Record<string, any>} options Opciones configuradas en main.yml
+   */
+  constructor(options) {
+    this.baseUrl = options.host || 'https://mycompany.atlassian.net';
+    this.projectKey = options.project_key || 'QA';
+    this.apiToken = process.env[options.token_env || 'JIRA_API_TOKEN'];
+  }
+
+  async createIssue({ title, body, labels }) {
+    // Llamada HTTP POST a la API REST de Jira
+    const res = await fetch(`${this.baseUrl}/rest/api/3/issue`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        fields: {
+          project: { key: this.projectKey },
+          summary: title,
+          description: body,
+          labels,
+          issuetype: { name: 'Test' }
+        }
+      })
+    });
+    const data = await res.json();
+    return {
+      id: data.id,
+      number: parseInt(data.key.split('-')[1], 10),
+      title,
+      state: 'open',
+      labels
+    };
+  }
+
+  async getIssue(issueId) {
+    const res = await fetch(`${this.baseUrl}/rest/api/3/issue/${issueId}`, {
+      headers: { 'Authorization': `Bearer ${this.apiToken}` }
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return {
+      id: data.id,
+      number: parseInt(data.key.split('-')[1], 10),
+      title: data.fields.summary,
+      body: data.fields.description,
+      state: data.fields.status?.name || 'open',
+      labels: data.fields.labels || []
+    };
+  }
+
+  async updateIssue(issueId, payload) {
+    // Lógica de actualización
+    return this.getIssue(issueId);
+  }
+
+  async closeIssue(issueId) {
+    // Transición de estado a Done/Closed
+  }
+
+  async listIssuesByLabel(label) {
+    // JQL query: project = QA AND labels = ...
+    return [];
+  }
+
+  async getMilestoneByTitle(title) {
+    return undefined;
+  }
+
+  async createIssueComment(issueId, body) {
+    const res = await fetch(`${this.baseUrl}/rest/api/3/issue/${issueId}/comment`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ body })
+    });
+    const data = await res.json();
+    return { id: data.id };
+  }
+
+  async updateIssueComment(commentId, body) {}
+
+  async listIssueComments(issueId) {
+    return [];
+  }
+}
+
+module.exports = JiraProvider;
+```
+
+---
+
+## ⚙️ Registro en `main.yml`
+
+Asocia el conector en tu archivo `main.yml` mediante el bloque `provider:`:
+
+```yaml
+# main.yml
+provider:
+  custom:
+    source: "./providers/jira-provider.js"
+    host: "https://jira.company.com"
+    project_key: "PAYMENTS"
+    token_env: "JIRA_TOKEN"
+```
+
+Al ejecutar `testform plan` y `testform apply`, Testform despachará las operaciones de sincronización a través de tu clase.

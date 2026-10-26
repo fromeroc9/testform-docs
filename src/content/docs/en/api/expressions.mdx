@@ -1,0 +1,98 @@
+---
+title: "Expressions: evaluateExpression"
+description: "Programmatic API reference for evaluating and interpolating HCL-style expressions in Testform."
+---
+
+Testform's expression engine parses and evaluates `${...}` configuration expressions, logical operators, ternary conditionals, and built-in function invocations at runtime.
+
+---
+
+## 🚀 Exported Functions
+
+```typescript
+import { evaluateExpression, interpolateExpressions } from '@fromeroc9/testform';
+
+/** Evaluates an expression string and returns the typed result */
+function evaluateExpression(expr: string, context?: EvaluationContext): any;
+
+/** Interpolates all ${...} placeholder expressions inside a template string */
+function interpolateExpressions(template: string, context?: EvaluationContext): string;
+```
+
+---
+
+## 📋 Evaluation Context (`EvaluationContext`)
+
+The `context` object supplies symbol lookup scopes during expression evaluation:
+
+```typescript
+export interface EvaluationContext {
+  /** Variables defined in vars.yml or via CLI flags (var.<name>) */
+  vars?: Record<string, any>;
+
+  /** Local variables defined in local.yml (local.<name>) */
+  locals?: Record<string, any>;
+
+  /** Static or dynamic data source records (data.<source>.<key>) */
+  data?: Record<string, any>;
+
+  /** Child module outputs (module.<name>.<output>) */
+  modules?: Record<string, Record<string, any>>;
+
+  /** Process environment variables */
+  env?: Record<string, string>;
+}
+```
+
+---
+
+## 🛠️ Programmatic Usage Examples
+
+### 1. `evaluateExpression` (Typed Evaluation)
+
+```typescript
+import { evaluateExpression } from '@fromeroc9/testform';
+
+const context = {
+  vars: {
+    environment: 'STAGING',
+    port: 8080,
+    features: ['auth', 'billing']
+  }
+};
+
+// Built-in functions and string manipulation
+const envLower = evaluateExpression('lower(var.environment)', context);
+console.log(envLower); // 'staging'
+
+// Comparison operators and array length
+const hasMultipleFeatures = evaluateExpression('length(var.features) > 1', context);
+console.log(hasMultipleFeatures); // true
+
+// Ternary conditional
+const host = evaluateExpression(
+  'var.environment == "PROD" ? "api.corp.com" : "staging.api.corp.com"',
+  context
+);
+console.log(host); // 'staging.api.corp.com'
+```
+
+### 2. `interpolateExpressions` (String Templating)
+
+Interpolate multiple tokens into URLs, headers, or test payloads:
+
+```typescript
+import { interpolateExpressions } from '@fromeroc9/testform';
+
+const template = 'https://${lower(var.environment)}.service.internal:${var.port}/health';
+
+const resolvedUrl = interpolateExpressions(template, {
+  vars: {
+    environment: 'QA-WEST',
+    port: 9000
+  }
+});
+
+console.log(resolvedUrl);
+// Output: "https://qa-west.service.internal:9000/health"
+```
