@@ -1,0 +1,242 @@
+---
+// Interactive Tabbed Code & CLI Preview Widget (Tight, Equal Buttons, Authentic Engine Flow)
+---
+
+<div class="code-preview-widget">
+  <div class="widget-header">
+    <div class="widget-controls sl-hidden sm:sl-flex">
+      <span class="ctrl-dot dot-red"></span>
+      <span class="ctrl-dot dot-yellow"></span>
+      <span class="ctrl-dot dot-green"></span>
+    </div>
+
+    <div class="widget-tabs" role="tablist">
+      <button class="tab-btn active" data-tab="0" role="tab" aria-selected="true">
+        <span class="tab-icon">📄</span>
+        <span>todo.case.feature</span>
+      </button>
+      <button class="tab-btn" data-tab="1" role="tab" aria-selected="false">
+        <span class="tab-icon">⚙️</span>
+        <span>main.yml</span>
+      </button>
+      <button class="tab-btn" data-tab="2" role="tab" aria-selected="false">
+        <span class="tab-icon">⚡</span>
+        <span>testform plan</span>
+      </button>
+      <button class="tab-btn" data-tab="3" role="tab" aria-selected="false">
+        <span class="tab-icon">🚀</span>
+        <span>testform apply</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="widget-viewport">
+    <!-- Panel 0: Gherkin Feature -->
+    <div class="tab-panel active" data-panel="0">
+      <pre><code><span class="tok-tag">@testcase</span> <span class="tok-tag">@e2e</span>
+<span class="tok-kw">Feature:</span> Gestión de Tareas en TodoMVC
+  <span class="tok-muted"># TMaC: Los casos son recursos declarativos versionados en Git</span>
+
+  <span class="tok-tag">@tc-e2e-001</span> <span class="tok-tag">@smoke</span>
+  <span class="tok-kw">Scenario:</span> Creación de una nueva tarea
+    <span class="tok-step">Given</span> el navegador abre la URL <span class="tok-str">"&#36;&#123;var.e2e_app_url&#125;"</span>
+    <span class="tok-step">When</span> el usuario ingresa la tarea <span class="tok-str">"Aprender testform"</span>
+    <span class="tok-step">And</span> presiona la tecla Enter
+    <span class="tok-step">Then</span> la lista de tareas contiene 1 elemento
+
+  <span class="tok-tag">@tc-e2e-002</span> <span class="tok-tag">@regression</span>
+  <span class="tok-tag">@depends_on</span>(<span class="tok-str">"features/todo.case.feature.@tc-e2e-001"</span>)
+  <span class="tok-kw">Scenario:</span> Marcar tarea como completada
+    <span class="tok-step">Given</span> existe al menos 1 tarea en la lista
+    <span class="tok-step">When</span> el usuario hace clic en el checkbox
+    <span class="tok-step">Then</span> el estado de la tarea cambia a completada</code></pre>
+    </div>
+
+    <!-- Panel 1: main.yml -->
+    <div class="tab-panel" data-panel="1">
+      <pre><code><span class="tok-kw">testform:</span>
+  <span class="tok-prop">required_version:</span> <span class="tok-str">">= 1.0.0"</span>
+  <span class="tok-prop">backend:</span>
+    <span class="tok-prop">local:</span>
+      <span class="tok-prop">path:</span> <span class="tok-str">"testform.state"</span>
+
+<span class="tok-kw">provider:</span> <span class="tok-str">"github"</span>
+
+<span class="tok-kw">variable:</span>
+  <span class="tok-prop">e2e_app_url:</span>
+    <span class="tok-prop">type:</span> string
+    <span class="tok-prop">default:</span> <span class="tok-str">"https://demo.playwright.dev/todomvc"</span>
+
+<span class="tok-kw">scopes:</span>
+  <span class="tok-prop">testcase:</span>
+    <span class="tok-prop">match:</span> <span class="tok-str">"features/*.case.feature"</span></code></pre>
+    </div>
+
+    <!-- Panel 2: testform plan -->
+    <div class="tab-panel" data-panel="2">
+      <pre><code><span class="tok-cmd">$ testform plan</span>
+<span class="tok-muted">testform used the selected providers to generate the execution plan:</span>
+
+<span class="tok-add"># [Gestión de Tareas en TodoMVC].testcase.@tc-e2e-001 will be created</span>
+<span class="tok-add">+ resource "testcase" "@tc-e2e-001"</span> {
+    <span class="tok-prop">+ feature</span> = <span class="tok-str">"Gestión de Tareas en TodoMVC"</span>
+    <span class="tok-prop">+ uri</span>     = <span class="tok-str">"features/todo.case.feature"</span>
+    <span class="tok-prop">+ labels</span>  = [<span class="tok-str">"@testcase"</span>, <span class="tok-str">"@e2e"</span>, <span class="tok-str">"@smoke"</span>]
+    <span class="tok-prop">+ title</span>   = <span class="tok-str">"Creación de una nueva tarea"</span>
+  }
+
+<span class="tok-hl">Plan:</span> 1 to add, 0 to change, 0 to destroy.
+<span class="tok-muted">State: Read-only check verified against testform.state</span></code></pre>
+    </div>
+
+    <!-- Panel 3: testform apply -->
+    <div class="tab-panel" data-panel="3">
+      <pre><code><span class="tok-cmd">$ testform apply -auto-approve</span>
+<span class="tok-muted">Acquiring state lock on local:testform.state... [OK]</span>
+
+<span class="tok-muted">testcase.features/todo.case.feature.@tc-e2e-001: Creating...</span>
+<span class="tok-ok">testcase.features/todo.case.feature.@tc-e2e-001: Creation complete after 0.6s [id=PVTI_42]</span>
+
+<span class="tok-ok">Apply complete! Resources: 1 added, 0 changed, 0 destroyed.</span>
+<span class="tok-hl">State lock released. Zero drift maintained.</span></code></pre>
+    </div>
+  </div>
+</div>
+
+<script>
+  function setupCodeWidget() {
+    const tabs = document.querySelectorAll('.code-preview-widget .tab-btn');
+    const panels = document.querySelectorAll('.code-preview-widget .tab-panel');
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const target = tab.getAttribute('data-tab');
+        tabs.forEach((t) => {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
+        });
+        panels.forEach((p) => p.classList.remove('active'));
+
+        tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
+        const activePanel = document.querySelector(`.code-preview-widget .tab-panel[data-panel="${target}"]`);
+        if (activePanel) activePanel.classList.add('active');
+      });
+    });
+  }
+
+  setupCodeWidget();
+  document.addEventListener('astro:page-load', setupCodeWidget);
+</script>
+
+<style>
+  .code-preview-widget {
+    margin: 1.5rem 0;
+    border-radius: 0.65rem;
+    overflow: hidden;
+    background: #090d16;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  }
+
+  .widget-header {
+    display: flex;
+    align-items: center;
+    background: #0f172a;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .widget-controls {
+    display: inline-flex;
+    gap: 0.3rem;
+    padding: 0 0.85rem;
+  }
+
+  .ctrl-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .dot-red { background: #ef4444; }
+  .dot-yellow { background: #eab308; }
+  .dot-green { background: #22c55e; }
+
+  .widget-tabs {
+    display: flex;
+    flex: 1;
+    overflow-x: auto;
+  }
+
+  .tab-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.55rem 0.5rem;
+    font-size: 0.76rem;
+    font-weight: 600;
+    font-family: var(--sl-font-mono, monospace);
+    color: #94a3b8;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+  }
+
+  .tab-btn:hover {
+    color: #f8fafc;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .tab-btn.active {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.08);
+    border-bottom-color: #38bdf8;
+  }
+
+  .tab-icon {
+    font-size: 0.8rem;
+  }
+
+  .widget-viewport {
+    padding: 1rem 1.25rem;
+    min-height: 170px;
+    background: #090d16;
+  }
+
+  .tab-panel {
+    display: none;
+  }
+
+  .tab-panel.active {
+    display: block;
+  }
+
+  .widget-viewport pre {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+  }
+
+  .widget-viewport code {
+    font-family: var(--sl-font-mono, monospace);
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: #e2e8f0;
+  }
+
+  .tok-tag { color: #818cf8; font-weight: 600; }
+  .tok-kw { color: #f43f5e; font-weight: 700; }
+  .tok-step { color: #38bdf8; font-weight: 600; }
+  .tok-str { color: #34d399; }
+  .tok-prop { color: #38bdf8; }
+  .tok-cmd { color: #f8fafc; font-weight: 700; }
+  .tok-muted { color: #64748b; font-style: italic; }
+  .tok-add { color: #34d399; }
+  .tok-hl { color: #38bdf8; font-weight: 700; }
+  .tok-ok { color: #10b981; font-weight: 700; }
+</style>

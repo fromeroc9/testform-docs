@@ -1,0 +1,1278 @@
+---
+// Standalone landing page for testform in English
+---
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>testform - Declarative Test as Code Platform</title>
+  <meta name="description" content="Declarative test orchestration engine: zero mandatory SaaS servers and zero Test Drift. Manage your entire QA lifecycle directly in Git." />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+  <!-- Inline Theme Initialization to Prevent Flash of Wrong Theme -->
+  <script is:inline>
+    (function() {
+      const savedTheme = localStorage.getItem('starlight-theme') || localStorage.getItem('theme');
+      if (savedTheme === 'light') {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.dataset.theme = 'light';
+      } else if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.dataset.theme = 'dark';
+      } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.dataset.theme = 'light';
+      } else {
+        document.documentElement.classList.add('dark');
+        document.documentElement.dataset.theme = 'dark';
+      }
+    })();
+  </script>
+
+  <style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        overscroll-behavior: none;
+      }
+    }
+    ::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+
+  <script is:inline src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script is:inline>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface": "#0f131c",
+            "surface-dim": "#0f131c",
+            "surface-bright": "#353943",
+            "surface-container-lowest": "#0a0e17",
+            "surface-container-low": "#181b25",
+            "surface-container": "#1c1f29",
+            "surface-container-high": "#262a34",
+            "surface-container-highest": "#31353f",
+            "on-surface": "#dfe2ef",
+            "on-surface-variant": "#bbcabf",
+            "inverse-surface": "#dfe2ef",
+            "inverse-on-surface": "#2c303a",
+            "outline": "#86948a",
+            "outline-variant": "#3c4a42",
+            // Primary Brand Blue (#2563eb in light / #3b82f6 in dark)
+            "primary": "#3b82f6",
+            "primary-container": "#2563eb",
+            "on-primary": "#ffffff",
+            "on-primary-container": "#eff6ff",
+            "primary-fixed": "#60a5fa",
+            "primary-fixed-dim": "#3b82f6",
+            // Secondary Cyan (#0284c7)
+            "secondary": "#38bdf8",
+            "secondary-container": "#0284c7",
+            "on-secondary": "#003640",
+            "secondary-fixed": "#bae6fd",
+            "secondary-fixed-dim": "#38bdf8",
+            // Tertiary Indigo/Violet
+            "tertiary": "#c084fc",
+            "tertiary-container": "#9333ea",
+            "on-tertiary": "#3c0091",
+            "error": "#ffb4ab",
+            "error-container": "#93000a",
+            "on-error": "#690005"
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            sm: "0.125rem",
+            md: "0.375rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            full: "9999px"
+          },
+          spacing: {
+            margin: "1rem",
+            "margin-tablet": "2rem",
+            "margin-desktop": "3rem",
+            gutter: "1.25rem",
+            "gutter-desktop": "1.5rem",
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem",
+            "space-xl": "2.5rem"
+          },
+          fontFamily: {
+            "display-lg": ["Geist", "sans-serif"],
+            "headline-lg": ["Geist", "sans-serif"],
+            "headline-md": ["Geist", "sans-serif"],
+            "headline-sm": ["Geist", "sans-serif"],
+            "body-lg": ["Geist", "sans-serif"],
+            "body-md": ["Geist", "sans-serif"],
+            "body-sm": ["Geist", "sans-serif"],
+            "code-lg": ["JetBrains Mono", "monospace"],
+            "code-md": ["JetBrains Mono", "monospace"],
+            "code-sm": ["JetBrains Mono", "monospace"],
+            "label-md": ["JetBrains Mono", "monospace"],
+            "label-sm": ["JetBrains Mono", "monospace"]
+          },
+          fontSize: {
+            "display-lg": ["56px", { lineHeight: "64px", letterSpacing: "-0.03em", fontWeight: "700" }],
+            "display-lg-mobile": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "600" }],
+            "headline-lg-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.01em", fontWeight: "600" }],
+            "headline-md": ["24px", { lineHeight: "32px", letterSpacing: "-0.015em", fontWeight: "600" }],
+            "headline-sm": ["18px", { lineHeight: "26px", letterSpacing: "-0.01em", fontWeight: "600" }],
+            "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+            "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+            "body-sm": ["12px", { lineHeight: "18px", fontWeight: "400" }],
+            "code-lg": ["14px", { lineHeight: "22px", fontWeight: "500" }],
+            "code-md": ["13px", { lineHeight: "20px", fontWeight: "400" }],
+            "code-sm": ["11px", { lineHeight: "16px", fontWeight: "400" }],
+            "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.04em", fontWeight: "500" }],
+            "label-sm": ["10px", { lineHeight: "14px", letterSpacing: "0.06em", fontWeight: "600" }]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-white dark:bg-surface font-body-md text-body-md text-slate-800 dark:text-on-surface antialiased selection:bg-blue-500/20 selection:text-blue-600 dark:selection:text-blue-400 transition-colors duration-200">
+
+  <!-- ========================================== -->
+  <!-- HEADER NAVIGATION                          -->
+  <!-- ========================================== -->
+  <header class="fixed top-0 w-full z-50 bg-white/85 dark:bg-surface/85 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 transition-colors duration-200">
+    <div class="h-16 w-full px-margin md:px-margin-tablet lg:px-margin-desktop max-w-7xl mx-auto flex items-center justify-between gap-space-md">
+      
+      <!-- Brand Name (zero gap between testform and dot) -->
+      <div class="flex items-center gap-space-md">
+        <a class="flex items-center gap-2 text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="/en/">
+          <span class="font-headline-sm text-headline-sm tracking-tight font-bold">testform<span class="text-blue-600 dark:text-blue-400 font-extrabold">.</span></span>
+          <span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/60 dark:text-blue-400 dark:border-blue-800/80 tracking-widest uppercase">TaC</span>
+        </a>
+      </div>
+
+      <!-- Clean Text Navigation Links (NOT buttons) -->
+      <nav class="hidden md:flex items-center gap-8 font-label-md text-label-md">
+        <a class="text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 font-medium transition-colors" href="/en/docs/">Docs</a>
+        <a class="text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 font-medium transition-colors" href="/en/cli/">CLI</a>
+        <a class="text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400 font-medium transition-colors" href="/en/api/">API</a>
+      </nav>
+
+      <!-- Right Header Actions: Pure Icons (GitHub, Theme Mode, Language) -->
+      <div class="flex items-center gap-2">
+        <!-- GitHub Icon Link -->
+        <a
+          class="flex items-center justify-center w-9 h-9 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
+          href="https://github.com/fromeroc9/testform"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="GitHub Repository"
+          title="GitHub (v1.1.0)"
+        >
+          <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+          </svg>
+        </a>
+
+        <!-- Light / Dark Mode Toggle Icon Button -->
+        <button
+          id="theme-toggle-btn"
+          onclick="toggleTheme()"
+          class="flex items-center justify-center w-9 h-9 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
+          type="button"
+          aria-label="Toggle theme"
+          title="Toggle light/dark mode"
+        >
+          <span class="dark:hidden text-slate-700">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </span>
+          <span class="hidden dark:inline text-amber-300">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+          </span>
+        </button>
+
+        <!-- Language Toggle Icon Button (Icon only) -->
+        <a
+          href="/es/"
+          class="flex items-center justify-center w-9 h-9 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
+          aria-label="Switch to Spanish"
+          title="Switch to Spanish"
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- MAIN CONTENT                               -->
+  <!-- ========================================== -->
+  <main class="w-full pt-16 min-h-screen">
+    <div class="flex flex-col w-full">
+
+      <!-- ========================================== -->
+      <!-- 1. HERO SECTION                            -->
+      <!-- ========================================== -->
+      <section class="relative w-full py-space-xl overflow-hidden">
+        <!-- Ambient Glow with Primary Blue -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 max-w-5xl h-96 bg-gradient-to-b from-blue-500/10 via-cyan-500/5 to-transparent blur-3xl pointer-events-none -z-10"></div>
+        
+        <div class="w-full px-margin md:px-margin-tablet lg:px-margin-desktop max-w-7xl mx-auto flex flex-col items-center text-center">
+          
+          <!-- Main Title H1 -->
+          <h1 class="font-display-lg text-display-lg md:text-[56px] text-display-lg-mobile tracking-tight text-slate-900 dark:text-white mb-space-xs mt-space-sm">
+            testform<span class="text-blue-600 dark:text-blue-400 inline-block font-extrabold">.</span>
+          </h1>
+          
+          <!-- Highlighted Subtitle in Primary Blue -->
+          <p class="font-headline-md text-headline-md text-blue-600 dark:text-blue-400 tracking-normal mb-space-md font-semibold">
+            Declare, plan, apply, and reconcile in Git.
+          </p>
+          
+          <!-- Description -->
+          <p class="font-body-lg text-body-lg text-slate-600 dark:text-slate-300 max-w-3xl mb-space-xl">
+            Declarative test orchestration engine: zero mandatory SaaS servers and zero Test Drift. Manage your entire QA lifecycle, version every test suite as source code, and ensure immutable cryptographic traceability in every commit.
+          </p>
+
+          <!-- Official Global Installation Command Box -->
+          <div class="w-full max-w-xl bg-slate-50 dark:bg-surface-container-lowest rounded-xl p-space-sm shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col gap-space-xs text-left">
+            <!-- Box Header -->
+            <div class="flex items-center justify-between px-space-sm pb-space-xs">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/80 font-mono text-[11px] font-bold tracking-wider uppercase">
+                  <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                  npm
+                </span>
+                <span class="text-xs text-slate-500 dark:text-slate-400 font-mono">Global Installation</span>
+              </div>
+              <span class="font-label-sm text-label-sm text-slate-500 dark:text-slate-400 tracking-wider uppercase font-mono">v1.1.0 • verified</span>
+            </div>
+            
+            <!-- Terminal Command Box -->
+            <div class="flex items-center justify-between gap-space-md bg-slate-900 text-slate-100 dark:bg-surface-container-low dark:text-on-surface px-space-md py-space-sm rounded-lg border border-slate-800">
+              <div class="flex items-center gap-space-sm min-w-0 font-code-md text-code-md">
+                <span class="text-blue-400 select-none font-bold">&gt;</span>
+                <span class="truncate font-code-md" id="cli-command-text">npm i -g @fromeroc9/testform</span>
+              </div>
+              <button class="flex-shrink-0 flex items-center gap-space-xs px-space-sm py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-100 font-label-sm text-label-sm transition-all active:scale-95 cursor-pointer" id="copy-cli-btn" onclick="copyCliCommand()" type="button">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-400">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span id="copy-btn-label">Copy</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Metrics Counter Strip -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-space-md w-full max-w-4xl mt-space-xl pt-space-lg text-left">
+            <div class="bg-slate-50 dark:bg-surface-container p-space-md rounded-lg shadow-sm border border-slate-200 dark:border-slate-800">
+              <div class="font-label-sm text-label-sm text-slate-500 dark:text-slate-400 uppercase">Test Drift</div>
+              <div class="font-headline-md text-headline-md text-blue-600 dark:text-blue-400 font-bold">0.0% Drift</div>
+              <div class="font-body-sm text-body-sm text-slate-600 dark:text-slate-400">Synced via Git SHA</div>
+            </div>
+            <div class="bg-slate-50 dark:bg-surface-container p-space-md rounded-lg shadow-sm border border-slate-200 dark:border-slate-800">
+              <div class="font-label-sm text-label-sm text-slate-500 dark:text-slate-400 uppercase">Per-Seat Cost</div>
+              <div class="font-headline-md text-headline-md text-cyan-600 dark:text-cyan-400 font-bold">$0 / Dev</div>
+              <div class="font-body-sm text-body-sm text-slate-600 dark:text-slate-400">100% free local & CI runs</div>
+            </div>
+            <div class="bg-slate-50 dark:bg-surface-container p-space-md rounded-lg shadow-sm border border-slate-200 dark:border-slate-800">
+              <div class="font-label-sm text-label-sm text-slate-500 dark:text-slate-400 uppercase">Immutable Ledger</div>
+              <div class="font-headline-md text-headline-md text-indigo-600 dark:text-indigo-400 font-bold">SHA-256</div>
+              <div class="font-body-sm text-body-sm text-slate-600 dark:text-slate-400">Tests sealed in Git commit</div>
+            </div>
+            <div class="bg-slate-50 dark:bg-surface-container p-space-md rounded-lg shadow-sm border border-slate-200 dark:border-slate-800">
+              <div class="font-label-sm text-label-sm text-slate-500 dark:text-slate-400 uppercase">Setup Time</div>
+              <div class="font-headline-md text-headline-md text-slate-800 dark:text-white font-bold">&lt; 30 sec</div>
+              <div class="font-body-sm text-body-sm text-slate-600 dark:text-slate-400">Native CLI, zero server</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 2. INTEGRATED WORKBENCH: DECLARATIVE LIFECYCLE -->
+      <!-- ========================================== -->
+      <section class="w-full py-space-xl bg-slate-50 dark:bg-surface-container-lowest border-y border-slate-200 dark:border-slate-800 transition-colors duration-200">
+        <div class="w-full px-margin md:px-margin-tablet lg:px-margin-desktop max-w-7xl mx-auto">
+          
+          <!-- Unified Workbench Frame -->
+          <div class="w-full bg-[#121620] dark:bg-surface-container-low rounded-xl shadow-2xl border border-slate-700/60 dark:border-slate-800 overflow-hidden flex flex-col">
+            
+            <!-- Shared Unified Header Bar -->
+            <div class="bg-[#181d2a] dark:bg-surface-container-high px-space-md py-2.5 flex flex-wrap items-center justify-between gap-space-sm border-b border-slate-700/50 dark:border-slate-800">
+              <div class="flex items-center gap-space-sm">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                </div>
+                <span class="font-code-sm text-code-sm text-slate-200 font-semibold ml-2">workbench@testform:~/specs</span>
+              </div>
+              
+              <!-- Lifecycle Step Selector Buttons -->
+              <div class="flex items-center gap-1 overflow-x-auto" id="lifecycle-btn-group">
+                <button class="px-space-sm py-1 rounded font-label-md text-label-md transition-all bg-[#242b3d] hover:bg-[#2d364d] text-slate-300" id="btn-phase-init" onclick="manualPhaseSelect('init')" type="button">
+                  01 testform init
+                </button>
+                <button class="px-space-sm py-1 rounded font-label-md text-label-md transition-all bg-[#242b3d] hover:bg-[#2d364d] text-slate-300" id="btn-phase-plan" onclick="manualPhaseSelect('plan')" type="button">
+                  02 testform plan
+                </button>
+                <button class="px-space-sm py-1 rounded font-label-md text-label-md transition-all bg-[#242b3d] hover:bg-[#2d364d] text-slate-300" id="btn-phase-apply" onclick="manualPhaseSelect('apply')" type="button">
+                  03 testform apply
+                </button>
+                <button class="px-space-sm py-1 rounded font-label-md text-label-md transition-all bg-blue-600 text-white font-bold shadow-sm" id="btn-phase-diff" onclick="manualPhaseSelect('diff')" type="button">
+                  04 testform diff
+                </button>
+              </div>
+            </div>
+
+            <!-- Unified Dual-Pane Content Body -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-700/50 dark:divide-slate-800">
+              
+              <!-- Left Pane: Real Spec File Explorer & Code (5 cols) -->
+              <div class="lg:col-span-5 flex flex-col bg-[#0f131c]">
+                <!-- Spec File Tabs -->
+                <div class="flex bg-[#161b26] px-space-xs pt-1.5 gap-1 border-b border-slate-800 overflow-x-auto" id="file-tabs-container">
+                  <button class="px-space-sm py-1.5 rounded-t text-left font-code-sm text-code-sm transition-colors bg-[#0f131c] text-blue-400 font-semibold flex items-center gap-1.5 border-t-2 border-blue-500" id="tab-btn-testcase" onclick="manualEditorSelect('testcase')" type="button">
+                    <span class="material-symbols-outlined text-[14px]">description</span>
+                    testcase.feature
+                  </button>
+                  <button class="px-space-sm py-1.5 rounded-t text-left font-code-sm text-code-sm transition-colors text-slate-400 hover:text-slate-200 hover:bg-[#1c2230] flex items-center gap-1.5 border-t-2 border-transparent" id="tab-btn-testrun" onclick="manualEditorSelect('testrun')" type="button">
+                    <span class="material-symbols-outlined text-[14px]">play_circle</span>
+                    testrun.feature
+                  </button>
+                  <button class="px-space-sm py-1.5 rounded-t text-left font-code-sm text-code-sm transition-colors text-slate-400 hover:text-slate-200 hover:bg-[#1c2230] flex items-center gap-1.5 border-t-2 border-transparent" id="tab-btn-testplan" onclick="manualEditorSelect('testplan')" type="button">
+                    <span class="material-symbols-outlined text-[14px]">account_tree</span>
+                    testplan.feature
+                  </button>
+                </div>
+
+                <!-- Spec Syntax Viewer with Compliant Tags Only (@testcase/@testrun/@testplan and @tc-/@tr-/@tp-) -->
+                <div class="p-space-md font-code-sm text-code-sm overflow-x-auto min-h-[380px] bg-[#0a0e17] flex-1">
+                  <!-- Content testcase.feature -->
+                  <pre class="text-slate-200 leading-relaxed" id="editor-content-testcase"><code><span class="text-slate-500"># features/todo.case.feature</span>
+<span class="text-blue-400 font-semibold">@testcase</span>
+<span class="text-cyan-300 font-bold">Feature:</span> TodoMVC Task Management
+  As an application user
+  I want to manage my task list
+  To organize my daily activities
+
+  <span class="text-blue-400 font-bold">@tc-001</span>
+  <span class="text-cyan-300 font-bold">Scenario:</span> Create a new task in TodoMVC
+    <span class="text-indigo-300 font-semibold">Given</span> the browser opens URL <span class="text-emerald-300">"&#36;&#123;var.e2e_app_url&#125;"</span>
+    <span class="text-indigo-300 font-semibold">When</span> the user enters task <span class="text-emerald-300">"Learn Testform and TaC"</span>
+    <span class="text-indigo-300 font-semibold">And</span> presses Enter key
+    <span class="text-indigo-300 font-semibold">Then</span> the task list contains <span class="text-blue-300 font-semibold">1</span> item
+    <span class="text-indigo-300 font-semibold">And</span> the task text is <span class="text-emerald-300">"Learn Testform and TaC"</span>
+
+  <span class="text-blue-400 font-bold">@tc-002</span>
+  <span class="text-cyan-300 font-bold">Scenario:</span> Mark task as completed
+    <span class="text-indigo-300 font-semibold">Given</span> at least exists <span class="text-blue-300 font-semibold">1</span> task in the list
+    <span class="text-indigo-300 font-semibold">When</span> the user clicks the checkbox
+    <span class="text-indigo-300 font-semibold">Then</span> the task status changes to completed</code></pre>
+
+                  <!-- Content testrun.feature -->
+                  <pre class="text-slate-200 leading-relaxed hidden" id="editor-content-testrun"><code><span class="text-slate-500"># suites/sprint24.run.feature</span>
+<span class="text-blue-400 font-semibold">@testrun</span>
+<span class="text-blue-400 font-bold">@tr-001</span>
+<span class="text-cyan-300 font-bold">Feature:</span> Sprint 24 Regression Suite
+
+  <span class="text-cyan-300 font-bold">Rule:</span> features/todo.case.feature
+    <span class="text-blue-400 font-bold">Scenario:</span> @tc-001
+      <span class="text-indigo-300 font-semibold">*</span> mark status = <span class="text-emerald-400 font-semibold">passed</span>
+
+    <span class="text-blue-400 font-bold">Scenario:</span> @tc-002
+      <span class="text-indigo-300 font-semibold">*</span> mark status = <span class="text-amber-400 font-semibold">pending</span>
+
+  <span class="text-cyan-300 font-bold">Rule:</span> features/api_todo.case.feature
+    <span class="text-blue-400 font-bold">Scenario:</span> @tc-003
+      <span class="text-indigo-300 font-semibold">*</span> mark status = <span class="text-emerald-400 font-semibold">passed</span></code></pre>
+
+                  <!-- Content testplan.feature -->
+                  <pre class="text-slate-200 leading-relaxed hidden" id="editor-content-testplan"><code><span class="text-slate-500"># plans/release_v1.plan.feature</span>
+<span class="text-blue-400 font-semibold">@testplan</span>
+<span class="text-blue-400 font-bold">@tp-001</span>
+<span class="text-cyan-300 font-bold">Feature:</span> Release 1.0 Quality Plan
+
+  <span class="text-slate-500"># Declarative binding of test suites</span>
+  <span class="text-cyan-300 font-bold">Rule:</span> suites/sprint24.run.feature
+  <span class="text-cyan-300 font-bold">Rule:</span> suites/api_contract.run.feature</code></pre>
+                </div>
+
+                <!-- Left Pane Status Footer -->
+                <div class="px-space-md py-2 bg-[#161b26] text-slate-400 font-code-sm text-code-sm flex items-center justify-between border-t border-slate-800">
+                  <span>UTF-8 • Git Blame Tracked</span>
+                  <span class="text-blue-400 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                    HEAD: commit c4d8a1
+                  </span>
+                </div>
+              </div>
+
+              <!-- Right Pane: Real Terminal Execution Output (7 cols) -->
+              <div class="lg:col-span-7 flex flex-col bg-[#0a0e17]">
+                <!-- Terminal Subheader Strip -->
+                <div class="bg-[#161b26] px-space-md py-2 border-b border-slate-800 flex items-center justify-between font-code-sm text-code-sm text-slate-400">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[16px] text-blue-400">terminal</span>
+                    <span class="text-slate-200 font-semibold">console</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-label-sm text-label-sm text-blue-400 uppercase" id="phase-countdown-tag">PHASE 1 / 4</span>
+                    <span class="text-slate-600">|</span>
+                    <span class="text-blue-400 font-code-sm font-bold" id="console-hash-text">SHA: 0x8a4b...INIT</span>
+                  </div>
+                </div>
+
+                <!-- Dynamic Output Screen -->
+                <div class="p-space-md font-code-sm text-code-sm overflow-x-auto min-h-[380px] flex flex-col justify-between flex-1" id="console-output-container">
+                  <div class="space-y-1.5 text-slate-200 leading-relaxed" id="console-dynamic-log">
+                    <!-- Injected by JavaScript -->
+                  </div>
+
+                  <!-- Bottom Terminal Controls -->
+                  <div class="pt-space-md mt-space-md border-t border-slate-800 flex flex-wrap items-center justify-between gap-space-sm text-slate-400 font-code-sm">
+                    <div class="flex items-center gap-space-sm">
+                      <span class="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                      <span id="console-status-text">Backend: Local / State Synced</span>
+                    </div>
+                    <div class="flex items-center gap-space-md">
+                      <button class="text-slate-400 hover:text-blue-400 transition-colors flex items-center gap-1 font-label-sm text-label-sm uppercase" onclick="restartLifecycleLoop()" type="button">
+                        <span class="material-symbols-outlined text-[14px]">replay</span>
+                        Restart Loop
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Unified Bottom Diff Strip -->
+                <div class="bg-[#161b26] px-space-md py-2 flex items-center justify-between text-slate-300 font-code-sm text-code-sm border-t border-slate-800">
+                  <div class="flex items-center gap-space-md">
+                    <span class="text-blue-400 font-bold">+ 1 to add</span>
+                    <span class="text-cyan-400">~ 0 modified</span>
+                    <span class="text-slate-400">- 0 drift</span>
+                  </div>
+                  <span class="font-label-sm text-label-sm text-slate-400 font-mono">Deterministic Plan Engine • v1.1.0</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 3. WHY TESTFORM: THE NEW PARADIGM          -->
+      <!-- ========================================== -->
+      <section class="w-full py-space-xl">
+        <div class="w-full px-margin md:px-margin-tablet lg:px-margin-desktop max-w-7xl mx-auto">
+          <!-- Section Intro Header -->
+          <div class="max-w-3xl mb-space-xl">
+            <div class="font-label-sm text-label-sm text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-space-xs font-semibold">Continuous Quality Architecture</div>
+            <h2 class="font-headline-lg text-headline-lg text-slate-900 dark:text-white mb-space-sm">
+              Why Testform: The New Paradigm of QE
+            </h2>
+            <p class="font-body-lg text-body-lg text-slate-600 dark:text-slate-300">
+              Testform does not seek to break your existing suites or frameworks; it evolves quality engineering (QE) by integrating natively into Git. Complement your current tools and prepare your infrastructure with zero vendor lock-in.
+            </p>
+          </div>
+
+          <!-- 6 Pillars Bento Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md">
+            
+            <!-- Pilar 1 -->
+            <div class="bg-slate-50 dark:bg-surface-container rounded-xl p-space-lg shadow-sm hover:shadow-md hover:border-blue-300 dark:hover:border-blue-500/50 transition-all border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+              <div>
+                <div class="w-10 h-10 rounded bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 flex items-center justify-center mb-space-md">
+                  <span class="material-symbols-outlined text-[24px]">sync_disabled</span>
+                </div>
+                <h3 class="font-headline-sm text-headline-sm text-slate-900 dark:text-white mb-space-xs">1. Eliminate Test Drift</h3>
+                <p class="font-body-md text-body-md text-slate-600 dark:text-slate-400 mb-space-md">
+                  Zero desynchronization between your codebase and test cases. Every change in your contracts triggers an immediate discrepancy alert before deployment.
+                </p>
+              </div>
+              <div class="font-code-sm text-code-sm text-blue-600 dark:text-blue-400 flex items-center gap-1 font-semibold">
+                <span class="material-symbols-outlined text-[14px]">verified</span>
+                Zero State Discrepancy
+              </div>
+            </div>
+
+            <!-- Pilar 2 -->
+            <div class="bg-slate-50 dark:bg-surface-container rounded-xl p-space-lg shadow-sm hover:shadow-md hover:border-cyan-300 dark:hover:border-cyan-500/50 transition-all border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+              <div>
+                <div class="w-10 h-10 rounded bg-cyan-100 text-cyan-600 dark:bg-cyan-950/60 dark:text-cyan-400 flex items-center justify-center mb-space-md">
+                  <span class="material-symbols-outlined text-[24px]">credit_card_off</span>
+                </div>
+                <h3 class="font-headline-sm text-headline-sm text-slate-900 dark:text-white mb-space-xs">2. Zero Seat Costs</h3>
+                <p class="font-body-md text-body-md text-slate-600 dark:text-slate-400 mb-space-md">
+                  Run freely on your local machine and CI/CD runners without paying abusive $70/mo license fees for every developer or tester making commits.
+                </p>
+              </div>
+              <div class="font-code-sm text-code-sm text-cyan-600 dark:text-cyan-400 flex items-center gap-1 font-semibold">
+                <span class="material-symbols-outlined text-[14px]">payments</span>
+                100% Free Core Engine
+              </div>
+            </div>
+
+            <!-- Pilar 3 -->
+            <div class="bg-slate-50 dark:bg-surface-container rounded-xl p-space-lg shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+              <div>
+                <div class="w-10 h-10 rounded bg-indigo-100 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 flex items-center justify-center mb-space-md">
+                  <span class="material-symbols-outlined text-[24px]">source_environment</span>
+                </div>
+                <h3 class="font-headline-sm text-headline-sm text-slate-900 dark:text-white mb-space-xs">3. Git as Single Source of Truth</h3>
+                <p class="font-body-md text-body-md text-slate-600 dark:text-slate-400 mb-space-md">
+                  Your test specifications live in Git branches, participate in standard Pull Request reviews, and follow real semantic versioning rules.
+                </p>
+              </div>
+              <div class="font-code-sm text-code-sm text-indigo-600 dark:text-indigo-400 flex items-center gap-1 font-semibold">
+                <span class="material-symbols-outlined text-[14px]">merge</span>
+                PR-First Quality Flow
+              </div>
+            </div>
+
+            <!-- Pilar 4 -->
+            <div class="bg-slate-50 dark:bg-surface-container rounded-xl p-space-lg shadow-sm hover:shadow-md hover:border-blue-300 dark:hover:border-blue-500/50 transition-all border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+              <div>
+                <div class="w-10 h-10 rounded bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 flex items-center justify-center mb-space-md">
+                  <span class="material-symbols-outlined text-[24px]">history_edu</span>
+                </div>
+                <h3 class="font-headline-sm text-headline-sm text-slate-900 dark:text-white mb-space-xs">4. Git Blame & Native Auditability</h3>
+                <p class="font-body-md text-body-md text-slate-600 dark:text-slate-400 mb-space-md">
+                  Audit through real commits and granular line-by-line Git blame on every test case. Zero opaque proprietary signatures: every change has a verified author and SHA.
+                </p>
+              </div>
+              <div class="font-code-sm text-code-sm text-blue-600 dark:text-blue-400 flex items-center gap-1 font-semibold">
+                <span class="material-symbols-outlined text-[14px]">commit</span>
+                Granular Git Blame Audit
+              </div>
+            </div>
+
+            <!-- Pilar 5 -->
+            <div class="bg-slate-50 dark:bg-surface-container rounded-xl p-space-lg shadow-sm hover:shadow-md hover:border-cyan-300 dark:hover:border-cyan-500/50 transition-all border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+              <div>
+                <div class="w-10 h-10 rounded bg-cyan-100 text-cyan-600 dark:bg-cyan-950/60 dark:text-cyan-400 flex items-center justify-center mb-space-md">
+                  <span class="material-symbols-outlined text-[24px]">cloud_sync</span>
+                </div>
+                <h3 class="font-headline-sm text-headline-sm text-slate-900 dark:text-white mb-space-xs">5. Total Data Sovereignty</h3>
+                <p class="font-body-md text-body-md text-slate-600 dark:text-slate-400 mb-space-md">
+                  Your specs and execution artifacts live in your repo or your own storage bucket (AWS S3, MinIO, GCS). Zero secret leaks to third-party SaaS.
+                </p>
+              </div>
+              <div class="font-code-sm text-code-sm text-cyan-600 dark:text-cyan-400 flex items-center gap-1 font-semibold">
+                <span class="material-symbols-outlined text-[14px]">key</span>
+                Self-Hosted S3 / MinIO
+              </div>
+            </div>
+
+            <!-- Pilar 6 -->
+            <div class="bg-slate-50 dark:bg-surface-container rounded-xl p-space-lg shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+              <div>
+                <div class="w-10 h-10 rounded bg-indigo-100 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 flex items-center justify-center mb-space-md">
+                  <span class="material-symbols-outlined text-[24px]">lock_open</span>
+                </div>
+                <h3 class="font-headline-sm text-headline-sm text-slate-900 dark:text-white mb-space-xs">6. Zero Lock-In & Total Portability</h3>
+                <p class="font-body-md text-body-md text-slate-600 dark:text-slate-400 mb-space-md">
+                  Define tests in Gherkin or YAML completely unchained. Store specs in your own repositories and compile cleanly for any modern test runner.
+                </p>
+              </div>
+              <div class="font-code-sm text-code-sm text-indigo-600 dark:text-indigo-400 flex items-center gap-1 font-semibold">
+                <span class="material-symbols-outlined text-[14px]">tune</span>
+                Declarative Extensibility
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 4. BLOCK DRIFT BEFORE MERGE (CI)           -->
+      <!-- ========================================== -->
+      <section class="w-full py-space-xl bg-slate-50 dark:bg-surface-container-lowest border-y border-slate-200 dark:border-slate-800 transition-colors duration-200">
+        <div class="w-full px-margin md:px-margin-tablet lg:px-margin-desktop max-w-7xl mx-auto">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-center">
+            
+            <!-- Left: CI Explanation -->
+            <div class="lg:col-span-5 space-y-space-md">
+              <div class="font-label-sm text-label-sm text-blue-600 dark:text-blue-400 uppercase tracking-widest font-semibold">Pipeline Guard</div>
+              <h2 class="font-headline-lg text-headline-lg text-slate-900 dark:text-white">
+                Block Drift Before Merge: Strict PR Verification
+              </h2>
+              <p class="font-body-md text-body-md text-slate-600 dark:text-slate-300 leading-relaxed">
+                GitHub Actions and GitLab CI automatically execute <code class="font-code-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-blue-200 dark:border-slate-700">testform plan</code> and <code class="font-code-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-blue-200 dark:border-slate-700">testform diff --remote</code> on every Pull Request.
+              </p>
+              <p class="font-body-md text-body-md text-slate-600 dark:text-slate-300 leading-relaxed">
+                If a developer modifies endpoint logic or services without updating linked tests, CI detects the desynchronization and alerts the team in real time. Zero manual sync work, zero scattered spreadsheets.
+              </p>
+              <div class="space-y-space-xs pt-space-sm">
+                <div class="flex items-center gap-space-sm font-code-sm text-code-sm text-slate-800 dark:text-slate-200">
+                  <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[18px]">check_circle</span>
+                  <span>Real-time speculative change analysis</span>
+                </div>
+                <div class="flex items-center gap-space-sm font-code-sm text-code-sm text-slate-800 dark:text-slate-200">
+                  <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[18px]">check_circle</span>
+                  <span>Automated reconciliation between Git and GitHub Projects</span>
+                </div>
+                <div class="flex items-center gap-space-sm font-code-sm text-code-sm text-slate-800 dark:text-slate-200">
+                  <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[18px]">check_circle</span>
+                  <span>Immutable cryptographic seal verified in commit</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: CI Workflow Code -->
+            <div class="lg:col-span-7 bg-[#121620] rounded-xl shadow-xl overflow-hidden flex flex-col border border-slate-700/60">
+              <!-- Terminal Chrome Bar -->
+              <div class="bg-[#181d2a] px-space-md py-2.5 flex items-center justify-between border-b border-slate-700/50">
+                <div class="flex items-center gap-space-xs font-code-sm text-code-sm text-slate-400">
+                  <span class="material-symbols-outlined text-[16px] text-blue-400">terminal</span>
+                  <span>.github/workflows/ci.yml</span>
+                </div>
+                <span class="font-label-sm text-label-sm px-space-xs py-0.5 rounded bg-slate-800 text-blue-400 font-semibold font-mono">GitHub Actions</span>
+              </div>
+              
+              <!-- Code Window -->
+              <div class="p-space-md font-code-sm text-code-sm bg-[#0a0e17] overflow-x-auto leading-relaxed">
+                <pre class="text-slate-200"><code><span class="text-slate-500">name:</span> <span class="text-emerald-300">"Testform State &amp; Drift Validation"</span>
+<span class="text-slate-500">on:</span>
+  <span class="text-blue-400 font-semibold">pull_request:</span>
+    <span class="text-slate-500">branches:</span> [ <span class="text-emerald-300">main</span>, <span class="text-emerald-300">release/*</span> ]
+
+<span class="text-slate-500">jobs:</span>
+  <span class="text-blue-400 font-semibold">testform-drift-guard:</span>
+    <span class="text-slate-500">runs-on:</span> <span class="text-emerald-300">ubuntu-latest</span>
+    <span class="text-slate-500">steps:</span>
+      - <span class="text-indigo-300">name:</span> <span class="text-slate-200">Checkout Repository Code</span>
+        <span class="text-slate-500">uses:</span> <span class="text-emerald-300">actions/checkout@v4</span>
+
+      - <span class="text-indigo-300">name:</span> <span class="text-slate-200">Setup Node.js Runtime</span>
+        <span class="text-slate-500">uses:</span> <span class="text-emerald-300">actions/setup-node@v4</span>
+        <span class="text-slate-500">with:</span>
+          <span class="text-slate-500">node-version:</span> <span class="text-indigo-300">'20.x'</span>
+
+      - <span class="text-indigo-300">name:</span> <span class="text-slate-200">Install Testform Engine CLI</span>
+        <span class="text-slate-500">run:</span> <span class="text-emerald-300">npm i -g @fromeroc9/testform</span>
+
+      - <span class="text-indigo-300">name:</span> <span class="text-slate-200">Initialize Backend</span>
+        <span class="text-slate-500">run:</span> <span class="text-emerald-300">testform init</span>
+
+      - <span class="text-indigo-300">name:</span> <span class="text-slate-200">Execute Speculative Drift Plan</span>
+        <span class="text-slate-500">run:</span> <span class="text-blue-400">testform plan</span>
+
+      - <span class="text-indigo-300">name:</span> <span class="text-slate-200">Audit Remote State Synchronization</span>
+        <span class="text-slate-500">run:</span> <span class="text-emerald-300">testform diff --remote</span></code></pre>
+              </div>
+
+              <!-- Diff Bar in CI -->
+              <div class="px-space-md py-2.5 bg-[#161b26] flex items-center justify-between text-slate-400 font-code-sm text-code-sm border-t border-slate-800">
+                <span class="text-blue-400 flex items-center gap-1 font-semibold">
+                  <span class="material-symbols-outlined text-[16px]">check_circle</span>
+                  Exit Code 0: Clean Test State Matrix
+                </span>
+                <span class="text-cyan-400">PR Drift Guard: Active</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 5. ROI & IMPACT CALCULATOR                 -->
+      <!-- ========================================== -->
+      <section class="w-full py-space-xl">
+        <div class="w-full px-margin md:px-margin-tablet lg:px-margin-desktop max-w-7xl mx-auto">
+          <div class="max-w-2xl mb-space-lg">
+            <div class="font-label-sm text-label-sm text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-space-xs font-semibold">Economic Model for Engineering Leads</div>
+            <h2 class="font-headline-lg text-headline-lg text-slate-900 dark:text-white mb-space-xs">
+              Instant Impact & ROI Calculator
+            </h2>
+            <p class="font-body-md text-body-md text-slate-600 dark:text-slate-300">
+              Contrast the hidden cost of paying SaaS QA licenses against the open adoption of Test-as-Code.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-space-md items-stretch">
+            
+            <!-- Controls Pane (7 cols) -->
+            <div class="lg:col-span-7 bg-slate-50 dark:bg-surface-container rounded-xl p-space-lg shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+              <div class="space-y-space-lg">
+                <!-- Slider 1: Dev count -->
+                <div>
+                  <div class="flex items-center justify-between mb-space-xs">
+                    <label class="font-label-md text-label-md text-slate-900 dark:text-white font-semibold" for="dev-count-slider">
+                      Engineering & QA Team Size
+                    </label>
+                    <span class="font-code-lg text-code-lg text-blue-600 dark:text-blue-400 font-bold" id="dev-count-label">50 Engineers</span>
+                  </div>
+                  <input class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600" id="dev-count-slider" max="200" min="5" oninput="recalculateRoi()" step="5" type="range" value="50" />
+                  <div class="flex justify-between font-code-sm text-code-sm text-slate-500 dark:text-slate-400 mt-1 font-mono">
+                    <span>5 devs</span>
+                    <span>50 devs</span>
+                    <span>100 devs</span>
+                    <span>200+ devs</span>
+                  </div>
+                </div>
+
+                <!-- Slider 2: SaaS cost per seat -->
+                <div>
+                  <div class="flex items-center justify-between mb-space-xs">
+                    <label class="font-label-md text-label-md text-slate-900 dark:text-white font-semibold" for="seat-cost-slider">
+                      Current Monthly SaaS Cost Per Seat
+                    </label>
+                    <span class="font-code-lg text-code-lg text-cyan-600 dark:text-cyan-400 font-bold" id="seat-cost-label">$60 USD / mo</span>
+                  </div>
+                  <input class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-600" id="seat-cost-slider" max="120" min="30" oninput="recalculateRoi()" step="5" type="range" value="60" />
+                  <div class="flex justify-between font-code-sm text-code-sm text-slate-500 dark:text-slate-400 mt-1 font-mono">
+                    <span>$30/mo</span>
+                    <span>$60/mo (Average)</span>
+                    <span>$90/mo</span>
+                    <span>$120/mo</span>
+                  </div>
+                </div>
+
+                <!-- Breakdown Notes -->
+                <div class="p-space-md rounded-lg bg-white dark:bg-surface-container-low text-slate-600 dark:text-slate-300 font-body-sm text-body-sm space-y-1 border border-slate-200 dark:border-slate-800">
+                  <div class="flex items-center gap-space-xs text-slate-900 dark:text-white font-medium">
+                    <span class="material-symbols-outlined text-[16px] text-blue-600 dark:text-blue-400">info</span>
+                    <span>Calculation based on traditional licenses (TestRail, Zephyr, Xray, PractiTest):</span>
+                  </div>
+                  <p>• Engineers do not need read/write accounts on external platforms: everything flows through Git.</p>
+                  <p>• Includes a conservative estimate of 1.5 hours saved per engineer per week on manual sync tasks.</p>
+                </div>
+              </div>
+
+              <div class="pt-space-md font-label-sm text-label-sm text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 mt-space-md">
+                Testform Core: 100% direct license savings with unlimited test runs.
+              </div>
+            </div>
+
+            <!-- Metric Output Cards Pane (5 cols) -->
+            <div class="lg:col-span-5 flex flex-col gap-space-md">
+              <!-- Big Highlight: Annual savings -->
+              <div class="bg-slate-50 dark:bg-surface-container-lowest rounded-xl p-space-lg shadow-xl border border-slate-200 dark:border-slate-800 flex-1 flex flex-col justify-between">
+                <div>
+                  <div class="font-label-sm text-label-sm text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-space-xs font-semibold">
+                    Net Annual License Savings
+                  </div>
+                  <div class="font-display-lg text-display-lg text-blue-600 dark:text-blue-400 font-bold tracking-tight my-space-xs" id="annual-savings-display">$36,000</div>
+                  <div class="font-headline-sm text-headline-sm text-slate-800 dark:text-white font-medium">
+                    USD eliminated from recurring spend
+                  </div>
+                </div>
+
+                <div class="pt-space-md mt-space-md border-t border-slate-200 dark:border-slate-800">
+                  <div class="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden mb-space-xs">
+                    <div class="h-full bg-blue-600 dark:bg-blue-500 rounded-full transition-all duration-300" style="width: 100%;"></div>
+                  </div>
+                  <div class="flex justify-between font-code-sm text-code-sm text-slate-500 dark:text-slate-400 font-mono">
+                    <span>Testform Spend: $0</span>
+                    <span class="text-blue-600 dark:text-blue-400 font-bold">100% Seat Cost Reduction</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Secondary Metric: Hours saved -->
+              <div class="bg-slate-100 dark:bg-surface-container-high rounded-xl p-space-md shadow-md border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div>
+                  <div class="font-label-sm text-label-sm text-slate-500 dark:text-slate-400 uppercase">Manual Hours Saved</div>
+                  <div class="font-headline-md text-headline-md text-cyan-700 dark:text-cyan-400 font-bold" id="hours-saved-display">3,900 hrs / yr</div>
+                  <div class="font-body-sm text-body-sm text-slate-600 dark:text-slate-400">Manual reconciliations eliminated</div>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-cyan-100 dark:bg-cyan-950/60 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
+                  <span class="material-symbols-outlined text-[28px]">schedule</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 6. BENCHMARK: TESTFORM VS TRADITIONAL      -->
+      <!-- ========================================== -->
+      <section class="w-full py-space-xl bg-slate-50 dark:bg-surface-container-lowest border-y border-slate-200 dark:border-slate-800 transition-colors duration-200">
+        <div class="w-full px-margin md:px-margin-tablet lg:px-margin-desktop max-w-7xl mx-auto">
+          <div class="max-w-3xl mb-space-xl">
+            <div class="font-label-sm text-label-sm text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-space-xs font-semibold">Technical &amp; Operational Matrix</div>
+            <h2 class="font-headline-lg text-headline-lg text-slate-900 dark:text-white mb-space-xs">
+              Hybrid Benchmark: Testform vs Traditional SaaS
+            </h2>
+            <p class="font-body-md text-body-md text-slate-600 dark:text-slate-300">
+              Compare point-by-point the agility, costs, and data sovereignty of a Test-as-Code architecture versus the legacy disconnected SaaS model.
+            </p>
+          </div>
+
+          <!-- Comparison Table -->
+          <div class="w-full overflow-x-auto rounded-xl shadow-xl border border-slate-200 dark:border-slate-800">
+            <table class="w-full text-left bg-white dark:bg-surface-container-low min-w-[700px]">
+              <thead>
+                <tr class="bg-slate-100 dark:bg-surface-container-high text-slate-900 dark:text-white font-label-md text-label-md uppercase border-b border-slate-200 dark:border-slate-800">
+                  <th class="py-space-md px-space-lg w-1/3">Evaluation Criteria</th>
+                  <th class="py-space-md px-space-lg w-1/3 text-blue-600 dark:text-blue-400 font-bold">testform. (Declarative TaC)</th>
+                  <th class="py-space-md px-space-lg w-1/3 text-slate-500 dark:text-slate-400">Traditional SaaS (Legacy QA)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-800 font-body-sm text-body-sm">
+                <!-- Row 1: Cost -->
+                <tr class="hover:bg-slate-50 dark:hover:bg-surface-container transition-colors">
+                  <td class="py-space-md px-space-lg text-slate-900 dark:text-white font-semibold flex items-center gap-space-xs">
+                    <span class="material-symbols-outlined text-[16px] text-blue-600 dark:text-blue-400">attach_money</span>
+                    Cost Model
+                  </td>
+                  <td class="py-space-md px-space-lg text-blue-600 dark:text-blue-400 font-medium">
+                    <div class="font-code-md text-code-md font-bold">$0 / Seat</div>
+                    <div>Zero cost per developer and no execution quotas</div>
+                  </td>
+                  <td class="py-space-md px-space-lg text-slate-500 dark:text-slate-400">
+                    <div class="font-code-md text-code-md text-rose-600 dark:text-rose-400 font-bold">$50 - $85 / mo</div>
+                    <div>Mandatory per-user license fees</div>
+                  </td>
+                </tr>
+
+                <!-- Row 2: Source of Truth -->
+                <tr class="hover:bg-slate-50 dark:hover:bg-surface-container transition-colors bg-slate-50/50 dark:bg-surface-container/50">
+                  <td class="py-space-md px-space-lg text-slate-900 dark:text-white font-semibold flex items-center gap-space-xs">
+                    <span class="material-symbols-outlined text-[16px] text-blue-600 dark:text-blue-400">commit</span>
+                    Source of Truth
+                  </td>
+                  <td class="py-space-md px-space-lg text-blue-600 dark:text-blue-400 font-medium">
+                    <div class="font-bold">Native Git</div>
+                    <div>Specs versioned in PRs, branches, and commits</div>
+                  </td>
+                  <td class="py-space-md px-space-lg text-slate-500 dark:text-slate-400">
+                    <div>Isolated Web UI</div>
+                    <div>Third-party database disconnected from source code</div>
+                  </td>
+                </tr>
+
+                <!-- Row 3: Drift Detection -->
+                <tr class="hover:bg-slate-50 dark:hover:bg-surface-container transition-colors">
+                  <td class="py-space-md px-space-lg text-slate-900 dark:text-white font-semibold flex items-center gap-space-xs">
+                    <span class="material-symbols-outlined text-[16px] text-rose-500">warning</span>
+                    Drift Detection
+                  </td>
+                  <td class="py-space-md px-space-lg text-blue-600 dark:text-blue-400 font-medium">
+                    <div class="font-bold">Automated in CI/CD</div>
+                    <div><code class="font-code-sm text-blue-600 dark:text-blue-400 font-mono">testform diff --remote</code> alerts and blocks misaligned merges</div>
+                  </td>
+                  <td class="py-space-md px-space-lg text-slate-500 dark:text-slate-400">
+                    <div class="text-rose-600 dark:text-rose-400 font-bold">Manual & Nonexistent</div>
+                    <div>Relies on testers memory to update web portals</div>
+                  </td>
+                </tr>
+
+                <!-- Row 4: Audit & Traceability -->
+                <tr class="hover:bg-slate-50 dark:hover:bg-surface-container transition-colors bg-slate-50/50 dark:bg-surface-container/50">
+                  <td class="py-space-md px-space-lg text-slate-900 dark:text-white font-semibold flex items-center gap-space-xs">
+                    <span class="material-symbols-outlined text-[16px] text-indigo-500">fingerprint</span>
+                    Audit & Traceability
+                  </td>
+                  <td class="py-space-md px-space-lg text-blue-600 dark:text-blue-400 font-medium">
+                    <div class="font-bold">Git Blame + SHA-256 Ledger</div>
+                    <div>Immutable cryptographic seal verified by hash</div>
+                  </td>
+                  <td class="py-space-md px-space-lg text-slate-500 dark:text-slate-400">
+                    <div>Proprietary Volatile Logs</div>
+                    <div>Editable by admins, no digital signature</div>
+                  </td>
+                </tr>
+
+                <!-- Row 5: Storage & Sovereignty -->
+                <tr class="hover:bg-slate-50 dark:hover:bg-surface-container transition-colors">
+                  <td class="py-space-md px-space-lg text-slate-900 dark:text-white font-semibold flex items-center gap-space-xs">
+                    <span class="material-symbols-outlined text-[16px] text-cyan-600 dark:text-cyan-400">cloud_done</span>
+                    Storage & Sovereignty
+                  </td>
+                  <td class="py-space-md px-space-lg text-blue-600 dark:text-blue-400 font-medium">
+                    <div class="font-bold">100% Your Own Repo & Cloud</div>
+                    <div>Your data resides in your cloud (S3, GCS, Azure, or local)</div>
+                  </td>
+                  <td class="py-space-md px-space-lg text-slate-500 dark:text-slate-400">
+                    <div>Vendor Closed Cloud</div>
+                    <div>Risk of vendor lock-in and sensitive data leakage</div>
+                  </td>
+                </tr>
+
+                <!-- Row 6: CI/CD Pipeline Integration -->
+                <tr class="hover:bg-slate-50 dark:hover:bg-surface-container transition-colors bg-slate-50/50 dark:bg-surface-container/50">
+                  <td class="py-space-md px-space-lg text-slate-900 dark:text-white font-semibold flex items-center gap-space-xs">
+                    <span class="material-symbols-outlined text-[16px] text-blue-600 dark:text-blue-400">terminal</span>
+                    CI/CD Pipeline Integration
+                  </td>
+                  <td class="py-space-md px-space-lg text-blue-600 dark:text-blue-400 font-medium">
+                    <div class="font-bold">Pipeline First (Native GitHub Actions &amp; GitLab CI)</div>
+                    <div>Governs QA lifecycle directly in your workflows via CLI</div>
+                  </td>
+                  <td class="py-space-md px-space-lg text-slate-500 dark:text-slate-400">
+                    <div>Rigid Plugins / Limited Webhooks</div>
+                    <div>Requires slow sync tools, third-party tokens, and proprietary SDKs</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 7. CALL TO ACTION FINAL                     -->
+      <!-- ========================================== -->
+      <section class="relative w-full py-space-xl overflow-hidden">
+        <!-- Ambient Blue Gradient -->
+        <div class="absolute inset-0 bg-gradient-to-t from-blue-500/10 via-transparent to-transparent pointer-events-none -z-10"></div>
+        
+        <div class="w-full px-margin md:px-margin-tablet lg:px-margin-desktop max-w-5xl mx-auto text-center flex flex-col items-center">
+          <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-surface-container-high text-blue-600 dark:text-blue-400 flex items-center justify-center mb-space-md shadow-lg border border-blue-200 dark:border-slate-800">
+            <span class="material-symbols-outlined text-[28px]">terminal</span>
+          </div>
+          
+          <h2 class="font-headline-lg text-headline-lg text-slate-900 dark:text-white mb-space-xs">
+            Start governing your tests as infrastructure
+          </h2>
+          <p class="font-body-lg text-body-lg text-slate-600 dark:text-slate-300 max-w-2xl mb-space-lg">
+            Install the official CLI, run your first <code class="text-blue-600 dark:text-blue-400 font-code-sm">testform init</code>, and protect your pipeline against desynchronization in under two minutes.
+          </p>
+
+          <!-- Instant Installation Card -->
+          <div class="w-full max-w-2xl bg-slate-50 dark:bg-surface-container-low p-space-md rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-space-md mb-space-lg">
+            <div class="flex items-center gap-space-sm font-code-md text-code-md text-slate-900 dark:text-on-surface min-w-0 font-mono">
+              <span class="text-blue-600 dark:text-blue-400 select-none font-bold">$</span>
+              <span class="truncate font-bold">npm i -g @fromeroc9/testform</span>
+            </div>
+            <button class="w-full sm:w-auto px-space-lg py-2.5 rounded bg-blue-600 text-white font-label-md text-label-md font-bold hover:bg-blue-500 transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 flex-shrink-0" id="final-copy-btn" onclick="copyFinalCommand()" type="button">
+              <span class="material-symbols-outlined text-[16px]">content_copy</span>
+              <span id="final-btn-label">Copy Command</span>
+            </button>
+          </div>
+
+          <!-- Action Links Row (clean links, not bulky buttons) -->
+          <div class="flex flex-wrap items-center justify-center gap-6">
+            <a class="text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-400 font-label-md text-label-md transition-colors flex items-center gap-1.5 font-medium" href="/en/docs/">
+              <span class="material-symbols-outlined text-[18px] text-blue-600 dark:text-blue-400">menu_book</span>
+              <span>Read Documentation</span>
+            </a>
+            <a class="text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-400 font-label-md text-label-md transition-colors flex items-center gap-1.5 font-medium" href="/en/cli/">
+              <span class="material-symbols-outlined text-[18px] text-blue-600 dark:text-blue-400">code</span>
+              <span>CLI Reference</span>
+            </a>
+            <a class="text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-400 font-label-md text-label-md transition-colors flex items-center gap-1.5 font-medium" href="https://github.com/fromeroc9/testform" target="_blank" rel="noopener noreferrer">
+              <span class="text-blue-600 dark:text-blue-400">★</span>
+              <span>GitHub (Open Source)</span>
+            </a>
+          </div>
+
+          <div class="mt-space-lg font-code-sm text-code-sm text-slate-500 dark:text-slate-400 flex items-center gap-2 font-mono">
+            <span class="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400"></span>
+            <span>Open Source Apache-2.0 • Compatible with any modern testing stack</span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ========================================== -->
+  <!-- FOOTER                                     -->
+  <!-- ========================================== -->
+  <footer class="w-full bg-slate-50 dark:bg-surface-container-lowest border-t border-slate-200 dark:border-slate-800 transition-colors duration-200">
+    <div class="w-full px-margin md:px-margin-tablet lg:px-margin-desktop py-space-xl max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-space-xl mb-space-xl">
+        
+        <div class="md:col-span-1 space-y-space-sm">
+          <div class="flex items-center gap-space-xs">
+            <span class="font-headline-sm text-headline-sm font-bold text-slate-900 dark:text-white">testform<span class="text-blue-600 dark:text-blue-400 font-extrabold">.</span></span>
+          </div>
+          <p class="font-body-sm text-body-sm text-slate-600 dark:text-slate-400">
+            Declarative Test-as-Code state orchestration engine. Deterministic testing with zero drift.
+          </p>
+          <div class="flex items-center gap-space-xs font-code-sm text-code-sm text-blue-600 dark:text-blue-400 font-mono">
+            <span class="text-cyan-600 dark:text-cyan-400">$</span>
+            <span>npm i -g @fromeroc9/testform</span>
+          </div>
+        </div>
+
+        <div class="space-y-space-sm">
+          <div class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-slate-900 dark:text-white">Architecture</div>
+          <ul class="space-y-space-xs font-label-md text-label-md">
+            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="/en/docs/test-as-code/gherkin/">Declarative Gherkin (TMaC)</a></li>
+            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="/en/docs/guides/lifecycle/">Pipeline First Engine</a></li>
+            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="/en/docs/guides/drift-detection/">Drift Detection</a></li>
+          </ul>
+        </div>
+
+        <div class="space-y-space-sm">
+          <div class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-slate-900 dark:text-white">Documentation</div>
+          <ul class="space-y-space-xs font-label-md text-label-md">
+            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="/en/docs/getting-started/">Getting Started</a></li>
+            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="/en/cli/">CLI Reference</a></li>
+            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="/en/api/">API Specification</a></li>
+          </ul>
+        </div>
+
+        <div class="space-y-space-sm">
+          <div class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-slate-900 dark:text-white">Ecosystem</div>
+          <ul class="space-y-space-xs font-label-md text-label-md">
+            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="https://github.com/fromeroc9/testform" target="_blank" rel="noopener noreferrer">GitHub Repository</a></li>
+            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="https://github.com/fromeroc9/testform/issues" target="_blank" rel="noopener noreferrer">Report an Issue</a></li>
+            <li><a class="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" href="https://www.npmjs.com/package/@fromeroc9/testform" target="_blank" rel="noopener noreferrer">NPM Package</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="pt-space-md border-t border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-space-sm font-label-sm text-label-sm text-slate-500 dark:text-slate-400 font-mono">
+        <div>
+          <span>© 2026 testform. Distributed under Apache 2.0 License.</span>
+        </div>
+        <div class="flex items-center gap-space-md">
+          <span class="text-blue-600 dark:text-blue-400">hash: 0x9e7a...tm</span>
+          <span class="text-cyan-600 dark:text-cyan-400">cluster: ready</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========================================== -->
+  <!-- CLIENT INTERACTION SCRIPTS                 -->
+  <!-- ========================================== -->
+  <script is:inline>
+    // 1. THEME SWITCHER (DARK / LIGHT SYNCHRONIZED WITH STARLIGHT)
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.contains('dark');
+      const nextTheme = isDark ? 'light' : 'dark';
+
+      if (nextTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.dataset.theme = 'dark';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.dataset.theme = 'light';
+      }
+
+      localStorage.setItem('starlight-theme', nextTheme);
+      localStorage.setItem('theme', nextTheme);
+    }
+
+    // 2. CLI COMMAND COPY
+    function copyCliCommand() {
+      const text = 'npm i -g @fromeroc9/testform';
+      navigator.clipboard.writeText(text).then(() => {
+        const label = document.getElementById('copy-btn-label');
+        if (label) {
+          label.textContent = 'Copied!';
+          setTimeout(() => { label.textContent = 'Copy'; }, 2000);
+        }
+      });
+    }
+
+    function copyFinalCommand() {
+      navigator.clipboard.writeText('npm i -g @fromeroc9/testform').then(() => {
+        const label = document.getElementById('final-btn-label');
+        if (label) {
+          label.textContent = 'Copied!';
+          setTimeout(() => { label.textContent = 'Copy Command'; }, 2000);
+        }
+      });
+    }
+
+    // 3. UNIFIED WORKBENCH SPEC TABS
+    function selectEditorTab(tabKey) {
+      const tabs = ['testcase', 'testrun', 'testplan'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        const content = document.getElementById(`editor-content-${t}`);
+        if (t === tabKey) {
+          if (btn) btn.className = 'px-space-sm py-1.5 rounded-t text-left font-code-sm text-code-sm transition-colors bg-[#0f131c] text-blue-400 font-semibold flex items-center gap-1.5 border-t-2 border-blue-500';
+          if (content) content.classList.remove('hidden');
+        } else {
+          if (btn) btn.className = 'px-space-sm py-1.5 rounded-t text-left font-code-sm text-code-sm transition-colors text-slate-400 hover:text-slate-200 hover:bg-[#1c2230] flex items-center gap-1.5 border-t-2 border-transparent';
+          if (content) content.classList.add('hidden');
+        }
+      });
+    }
+
+    function manualEditorSelect(tabKey) {
+      selectEditorTab(tabKey);
+    }
+
+    // 4. REALTIME LIFECYCLE CONSOLE PHASES (REAL TESTFORM LOGS)
+    const lifecycleOutputs = {
+      init: [
+        '<span class="text-blue-400">$ testform init</span>',
+        '<span class="text-slate-400">Initializing the backend "local"... [OK]</span>',
+        '<span class="text-slate-400">Initializing provider plugins...</span>',
+        '<span class="text-slate-200">- Finding provider "github"...</span>',
+        '<span class="text-slate-200">- Installed provider "github" (v1.0)</span>',
+        '<span class="text-blue-400 font-bold">✔ testform has been successfully initialized!</span>',
+        '<span class="text-slate-400">You may now begin working with testform. Try running "testform plan".</span>'
+      ],
+      plan: [
+        '<span class="text-blue-400">$ testform plan</span>',
+        '<span class="text-slate-400">testform used selected providers to generate the execution plan:</span>',
+        '<span class="text-blue-400 font-bold">  # [TodoMVC Task Management].testcase.@tc-001 will be created</span>',
+        '<span class="text-cyan-300">  + resource "testcase" "@tc-001" {</span>',
+        '<span class="text-cyan-300">      + feature = "TodoMVC Task Management"</span>',
+        '<span class="text-cyan-300">      + uri     = "features/todo.case.feature"</span>',
+        '<span class="text-cyan-300">      + labels  = ["@testcase", "@tc-001"]</span>',
+        '<span class="text-cyan-300">      + title   = "Create a new task in TodoMVC"</span>',
+        '<span class="text-cyan-300">    }</span>',
+        '<span class="text-slate-200 font-semibold">Plan: <span class="text-blue-400 font-bold">1 to add</span>, <span class="text-cyan-400">0 to change</span>, <span class="text-slate-400">0 to destroy</span>.</span>',
+        '<span class="text-blue-400 font-semibold">✔ State: Read-only check verified against testform.state</span>'
+      ],
+      apply: [
+        '<span class="text-blue-400">$ testform apply -auto-approve</span>',
+        '<span class="text-slate-400">Acquiring state lock on local:testform.state... [OK]</span>',
+        '<span class="text-cyan-300">testcase.features/todo.case.feature.@tc-001: Creating...</span>',
+        '<span class="text-emerald-400">testcase.features/todo.case.feature.@tc-001: Creation complete after 0.6s [id=PVTI_lADO #14]</span>',
+        '<span class="text-slate-500">--------------------------------------------------</span>',
+        '<span class="text-blue-400 font-bold">Apply complete! Resources: 1 added, 0 changed, 0 destroyed.</span>',
+        '<span class="text-slate-400">State lock released. Zero drift maintained.</span>'
+      ],
+      diff: [
+        '<span class="text-blue-400">$ testform diff --remote</span>',
+        '<span class="text-slate-200 font-semibold"># testform Remote Drift Detection</span>',
+        '<span class="text-slate-400">Checking local configuration and state against live remote provider...</span>',
+        '<span class="text-slate-500">────────────────────────────────────────────────────────────</span>',
+        '<span class="text-blue-400 font-bold">✔ No remote drift detected. Local configuration matches remote.</span>',
+        '<span class="text-indigo-300">Remote Sync:   <span class="text-slate-200">GitHub Projects V2 (Project #4)</span></span>',
+        '<span class="text-indigo-300">State Hash:    <span class="text-blue-400 font-mono font-bold">sha256:7c9e12... [VERIFIED]</span></span>',
+        '<span class="text-blue-400 font-bold">✔ 0 drift detected. Remote project matches Git source of truth.</span>'
+      ]
+    };
+
+    const phaseConfig = {
+      init: { fileTab: 'testcase', label: 'PHASE 1 / 4', hash: 'SHA: 0x8a4b...INIT' },
+      plan: { fileTab: 'testcase', label: 'PHASE 2 / 4', hash: 'SHA: 0x3d12...PLAN' },
+      apply: { fileTab: 'testrun', label: 'PHASE 3 / 4', hash: 'SHA: 0x4f8e...APPLY' },
+      diff: { fileTab: 'testplan', label: 'PHASE 4 / 4', hash: 'SHA: 0x7c9e...SYNCED' }
+    };
+
+    const phaseSequence = ['init', 'plan', 'apply', 'diff'];
+    let currentPhaseIndex = 0;
+    let autoLoopInterval = null;
+
+    function applyPhaseState(phaseKey) {
+      // 1. Update Buttons
+      phaseSequence.forEach(p => {
+        const btn = document.getElementById(`btn-phase-${p}`);
+        if (btn) {
+          if (p === phaseKey) {
+            btn.className = 'px-space-sm py-1 rounded font-label-md text-label-md transition-all bg-blue-600 text-white font-bold shadow-sm';
+          } else {
+            btn.className = 'px-space-sm py-1 rounded font-label-md text-label-md transition-all bg-[#242b3d] hover:bg-[#2d364d] text-slate-300';
+          }
+        }
+      });
+
+      // 2. Terminal dynamic output
+      const logContainer = document.getElementById('console-dynamic-log');
+      const lines = lifecycleOutputs[phaseKey] || [];
+      if (logContainer) {
+        logContainer.innerHTML = lines.map(line => `<div>${line}</div>`).join('');
+      }
+
+      // 3. Corresponding spec editor tab
+      const cfg = phaseConfig[phaseKey];
+      if (cfg) {
+        selectEditorTab(cfg.fileTab);
+        const tag = document.getElementById('phase-countdown-tag');
+        if (tag) tag.textContent = cfg.label;
+
+        const hashDisplay = document.getElementById('console-hash-text');
+        if (hashDisplay) {
+          hashDisplay.textContent = cfg.hash;
+          if (phaseKey === 'diff') {
+            hashDisplay.className = 'text-blue-400 font-code-sm font-bold';
+          } else if (phaseKey === 'apply') {
+            hashDisplay.className = 'text-emerald-400 font-code-sm';
+          } else {
+            hashDisplay.className = 'text-blue-400 font-code-sm';
+          }
+        }
+      }
+    }
+
+    function startAutoLoop() {
+      if (autoLoopInterval) clearInterval(autoLoopInterval);
+      autoLoopInterval = setInterval(() => {
+        currentPhaseIndex = (currentPhaseIndex + 1) % phaseSequence.length;
+        applyPhaseState(phaseSequence[currentPhaseIndex]);
+      }, 4000);
+    }
+
+    function manualPhaseSelect(phaseKey) {
+      currentPhaseIndex = phaseSequence.indexOf(phaseKey);
+      applyPhaseState(phaseKey);
+      startAutoLoop();
+    }
+
+    function restartLifecycleLoop() {
+      manualPhaseSelect('init');
+    }
+
+    // 5. ROI DYNAMIC CALCULATOR
+    function recalculateRoi() {
+      const devSlider = document.getElementById('dev-count-slider');
+      const costSlider = document.getElementById('seat-cost-slider');
+      if (!devSlider || !costSlider) return;
+
+      const devs = parseInt(devSlider.value, 10);
+      const seatCost = parseInt(costSlider.value, 10);
+
+      const devLabel = document.getElementById('dev-count-label');
+      const costLabel = document.getElementById('seat-cost-label');
+      if (devLabel) devLabel.textContent = `${devs} Engineers`;
+      if (costLabel) costLabel.textContent = `${seatCost} USD / mo`;
+
+      // Annual license savings = devs * seatCost * 12 months
+      const annualSavings = devs * seatCost * 12;
+      const savingsDisplay = document.getElementById('annual-savings-display');
+      if (savingsDisplay) savingsDisplay.textContent = `$${annualSavings.toLocaleString('en-US')}`;
+
+      // Estimated manual hours saved = devs * 1.5 hrs/week * 52 weeks
+      const hoursSaved = Math.round(devs * 1.5 * 52);
+      const hoursDisplay = document.getElementById('hours-saved-display');
+      if (hoursDisplay) hoursDisplay.textContent = `${hoursSaved.toLocaleString('en-US')} hrs / yr`;
+    }
+
+    // Initializer on Load
+    document.addEventListener('DOMContentLoaded', () => {
+      applyPhaseState('init');
+      startAutoLoop();
+      recalculateRoi();
+    });
+  </script>
+
+</body>
+</html>

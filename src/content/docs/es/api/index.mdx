@@ -1,0 +1,30 @@
+---
+title: "Referencia de API y Proveedores"
+---
+
+La especificación de **API & Providers** detalla los contratos de comunicación entre el motor central de Testform, los adaptadores de sincronización (*Providers*) y los motores de almacenamiento distribuido (*Backends*).
+
+---
+
+## 🔌 Arquitectura de Proveedores
+
+Testform se comunica con plataformas externas a través de proveedores modulares desacoplados:
+
+- **GitHub Provider:** Sincronización bidireccional mediante GraphQL v4 y REST v3 con issues, hitos (*milestones*) y GitHub Projects V2.
+- **GitLab Provider:** Mapeo de casos y estados hacia GitLab Issues e Issue Boards.
+- **Local Provider:** Proveedor de simulación 100% offline para pruebas deterministas sin tokens ni conexión de red.
+- **Custom Provider:** Soporte para conectar cualquier gestor de calidad interno vía HTTP REST o CLI bridge.
+
+---
+
+## 🪣 Arquitectura de Backends de Estado
+
+El estado de los recursos se conserva en un ledger inmutable con validación criptográfica SHA-256:
+
+- **GitHub Bucket:** Almacenamiento en rama Git nativa (`testform-state`) con optimistic locking.
+- **AWS S3 + DynamoDB:** Almacenamiento en buckets S3 con control de concurrencia mediante DynamoDB table lock.
+- **Azure Blob Storage:** Almacenamiento en contenedores Blob con leases distribuidos.
+- **Google Cloud Storage (GCS):** Almacenamiento de alta disponibilidad en buckets de GCP.
+- **Local:** Ledger en disco (`testform.state`).
+
+

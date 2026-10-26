@@ -1,0 +1,167 @@
+---
+title: "Backends y Almacenamiento de Estado"
+---
+
+Un **Backend** en Testform define dónde y cómo se almacena el archivo de estado (`testform.state`), y cómo se gestionan los bloqueos de concurrencia (`state lock`) para evitar colisiones entre pipelines de CI/CD e ingenieros.
+
+Siguiendo el diseño idiomático de Testform y Terraform, la configuración se define en **modo diccionario**, donde la clave raíz especifica directamente el tipo de backend (sin campos `type:` redundantes).
+
+---
+
+## 🌐 1. Backend REST / HTTP Nativo (`http` o `rest`)
+
+Permite almacenar el estado en cualquier API REST remota o servicio web HTTP compatible con el protocolo estándar de Terraform:
+
+```yaml
+# main.yml
+backend:
+  http: # o 'rest'
+    address: "https://api.empresa.com/v1/states/testform.state"
+    lock_address: "https://api.empresa.com/v1/states/testform.state/lock"
+    unlock_address: "https://api.empresa.com/v1/states/testform.state/unlock"
+    headers:
+      Authorization: "Bearer ${env.STATE_API_TOKEN}"
+      Content-Type: "application/json"
+    update_method: "POST" # 'POST' o 'PUT' (por defecto POST)
+```
+
+### Opciones del Backend HTTP
+
+| Parámetro | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `address` | `string` | **Requerido.** URL para operaciones de lectura (`GET`) y escritura (`POST`/`PUT`) del estado. |
+| `lock_address` | `string` | URL para adquirir el bloqueo de estado mediante petición `POST`. |
+| `unlock_address` | `string` | URL para liberar el bloqueo mediante petición `DELETE`. |
+| `headers` | `map` | Cabeceras HTTP personalizadas (autenticación `Bearer`, tokens, metadatos). |
+| `username` / `password` | `string` | Credenciales para autenticación HTTP Basic automática. |
+
+:::tip[Interpolación Dinámica de Workspaces]
+Si utilizas múltiples entornos de trabajo, puedes incluir `{workspace}` o `${workspace}` en la URL:
+```yaml
+address: "https://api.empresa.com/v1/workspaces/{workspace}/state"
+```
+:::
+
+---
+
+## 🛠️ 2. Custom Backend (`custom`)
+
+Si tu infraestructura requiere almacenamiento propietario, conexiones directas a bases de datos, Vault corporativo o firmas criptográficas personalizadas, puedes implementar tu propio backend:
+
+```yaml
+# main.yml
+backend:
+  custom:
+    source: ".testform/backends/vault-backend.js" # o paquete npm "@org/custom-backend"
+    # El resto de propiedades son libres y se entregan al constructor:
+    endpoint: "https://vault.internal.com"
+    tokenEnv: "VAULT_TOKEN"
+```
+
+### Implementación del Custom Backend
+
+Solo necesitas crear una clase que cumpla la interfaz de almacenamiento:
+
+```javascript
+// .testform/backends/vault-backend.js
+class VaultBackend {
+  constructor(config, workspace) {
+    this.endpoint = config.endpoint;
+    this.token = process.env[config.tokenEnv || 'VAULT_TOKEN'];
+    this.workspace = workspace;
+  }
+
+  async read() {
+    const res = await fetch(`${this.endpoint}/state/${this.workspace}`, {
+      headers: { Authorization: `Bearer ${this.token}` }
+    });
+    if (res.status === 404) return null;
+    return await res.json();
+  }
+
+  async write(state) {
+    await fetch(`${this.endpoint}/state/${this.workspace}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.token}` },
+      body: JSON.stringify(state)
+    });
+  }
+
+  async exists() { return (await this.read()) !== null; }
+  async lock(timeout) { return true; }
+  async unlock() { return true; }
+  async forceUnlock(lockId) { return { success: true }; }
+  async isLocked() { return false; }
+  async listWorkspaces() { return ['default']; }
+  async deleteWorkspace(name) { return true; }
+}
+
+module.exports = VaultBackend;
+```
+
+---
+
+## 🪣 3. GitHub como Bucket de Estado Nativo
+
+Almacena el estado directamente en una rama Git de tu repositorio sin requerir infraestructura externa:
+
+```yaml
+# main.yml
+backend:
+  github:
+    owner: "fromeroc9"
+    repository: "testform"
+    branch: "testform-state"          # Rama que actúa como bucket
+    path: "production.testform.state" # Ruta del objeto de estado
+    token_env: "GITHUB_TOKEN"
+```
+
+---
+
+## ☁️ 4. AWS S3 y Almacenamiento Compatible (MinIO, Cloudflare R2, Ceph, OCI)
+
+Soporta AWS S3 nativo y cualquier servicio compatible con la API de S3:
+
+```yaml
+# main.yml
+backend:
+  s3:
+    bucket: "empresa-qa-states"
+    key: "core/testform.state"
+    region: "us-east-1"
+    endpoint: "https://minio.internal.com:9000" # Endpoint custom para MinIO/R2
+    force_path_style: true                      # Requerido para MinIO o Ceph
+    dynamodb_table: "testform-locks"            # Tabla opcional para state locking
+```
+
+---
+
+## 💻 5. Backend Local
+
+Almacena el estado en el disco local (predeterminado en desarrollo):
+
+```yaml
+# main.yml
+backend:
+  local:
+    path: "./testform.state"
+```
+
+---
+
+## 🔒 State Locking y Desbloqueo Forzado
+
+Cuando se ejecutan operaciones concurrentes, Testform adquiere automáticamente un bloqueo:
+
+```bash
+$ testform apply
+Acquiring state lock on backend... [OK]
+...
+Releasing state lock... [OK]
+```
+
+Si un pipeline de CI/CD se detiene abruptamente y el bloqueo queda huérfano:
+
+```bash
+testform force-unlock <LOCK-ID>
+```

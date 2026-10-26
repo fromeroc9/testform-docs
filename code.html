@@ -1,0 +1,913 @@
+<!DOCTYPE html><html class="dark" lang="en" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_standard" name="shell-type"><title>testform. | Declarative Test as Code Platform</title><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"inverse-surface":"#dfe2ef","error":"#ffb4ab","on-primary":"#003824","surface-container-low":"#181b25","on-error":"#690005","tertiary-fixed-dim":"#d0bcff","secondary-fixed":"#acedff","primary-container":"#10b981","on-error-container":"#ffdad6","on-secondary-fixed-variant":"#004e5c","on-tertiary-container":"#4600a7","on-tertiary-fixed-variant":"#5516be","surface":"#0f131c","error-container":"#93000a","surface-variant":"#31353f","surface-container":"#1c1f29","secondary":"#4cd7f6","on-primary-container":"#00422b","surface-container-highest":"#31353f","primary-fixed":"#6ffbbe","primary-fixed-dim":"#4edea3","primary":"#4edea3","surface-tint":"#4edea3","secondary-fixed-dim":"#4cd7f6","tertiary-fixed":"#e9ddff","surface-dim":"#0f131c","outline":"#86948a","on-tertiary-fixed":"#23005c","tertiary":"#d0bcff","on-secondary-container":"#00424e","on-tertiary":"#3c0091","on-primary-fixed":"#002113","on-secondary":"#003640","on-background":"#dfe2ef","background":"#0f131c","on-secondary-fixed":"#001f26","inverse-on-surface":"#2c303a","on-surface":"#dfe2ef","surface-bright":"#353943","on-primary-fixed-variant":"#005236","secondary-container":"#03b5d3","surface-container-high":"#262a34","surface-container-lowest":"#0a0e17","on-surface-variant":"#bbcabf","inverse-primary":"#006c49","tertiary-container":"#b090ff","outline-variant":"#3c4a42"},borderRadius:{DEFAULT:"0.125rem",lg:"0.25rem",xl:"0.5rem",full:"0.75rem"},spacing:{margin:"1rem",gutter:"1.25rem","space-lg":"1.5rem","space-sm":"0.5rem","space-md":"1rem","margin-tablet":"2rem","gutter-desktop":"1.5rem","margin-desktop":"3rem","space-xs":"0.25rem","space-xl":"2.5rem"},fontFamily:{"display-lg":["Geist"],"code-sm":["JetBrains Mono"],"display-lg-mobile":["Geist"],"body-sm":["Geist"],"headline-sm":["Geist"],"label-md":["JetBrains Mono"],"headline-lg-mobile":["Geist"],"headline-md":["Geist"],"body-md":["Geist"],"body-lg":["Geist"],"label-sm":["JetBrains Mono"],"code-md":["JetBrains Mono"],"headline-lg":["Geist"],"code-lg":["JetBrains Mono"]},fontSize:{"display-lg":["56px",{lineHeight:"64px",letterSpacing:"-0.03em",fontWeight:"700"}],"code-sm":["11px",{lineHeight:"16px",fontWeight:"400"}],"display-lg-mobile":["36px",{lineHeight:"44px",letterSpacing:"-0.02em",fontWeight:"700"}],"body-sm":["12px",{lineHeight:"18px",fontWeight:"400"}],"headline-sm":["18px",{lineHeight:"26px",letterSpacing:"-0.01em",fontWeight:"600"}],"label-md":["12px",{lineHeight:"16px",letterSpacing:"0.04em",fontWeight:"500"}],"headline-lg-mobile":["26px",{lineHeight:"34px",letterSpacing:"-0.01em",fontWeight:"600"}],"headline-md":["24px",{lineHeight:"32px",letterSpacing:"-0.015em",fontWeight:"600"}],"body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],"body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],"label-sm":["10px",{lineHeight:"14px",letterSpacing:"0.06em",fontWeight:"600"}],"code-md":["13px",{lineHeight:"20px",fontWeight:"400"}],"headline-lg":["32px",{lineHeight:"40px",letterSpacing:"-0.02em",fontWeight:"600"}],"code-lg":["14px",{lineHeight:"22px",fontWeight:"500"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><header class="fixed top-0 w-full z-50 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.25)]"><div class="h-16 w-full px-margin md:px-margin-tablet lg:px-margin-desktop flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-lg"><a class="flex items-center gap-space-xs text-on-surface hover:text-primary transition-colors" data-path="overview" href="#"><span class="font-headline-sm text-headline-sm tracking-tight font-bold">testform<span class="text-primary">.</span></span><span class="font-label-sm text-label-sm px-space-xs py-0.5 rounded bg-surface-container text-secondary tracking-widest uppercase">TaC</span></a></div><nav class="hidden md:flex items-center gap-space-md font-label-md text-label-md"><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container px-space-sm py-1 rounded transition-colors" data-path="documentation" href="#">Docs</a><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container px-space-sm py-1 rounded transition-colors" data-path="cli-reference" href="#">CLI</a><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container px-space-sm py-1 rounded transition-colors" href="#">API</a></nav><div class="flex items-center gap-space-sm"><a class="flex items-center gap-space-xs px-space-sm py-1.5 rounded bg-surface-container hover:bg-surface-container-high hover:text-on-surface text-on-surface-variant font-label-sm text-label-sm transition-all" href="https://github.com"><span class="text-primary">★</span><span class="">4.2k</span></a><button class="flex items-center gap-space-xs px-space-sm py-1.5 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm transition-colors" type="button"><span class="material-symbols-outlined text-[16px] text-secondary">dark_mode</span><span class="hidden sm:inline">Night</span></button></div></div></header><main class="w-full pt-16 bg-surface min-h-[calc(100vh-16rem)]"><div class="flex flex-col w-full">
+<!-- ========================================== -->
+<!-- 1. HERO SECTION                            -->
+<!-- ========================================== -->
+<section class="relative w-full py-space-xl overflow-hidden">
+<!-- Subtle Background Ambient Glow -->
+<div class="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 max-w-5xl h-96 bg-gradient-to-b from-primary/10 via-secondary/5 to-transparent blur-3xl pointer-events-none -z-10"></div>
+<div class="w-full px-margin md:px-margin-tablet lg:px-margin-desktop max-w-7xl mx-auto flex flex-col items-center text-center">
+<!-- Top Tag Badge -->
+
+<!-- Main Title H1 -->
+<h1 class="font-display-lg text-display-lg tracking-tight text-on-surface mb-space-xs">
+        Testform<span class="text-primary animate-pulse inline-block">.</span>
+</h1>
+<!-- Highlighted Subtitle -->
+<p class="font-headline-md text-headline-md text-secondary tracking-normal mb-space-md font-semibold">
+        Declara, planifica, aplica y audita.
+      </p>
+<!-- Accurate Description (NO DAG mentions) -->
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-3xl mb-space-xl">
+        Orquestador declarativo de pruebas de software: sin servidores SaaS obligatorios y sin Test Drift. Gestiona el ciclo de vida completo de QA, versiona cada suite como código fuente y garantiza trazabilidad inmutable y criptográfica en cada commit.
+      </p>
+<!-- Interactive NPM / CURL Command Switcher -->
+<div class="w-full max-w-xl bg-surface-container-lowest rounded-xl p-space-sm shadow-xl flex flex-col gap-space-xs text-left">
+<!-- Switcher Header / Tabs -->
+<div class="flex items-center justify-between px-space-sm pb-space-xs">
+<div class="flex items-center gap-space-xs" id="cmd-tabs">
+<button class="px-space-sm py-1 rounded font-label-md text-label-md transition-colors bg-surface-container-high text-on-surface font-semibold" id="tab-npm" onclick="switchCliTab('npm')" type="button">
+              NPM
+            </button>
+<button class="px-space-sm py-1 rounded font-label-md text-label-md transition-colors text-on-surface-variant hover:text-on-surface" id="tab-curl" onclick="switchCliTab('curl')" type="button">
+              CURL
+            </button>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant tracking-wider uppercase">v0.19.4 • verified</span>
+</div>
+<!-- Terminal Command Box -->
+<div class="flex items-center justify-between gap-space-md bg-surface-container-low px-space-md py-space-sm rounded-lg">
+<div class="flex items-center gap-space-sm min-w-0 font-code-md text-code-md text-on-surface">
+<span class="text-secondary select-none font-bold">&gt;</span>
+<span class="truncate font-code-md" id="cli-command-text">npm i -g @fromero/testform</span>
+</div>
+<button class="flex-shrink-0 flex items-center gap-space-xs px-space-sm py-1.5 rounded bg-surface-container-high hover:bg-surface-variant text-on-surface font-label-sm text-label-sm transition-all active:scale-95" id="copy-cli-btn" onclick="copyCliCommand()" type="button">
+<span class="material-symbols-outlined text-[16px] text-primary">content_copy</span>
+<span id="copy-btn-label" class="">Copiar</span>
+</button>
+</div>
+</div>
+<!-- Quick Metrics Counter Strip -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-space-md w-full max-w-4xl mt-space-xl pt-space-lg text-left">
+<div class="bg-surface-container p-space-md rounded-lg shadow-sm">
+<div class="font-label-sm text-label-sm text-on-surface-variant uppercase">Desincronización</div>
+<div class="font-headline-md text-headline-md text-primary font-bold">0.0% Drift</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Sincronizado vía Git SHA</div>
+</div>
+<div class="bg-surface-container p-space-md rounded-lg shadow-sm">
+<div class="font-label-sm text-label-sm text-on-surface-variant uppercase">Licencias por Asiento</div>
+<div class="font-headline-md text-headline-md text-secondary font-bold">$0 / Dev</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Ejecución 100% libre en local</div>
+</div>
+<div class="bg-surface-container p-space-md rounded-lg shadow-sm">
+<div class="font-label-sm text-label-sm text-on-surface-variant uppercase">Ledger Inmutable</div>
+<div class="font-headline-md text-headline-md text-tertiary font-bold">SHA-256</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Pruebas selladas en commit</div>
+</div>
+<div class="bg-surface-container p-space-md rounded-lg shadow-sm">
+<div class="font-label-sm text-label-sm text-on-surface-variant uppercase">Tiempo de Setup</div>
+<div class="font-headline-md text-headline-md text-on-surface font-bold">&lt; 30 seg</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">CLI nativo sin servidores</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 2. WORKBENCH INTEGRADO: CICLO DECLARATIVO  -->
+<!-- ========================================== -->
+<section class="w-full py-space-xl bg-surface-container-lowest">
+<div class="w-full px-margin md:px-margin-tablet lg:px-margin-desktop max-w-7xl mx-auto">
+
+<!-- Unified Workbench / Single Console Frame -->
+<div class="w-full bg-surface-container-low rounded-xl shadow-2xl border border-outline-variant/50 overflow-hidden flex flex-col">
+<!-- Shared Unified Header Bar -->
+<div class="bg-surface-container-high px-space-md py-2.5 flex flex-wrap items-center justify-between gap-space-sm border-b border-outline-variant/40">
+<div class="flex items-center gap-space-sm">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-error"></span>
+<span class="w-2.5 h-2.5 rounded-full bg-secondary"></span>
+<span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface font-semibold ml-2">workbench@testform:~/specs</span>
+<span class="hidden md:inline font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-2 py-0.5 rounded bg-surface-container">HCL / Gherkin TaC IDE</span>
+</div>
+<!-- Lifecycle Step Selector Buttons (Unified) -->
+<div class="flex items-center gap-1 overflow-x-auto" id="lifecycle-btn-group">
+<button class="px-space-sm py-1 rounded font-label-md text-label-md transition-all bg-surface-container hover:bg-surface-variant text-on-surface" id="btn-phase-init" onclick="manualPhaseSelect('init')" type="button">
+          01 testform init
+        </button>
+<button class="px-space-sm py-1 rounded font-label-md text-label-md transition-all bg-surface-container hover:bg-surface-variant text-on-surface" id="btn-phase-plan" onclick="manualPhaseSelect('plan')" type="button">
+          02 testform plan
+        </button>
+<button class="px-space-sm py-1 rounded font-label-md text-label-md transition-all bg-surface-container hover:bg-surface-variant text-on-surface" id="btn-phase-apply" onclick="manualPhaseSelect('apply')" type="button">
+          03 testform apply
+        </button>
+<button class="px-space-sm py-1 rounded font-label-md text-label-md transition-all bg-primary text-on-primary font-bold shadow-sm" id="btn-phase-audit" onclick="manualPhaseSelect('audit')" type="button">
+          04 testform audit
+        </button>
+</div>
+</div>
+<!-- Unified Dual-Pane Content Body (Continuous, Seamless) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-outline-variant/40">
+<!-- Left Pane: Spec File Explorer & Code (5 cols) -->
+<div class="lg:col-span-5 flex flex-col bg-surface-container-low">
+<!-- Spec File Tabs -->
+<div class="flex bg-surface-container px-space-xs pt-1.5 gap-1 border-b border-outline-variant/30 overflow-x-auto" id="file-tabs-container">
+<button class="px-space-sm py-1.5 rounded-t text-left font-code-sm text-code-sm transition-colors bg-surface-container-lowest text-primary font-semibold flex items-center gap-1.5 border-t-2 border-primary" id="tab-btn-testcase" onclick="manualEditorSelect('testcase')" type="button">
+<span class="material-symbols-outlined text-[14px]">description</span>
+              testcase.feature
+            </button>
+<button class="px-space-sm py-1.5 rounded-t text-left font-code-sm text-code-sm transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high flex items-center gap-1.5 border-t-2 border-transparent" id="tab-btn-testrun" onclick="manualEditorSelect('testrun')" type="button">
+<span class="material-symbols-outlined text-[14px]">play_circle</span>
+              testrun.feature
+            </button>
+<button class="px-space-sm py-1.5 rounded-t text-left font-code-sm text-code-sm transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high flex items-center gap-1.5 border-t-2 border-transparent" id="tab-btn-testplan" onclick="manualEditorSelect('testplan')" type="button">
+<span class="material-symbols-outlined text-[14px]">account_tree</span>
+              testplan.feature
+            </button>
+</div>
+<!-- Spec Syntax Viewer -->
+<div class="p-space-md font-code-sm text-code-sm overflow-x-auto min-h-[380px] bg-surface-container-lowest flex-1">
+<!-- Content testcase.feature -->
+<pre class="text-on-surface leading-relaxed" id="editor-content-testcase"><code><span class="text-on-surface-variant"># @id: TC-AUTH-8820 | Tier-1 Critical</span>
+<span class="text-secondary font-semibold">@spec</span> <span class="text-primary">"auth/session_validation"</span>
+<span class="text-secondary font-semibold">@version</span> <span class="text-tertiary">"2.4.0"</span>
+<span class="text-secondary font-semibold">@runner</span> <span class="text-on-surface">"playwright"</span>
+
+<span class="text-primary font-bold">Feature:</span> Autenticación con MFA Estricto
+  Como cliente de API institucional
+  Deseo validar sesiones seguras y rechazar replay attacks
+
+  <span class="text-secondary font-bold">Scenario:</span> Validación de JWT con Claims Expirados
+    <span class="text-tertiary font-semibold">Given</span> el servicio de auth en estado <span class="text-primary">"cluster:healthy"</span>
+    <span class="text-tertiary font-semibold">And</span> una credencial con expiración epoch <span class="text-primary">"-300s"</span>
+    <span class="text-tertiary font-semibold">When</span> envío POST hacia <span class="text-primary">"/v2/auth/verify"</span>
+    <span class="text-tertiary font-semibold">Then</span> el status code es <span class="text-error font-semibold">401</span>
+    <span class="text-tertiary font-semibold">And</span> la respuesta contiene <span class="text-primary">"TOKEN_EXPIRED"</span>
+    <span class="text-tertiary font-semibold">And</span> se genera evento en auditoría SHA-256</code></pre>
+<!-- Content testrun.feature -->
+<pre class="text-on-surface leading-relaxed hidden" id="editor-content-testrun"><code><span class="text-on-surface-variant"># @run: TRUN-2025-05-18-B9 | Environment: Staging-EU</span>
+<span class="text-secondary font-semibold">@target_env</span> <span class="text-primary">"staging-eu-west-1"</span>
+<span class="text-secondary font-semibold">@concurrency</span> <span class="text-tertiary">8</span>
+<span class="text-secondary font-semibold">@max_retries</span> <span class="text-tertiary">1</span>
+
+<span class="text-primary font-bold">RunExecution:</span> Staging Core Sanity
+  <span class="text-secondary font-bold">SuiteSelection:</span>
+    <span class="text-tertiary font-semibold">Include:</span> [ <span class="text-primary">"@smoke"</span>, <span class="text-primary">"@security"</span>, <span class="text-primary">"@auth"</span> ]
+    <span class="text-tertiary font-semibold">Exclude:</span> [ <span class="text-error">"@flaky"</span>, <span class="text-error">"@quarantine"</span> ]
+
+  <span class="text-secondary font-bold">RunnerHooks:</span>
+    <span class="text-tertiary font-semibold">PreRun:</span>  <span class="text-primary">"./scripts/seed-tenant.sh --fresh"</span>
+    <span class="text-tertiary font-semibold">PostRun:</span> <span class="text-primary">"testform audit --seal --json &gt; ./artifacts/audit.json"</span>
+    <span class="text-tertiary font-semibold">OnFail:</span>  <span class="text-error">"notify-slack --channel #sec-alerts"</span></code></pre>
+<!-- Content testplan.feature -->
+<pre class="text-on-surface leading-relaxed hidden" id="editor-content-testplan"><code><span class="text-on-surface-variant"># @plan: TPLAN-RELEASE-v2.5.0 | Speculative Plan</span>
+<span class="text-secondary font-semibold">@orchestrator</span> <span class="text-primary">"testform-core"</span>
+<span class="text-secondary font-semibold">@drift_policy</span> <span class="text-error">"strict-block"</span>
+
+<span class="text-primary font-bold">TestPlan:</span> Gate de Despliegue Producción
+  <span class="text-secondary font-bold">Stages:</span>
+    <span class="text-tertiary font-semibold">Stage 1:</span> Contratos de API (Jest OpenAPI Validator)
+    <span class="text-tertiary font-semibold">Stage 2:</span> Integración E2E (Playwright Browserless Grid)
+    <span class="text-tertiary font-semibold">Stage 3:</span> Carga Cero Latencia (K6 Speculative Burst)
+  
+  <span class="text-secondary font-bold">LedgerValidation:</span>
+    <span class="text-tertiary font-semibold">CheckIntegrity:</span> <span class="text-primary">"sha256:4f8e...9b1c"</span>
+    <span class="text-tertiary font-semibold">DriftThreshold:</span> <span class="text-primary">"0 scenarios modified"</span></code></pre>
+</div>
+<!-- Left Pane Status Footer -->
+<div class="px-space-md py-2 bg-surface-container text-on-surface-variant font-code-sm text-code-sm flex items-center justify-between border-t border-outline-variant/30">
+<span class="">UTF-8 • Git Blame Tracked</span>
+<span class="text-primary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                HEAD: commit c4d8a1
+              </span>
+</div>
+</div>
+<!-- Right Pane: Terminal Execution Output (7 cols) -->
+<div class="lg:col-span-7 flex flex-col bg-surface-container-lowest">
+<!-- Terminal Subheader Strip -->
+<div class="bg-surface-container px-space-md py-2 border-b border-outline-variant/30 flex items-center justify-between font-code-sm text-code-sm text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-secondary">terminal</span>
+<span class="text-on-surface font-semibold">testform execution daemon</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-primary uppercase" id="phase-countdown-tag">FASE 4 / 4</span>
+<span class="text-outline-variant">|</span>
+<span class="text-primary font-code-sm font-bold" id="console-hash-text">SHA: 0x9b1c...SEALED</span>
+</div>
+</div>
+<!-- Dynamic Output Screen -->
+<div class="p-space-md font-code-sm text-code-sm overflow-x-auto min-h-[380px] flex flex-col justify-between flex-1" id="console-output-container">
+<div class="space-y-1.5 text-on-surface leading-relaxed" id="console-dynamic-log"><div><span class="text-secondary">$ testform audit --seal --json</span></div><div><span class="text-on-surface-variant">Construyendo ledger criptográfico y validando Git Blame...</span></div><div><span class="text-tertiary">Hash de Suite:   <span class="text-on-surface">0x4f8e91c7a209b531...</span></span></div><div><span class="text-tertiary">Commit Ref:      <span class="text-secondary">c4d8a1 (refs/heads/main)</span></span></div><div><span class="text-tertiary">Firma SHA-256:   <span class="text-primary font-bold">9b1c7e29a008f...OK [VERIFIED]</span></span></div><div><span class="text-primary font-bold">✔ Trazabilidad nativa y Git Blame verificados. Listo para compliance.</span></div></div>
+<!-- Bottom Terminal Controls -->
+<div class="pt-space-md mt-space-md border-t border-outline-variant/20 flex flex-wrap items-center justify-between gap-space-sm text-on-surface-variant font-code-sm">
+<div class="flex items-center gap-space-sm">
+<span class="inline-block w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span id="console-status-text" class="">Backend: Local / S3 Conectado</span>
+</div>
+<div class="flex items-center gap-space-md">
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1 font-label-sm text-label-sm uppercase" onclick="restartLifecycleLoop()" type="button">
+<span class="material-symbols-outlined text-[14px]">replay</span>
+                  Reiniciar Loop
+                </button>
+</div>
+</div>
+</div>
+<!-- Unified Bottom Diff Strip -->
+<div class="bg-surface-container px-space-md py-2 flex items-center justify-between text-on-surface font-code-sm text-code-sm border-t border-outline-variant/30">
+<div class="flex items-center gap-space-md">
+<span class="text-primary font-bold">+ 3 suites to apply</span>
+<span class="text-secondary">~ 0 modified</span>
+<span class="text-on-surface-variant">- 0 drift</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Deterministic Plan Engine • v0.19.4</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 3. POR QUÉ TESTFORM: EL NUEVO PARADIGMA    -->
+<!-- ========================================== -->
+<section class="w-full py-space-xl">
+<div class="w-full px-margin md:px-margin-tablet lg:px-margin-desktop max-w-7xl mx-auto">
+<!-- Section Intro Header -->
+<div class="max-w-3xl mb-space-xl">
+<div class="font-label-sm text-label-sm text-primary uppercase tracking-widest mb-space-xs">Arquitectura de Calidad Continua</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-space-sm">
+          Por qué Testform: El nuevo paradigma del QE
+        </h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">
+          Testform no busca destruir tus suites ni frameworks existentes; evoluciona la ingeniería de calidad (QE) integrándose nativamente en Git. Complementa tus herramientas actuales y prepara tu infraestructura para el futuro SaaS sin ningún tipo de vendor lock-in.
+        </p>
+</div>
+<!-- 6 Pillars Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md">
+<!-- Pilar 1 -->
+<div class="bg-surface-container rounded-xl p-space-lg shadow-sm hover:bg-surface-container-high transition-all flex flex-col justify-between">
+<div>
+<div class="w-10 h-10 rounded bg-primary/10 text-primary flex items-center justify-center mb-space-md">
+<span class="material-symbols-outlined text-[24px]">sync_disabled</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-space-xs">1. Elimina el Test Drift</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+              Cero desincronización entre tu base de código y los casos de prueba. Cada cambio en tus contratos genera una alerta de discrepancia inmediata antes del despliegue.
+            </p>
+</div>
+<div class="font-code-sm text-code-sm text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+            Zero State Discrepancy
+          </div>
+</div>
+<!-- Pilar 2 -->
+<div class="bg-surface-container rounded-xl p-space-lg shadow-sm hover:bg-surface-container-high transition-all flex flex-col justify-between">
+<div>
+<div class="w-10 h-10 rounded bg-secondary/10 text-secondary flex items-center justify-center mb-space-md">
+<span class="material-symbols-outlined text-[24px]">credit_card_off</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-space-xs">2. Cero Costos de Asiento</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+              Ejecuta libre en tu terminal local y en tus runners de CI/CD sin pagar licencias abusivas de $70/mes por cada desarrollador o tester que hace un commit.
+            </p>
+</div>
+<div class="font-code-sm text-code-sm text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">payments</span>
+            100% Free Core Engine
+          </div>
+</div>
+<!-- Pilar 3 -->
+<div class="bg-surface-container rounded-xl p-space-lg shadow-sm hover:bg-surface-container-high transition-all flex flex-col justify-between">
+<div>
+<div class="w-10 h-10 rounded bg-tertiary/10 text-tertiary flex items-center justify-center mb-space-md">
+<span class="material-symbols-outlined text-[24px]">source_environment</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-space-xs">3. Git como Única Fuente de Verdad</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+              Tus especificaciones de prueba viven en ramas de Git, participan en revisiones de Pull Requests estándar y siguen las reglas del versionado semántico real.
+            </p>
+</div>
+<div class="font-code-sm text-code-sm text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">merge</span>
+            PR-First Quality Flow
+          </div>
+</div>
+<!-- Pilar 4: Modificado explícitamente a Git Blame & Trazabilidad Nativa -->
+<div class="bg-surface-container rounded-xl p-space-lg shadow-sm hover:bg-surface-container-high transition-all flex flex-col justify-between">
+<div>
+<div class="w-10 h-10 rounded bg-primary/10 text-primary flex items-center justify-center mb-space-md">
+<span class="material-symbols-outlined text-[24px]">history_edu</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-space-xs">4. Git Blame &amp; Trazabilidad Nativa</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+              Auditoría mediante commits reales y Git blame granular línea por línea en cada caso de prueba. Cero firmas propietarias opacas: cada cambio tiene autor y SHA verificable.
+            </p>
+</div>
+<div class="font-code-sm text-code-sm text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">commit</span>
+            Granular Git Blame Audit
+          </div>
+</div>
+<!-- Pilar 5 -->
+<div class="bg-surface-container rounded-xl p-space-lg shadow-sm hover:bg-surface-container-high transition-all flex flex-col justify-between">
+<div>
+<div class="w-10 h-10 rounded bg-secondary/10 text-secondary flex items-center justify-center mb-space-md">
+<span class="material-symbols-outlined text-[24px]">cloud_sync</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-space-xs">5. Soberanía Total de tus Datos</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+              Tus specs y artefactos de ejecución viven en tu repositorio o en tu propio bucket de almacenamiento (AWS S3, MinIO, GCS). Sin filtración de secretos a SaaS ajenos.
+            </p>
+</div>
+<div class="font-code-sm text-code-sm text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">key</span>
+            Self-Hosted S3 / MinIO
+          </div>
+</div>
+<!-- Pilar 6: Modificado a Extensibilidad Declarativa / Zero Lock-in -->
+<div class="bg-surface-container rounded-xl p-space-lg shadow-sm hover:bg-surface-container-high transition-all flex flex-col justify-between">
+<div>
+<div class="w-10 h-10 rounded bg-tertiary/10 text-tertiary flex items-center justify-center mb-space-md">
+<span class="material-symbols-outlined text-[24px]">lock_open</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-space-xs">6. Zero Lock-in &amp; Portabilidad Total</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+              Define pruebas en HCL, Gherkin o YAML completamente libre de ataduras de proveedor. Almacena tus specs en tus propios buckets y compila limpiamente para tu stack de testing.
+            </p>
+</div>
+<div class="font-code-sm text-code-sm text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">tune</span>
+            Declarative Extensibility
+          </div>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 4. BLOQUEA EL DRIFT ANTES DEL MERGE (CI)   -->
+<!-- ========================================== -->
+<section class="w-full py-space-xl bg-surface-container-lowest">
+<div class="w-full px-margin md:px-margin-tablet lg:px-margin-desktop max-w-7xl mx-auto">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-center">
+<!-- Lado Izquierdo: Explicación CI -->
+<div class="lg:col-span-5 space-y-space-md">
+<div class="font-label-sm text-label-sm text-secondary uppercase tracking-widest">Pipeline Guard</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">
+            Bloquea el Drift antes del Merge: Verificación estricta en PR
+          </h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+            GitHub Actions y GitLab CI ejecutan automáticamente <code class="font-code-sm text-primary bg-surface-container-high px-1.5 py-0.5 rounded">testform plan</code> y <code class="font-code-sm text-secondary bg-surface-container-high px-1.5 py-0.5 rounded">testform audit</code> en cada Pull Request.
+          </p>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+            Si un desarrollador modifica la lógica de un endpoint o servicio pero no actualiza las pruebas vinculadas, la CI frena el pipeline en seco. Cero trabajo manual de sincronización, cero reuniones de reconciliación en hojas de cálculo.
+          </p>
+<div class="space-y-space-xs pt-space-sm">
+<div class="flex items-center gap-space-sm font-code-sm text-code-sm text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+<span class="">Análisis de cambio especulativo en tiempo real</span>
+</div>
+<div class="flex items-center gap-space-sm font-code-sm text-code-sm text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+<span class="">Comentario automatizado con diff de pruebas en el PR</span>
+</div>
+<div class="flex items-center gap-space-sm font-code-sm text-code-sm text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+<span class="">Sello criptográfico adjunto a los artefactos del commit</span>
+</div>
+</div>
+</div>
+<!-- Lado Derecho: Código ci.yml -->
+<div class="lg:col-span-7 bg-surface-container-low rounded-xl shadow-xl overflow-hidden flex flex-col">
+<!-- Terminal Chrome Bar -->
+<div class="bg-surface-container-high px-space-md py-2.5 flex items-center justify-between">
+<div class="flex items-center gap-space-xs font-code-sm text-code-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-secondary">terminal</span>
+<span class="">.github/workflows/ci.yml</span>
+</div>
+<span class="font-label-sm text-label-sm px-space-xs py-0.5 rounded bg-surface-container text-primary font-semibold">GitHub Actions</span>
+</div>
+<!-- Code Window -->
+<div class="p-space-md font-code-sm text-code-sm bg-surface-container-lowest overflow-x-auto leading-relaxed">
+<pre class="text-on-surface"><code><span class="text-on-surface-variant">name:</span> <span class="text-primary">"Testform State &amp; Drift Validation"</span>
+<span class="text-on-surface-variant">on:</span>
+  <span class="text-secondary font-semibold">pull_request:</span>
+    <span class="text-on-surface-variant">branches:</span> [ <span class="text-primary">main</span>, <span class="text-primary">release/*</span> ]
+
+<span class="text-on-surface-variant">jobs:</span>
+  <span class="text-secondary font-semibold">testform-drift-guard:</span>
+    <span class="text-on-surface-variant">runs-on:</span> <span class="text-primary">ubuntu-latest</span>
+    <span class="text-on-surface-variant">steps:</span>
+      - <span class="text-tertiary">name:</span> <span class="text-on-surface">Checkout Repository Code</span>
+        <span class="text-on-surface-variant">uses:</span> <span class="text-primary">actions/checkout@v4</span>
+
+      - <span class="text-tertiary">name:</span> <span class="text-on-surface">Setup Node.js Runtime</span>
+        <span class="text-on-surface-variant">uses:</span> <span class="text-primary">actions/setup-node@v4</span>
+        <span class="text-on-surface-variant">with:</span>
+          <span class="text-on-surface-variant">node-version:</span> <span class="text-tertiary">'20.x'</span>
+
+      - <span class="text-tertiary">name:</span> <span class="text-on-surface">Install Testform Engine CLI</span>
+        <span class="text-on-surface-variant">run:</span> <span class="text-primary">npm i -g @fromero/testform</span>
+
+      - <span class="text-tertiary">name:</span> <span class="text-on-surface">Initialize Remote State Bucket</span>
+        <span class="text-on-surface-variant">run:</span> <span class="text-primary">testform init --backend=s3 --bucket=${{ secrets.TF_STATE_BUCKET }}</span>
+
+      - <span class="text-tertiary">name:</span> <span class="text-on-surface">Execute Speculative Drift Plan</span>
+        <span class="text-on-surface-variant">run:</span> |
+          <span class="text-secondary">testform plan --drift-guard --detailed-exitcode</span> \
+            <span class="text-secondary">--out=pr-spec-plan.tfplan</span>
+
+      - <span class="text-tertiary">name:</span> <span class="text-on-surface">Seal Immutable Execution Audit</span>
+        <span class="text-on-surface-variant">if:</span> <span class="text-primary">always()</span>
+        <span class="text-on-surface-variant">run:</span> <span class="text-primary">testform audit --verify --report-pr=${{ github.event.number }}</span></code></pre>
+</div>
+<!-- Diff Bar in CI -->
+<div class="px-space-md py-2.5 bg-surface-container flex items-center justify-between text-on-surface-variant font-code-sm text-code-sm">
+<span class="text-primary flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+              Exit Code 0: Clean Test State Matrix
+            </span>
+<span class="text-secondary">PR Drift Guard: Active</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 5. CALCULADORA DE IMPACTO Y RETORNO (ROI)  -->
+<!-- ========================================== -->
+<section class="w-full py-space-xl">
+<div class="w-full px-margin md:px-margin-tablet lg:px-margin-desktop max-w-7xl mx-auto">
+<div class="max-w-2xl mb-space-lg">
+<div class="font-label-sm text-label-sm text-primary uppercase tracking-widest mb-space-xs">Modelo Económico para Engineering Leads</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-space-xs">
+          Calculadora de Impacto y Retorno Inmediato
+        </h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+          Contrasta el costo oculto de pagar asientos en herramientas SaaS de QA frente a la adopción abierta de Test-as-Code.
+        </p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-md items-stretch">
+<!-- Controls Pane (7 cols) -->
+<div class="lg:col-span-7 bg-surface-container rounded-xl p-space-lg shadow-sm flex flex-col justify-between">
+<div class="space-y-space-lg">
+<!-- Slider 1: Tamaño del Equipo -->
+<div>
+<div class="flex items-center justify-between mb-space-xs">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="dev-count-slider">
+                  Tamaño del Equipo de Desarrollo y QA
+                </label>
+<span class="font-code-lg text-code-lg text-primary font-bold" id="dev-count-label">50 Ingenieros</span>
+</div>
+<input class="w-full h-2 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-primary" id="dev-count-slider" max="200" min="5" oninput="recalculateRoi()" step="5" type="range" value="50">
+<div class="flex justify-between font-code-sm text-code-sm text-on-surface-variant mt-1">
+<span class="">5 devs</span>
+<span class="">50 devs</span>
+<span class="">100 devs</span>
+<span class="">200+ devs</span>
+</div>
+</div>
+<!-- Slider 2: Costo SaaS por Asiento -->
+<div>
+<div class="flex items-center justify-between mb-space-xs">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="seat-cost-slider">
+                  Costo Mensual Actual por Asiento SaaS
+                </label>
+<span class="font-code-lg text-code-lg text-secondary font-bold" id="seat-cost-label">$60 USD / mes</span>
+</div>
+<input class="w-full h-2 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-secondary" id="seat-cost-slider" max="120" min="30" oninput="recalculateRoi()" step="5" type="range" value="60">
+<div class="flex justify-between font-code-sm text-code-sm text-on-surface-variant mt-1">
+<span class="">$30/mes</span>
+<span class="">$60/mes (Media)</span>
+<span class="">$90/mes</span>
+<span class="">$120/mes</span>
+</div>
+</div>
+<!-- Breakdown Notes -->
+<div class="p-space-md rounded-lg bg-surface-container-low text-on-surface-variant font-body-sm text-body-sm space-y-1">
+<div class="flex items-center gap-space-xs text-on-surface font-medium">
+<span class="material-symbols-outlined text-[16px] text-tertiary">info</span>
+<span class="">Cálculo basado en licencias tradicionales (TestRail, Zephyr, Xray, PractiTest):</span>
+</div>
+<p class="">• Los ingenieros no necesitan cuentas de lectura/escritura en plataformas externas: todo fluye por Git.</p>
+<p class="">• Se incluye una estimación conservadora de 1.5 horas semanales ahorradas por ingeniero en tareas manuales de sync.</p>
+</div>
+</div>
+<div class="pt-space-md font-label-sm text-label-sm text-on-surface-variant">
+            Testform Core: 100% de ahorro directo en licencias sin límite de ejecuciones.
+          </div>
+</div>
+<!-- Metric Output Cards Pane (5 cols) -->
+<div class="lg:col-span-5 flex flex-col gap-space-md">
+<!-- Big Highlight: Ahorro Neto Anual -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-xl flex-1 flex flex-col justify-between">
+<div>
+<div class="font-label-sm text-label-sm text-primary uppercase tracking-widest mb-space-xs">
+                Ahorro Neto Anual en Licencias
+              </div>
+<div class="font-display-lg text-display-lg text-primary font-bold tracking-tight my-space-xs" id="annual-savings-display">$36,000</div>
+<div class="font-headline-sm text-headline-sm text-on-surface font-medium">
+                USD eliminados del gasto recurrente
+              </div>
+</div>
+<div class="pt-space-md mt-space-md">
+<div class="w-full h-2 rounded-full bg-surface-container-high overflow-hidden mb-space-xs">
+<div class="h-full bg-primary rounded-full transition-all duration-300" style="width: 100%;"></div>
+</div>
+<div class="flex justify-between font-code-sm text-code-sm text-on-surface-variant">
+<span class="">Gasto con Testform: $0</span>
+<span class="text-primary font-bold">100% Reducción de Asientos</span>
+</div>
+</div>
+</div>
+<!-- Secondary Metric: Horas Reconciliación Ahorradas -->
+<div class="bg-surface-container-high rounded-xl p-space-md shadow-md flex items-center justify-between">
+<div>
+<div class="font-label-sm text-label-sm text-on-surface-variant uppercase">Horas Manuales Ahorradas</div>
+<div class="font-headline-md text-headline-md text-secondary font-bold" id="hours-saved-display">3,900 hrs / año</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Reconciliaciones manuales eliminadas</div>
+</div>
+<div class="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[28px]">schedule</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 6. BENCHMARK HÍBRIDO (TESTFORM VS SAAS)    -->
+<!-- ========================================== -->
+<section class="w-full py-space-xl bg-surface-container-lowest">
+<div class="w-full px-margin md:px-margin-tablet lg:px-margin-desktop max-w-7xl mx-auto">
+<div class="max-w-3xl mb-space-xl">
+<div class="font-label-sm text-label-sm text-tertiary uppercase tracking-widest mb-space-xs">Matriz Técnica &amp; Operativa</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-space-xs">
+          Benchmark Híbrido: Testform vs SaaS Tradicionales
+        </h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+          Compara punto a punto la agilidad, costos y soberanía de una arquitectura Test-as-Code frente al modelo legado de plataformas SaaS desconectadas.
+        </p>
+</div>
+<!-- High Contrast Comparison Table -->
+<div class="w-full overflow-x-auto rounded-xl shadow-xl">
+<table class="w-full text-left bg-surface-container-low min-w-[700px]">
+<thead>
+<tr class="bg-surface-container-high text-on-surface font-label-md text-label-md uppercase">
+<th class="py-space-md px-space-lg w-1/3">Criterio de Evaluación</th>
+<th class="py-space-md px-space-lg w-1/3 text-primary font-bold">testform. (Declarativo TaC)</th>
+<th class="py-space-md px-space-lg w-1/3 text-on-surface-variant">SaaS Tradicional (Legacy QA)</th>
+</tr>
+</thead>
+<tbody class="divide-y-0 font-body-sm text-body-sm">
+<!-- Row 1: Costo -->
+<tr class="hover:bg-surface-container transition-colors">
+<td class="py-space-md px-space-lg text-on-surface font-semibold flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px] text-secondary">attach_money</span>
+                Modelo de Costos
+              </td>
+<td class="py-space-md px-space-lg text-primary font-medium">
+<div class="font-code-md text-code-md font-bold">$0 / Asiento</div>
+<div class="">Sin costo por desarrollador ni cuota de ejecución</div>
+</td>
+<td class="py-space-md px-space-lg text-on-surface-variant">
+<div class="font-code-md text-code-md text-error font-bold">$50 - $85 / mes</div>
+<div class="">Cobro obligatorio por cada usuario con acceso</div>
+</td>
+</tr>
+<!-- Row 2: Fuente de Verdad -->
+<tr class="hover:bg-surface-container transition-colors bg-surface-container/50">
+<td class="py-space-md px-space-lg text-on-surface font-semibold flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px] text-primary">commit</span>
+                Fuente de Verdad
+              </td>
+<td class="py-space-md px-space-lg text-primary font-medium">
+<div class="font-bold">Git Nativo</div>
+<div class="">Specs versionadas en PRs, branches y commits</div>
+</td>
+<td class="py-space-md px-space-lg text-on-surface-variant">
+<div class="">Interfaz Web Aislada</div>
+<div class="">Base de datos ajena desconectada del código</div>
+</td>
+</tr>
+<!-- Row 3: Detección de Drift -->
+<tr class="hover:bg-surface-container transition-colors">
+<td class="py-space-md px-space-lg text-on-surface font-semibold flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px] text-error">warning</span>
+                Detección de Drift
+              </td>
+<td class="py-space-md px-space-lg text-primary font-medium">
+<div class="font-bold">Automática en CI/CD</div>
+<div class=""><code class="font-code-sm">testform plan</code> alerta y bloquea merges desalineados</div>
+</td>
+<td class="py-space-md px-space-lg text-on-surface-variant">
+<div class="text-error font-bold">Manual e Inexistente</div>
+<div class="">Depende de la memoria de los testers actualizar la web</div>
+</td>
+</tr>
+<!-- Row 4: Auditoría de Cambios -->
+<tr class="hover:bg-surface-container transition-colors bg-surface-container/50">
+<td class="py-space-md px-space-lg text-on-surface font-semibold flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px] text-tertiary">fingerprint</span>
+                Auditoría y Trazabilidad
+              </td>
+<td class="py-space-md px-space-lg text-primary font-medium">
+<div class="font-bold">Git Blame + SHA-256 Ledger</div>
+<div class="">Sello criptográfico inmutable verificado por hash</div>
+</td>
+<td class="py-space-md px-space-lg text-on-surface-variant">
+<div class="">Logs Volátiles Propietarios</div>
+<div class="">Editables por administradores, sin firma digital</div>
+</td>
+</tr>
+<!-- Row 5: Almacenamiento y Soberanía -->
+<tr class="hover:bg-surface-container transition-colors">
+<td class="py-space-md px-space-lg text-on-surface font-semibold flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px] text-secondary">cloud_done</span>
+                Almacenamiento y Soberanía
+              </td>
+<td class="py-space-md px-space-lg text-primary font-medium">
+<div class="font-bold">100% Repositorio y Bucket Propio</div>
+<div class="">Tus datos residen en tu nube (S3, GCS o on-prem)</div>
+</td>
+<td class="py-space-md px-space-lg text-on-surface-variant">
+<div class="">Nube Cerrada del Proveedor</div>
+<div class="">Riesgo de vendor lock-in y filtración de data</div>
+</td>
+</tr>
+<!-- Row 6: Pipeline First & Orquestación por CLI (Modificado según petición) -->
+<tr class="hover:bg-surface-container transition-colors bg-surface-container/50">
+<td class="py-space-md px-space-lg text-on-surface font-semibold flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px] text-primary">terminal</span>
+                Integración en Pipelines CI/CD
+              </td>
+<td class="py-space-md px-space-lg text-primary font-medium">
+<div class="font-bold">Pipeline First (GitHub Actions &amp; GitLab CI nativos)</div>
+<div class="">Gobierna el ciclo de vida y estado conectándose directo a tus workflows existentes vía CLI</div>
+</td>
+<td class="py-space-md px-space-lg text-on-surface-variant">
+<div class="">Plugins Rígidos / Webhooks Limitados</div>
+<div class="">Requiere sincronizadores lentos, tokens de terceros y SDKs propietarios</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- 7. CALL TO ACTION FINAL                     -->
+<!-- ========================================== -->
+<section class="relative w-full py-space-xl overflow-hidden">
+<!-- Gradient Sheen in Background -->
+<div class="absolute inset-0 bg-gradient-to-t from-primary/10 via-surface to-surface pointer-events-none -z-10"></div>
+<div class="w-full px-margin md:px-margin-tablet lg:px-margin-desktop max-w-5xl mx-auto text-center flex flex-col items-center">
+<div class="w-12 h-12 rounded-xl bg-surface-container-high text-primary flex items-center justify-center mb-space-md shadow-lg">
+<span class="material-symbols-outlined text-[28px]">terminal</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-space-xs">
+        Comienza a gobernar tus pruebas como infraestructura
+      </h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mb-space-lg">
+        Instala el CLI oficial, ejecuta tu primer <code class="text-primary font-code-sm">testform init</code> y blinda tu pipeline contra desincronizaciones en menos de dos minutos.
+      </p>
+<!-- Instant Installation Card -->
+<div class="w-full max-w-2xl bg-surface-container-low p-space-md rounded-xl shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-space-md mb-space-lg">
+<div class="flex items-center gap-space-sm font-code-md text-code-md text-on-surface min-w-0">
+<span class="text-secondary select-none font-bold">$</span>
+<span class="truncate font-bold">npm i -g @fromero/testform</span>
+</div>
+<button class="w-full sm:w-auto px-space-lg py-2.5 rounded bg-primary text-on-primary font-label-md text-label-md font-bold hover:bg-primary-fixed transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 flex-shrink-0" id="final-copy-btn" onclick="copyFinalCommand()" type="button">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+<span id="final-btn-label" class="">Copiar Comando</span>
+</button>
+</div>
+<!-- Action Buttons Row -->
+<div class="flex flex-wrap items-center justify-center gap-space-md">
+<a class="px-space-lg py-2.5 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors flex items-center gap-space-xs" data-path="documentation" href="#">
+<span class="material-symbols-outlined text-[18px] text-secondary">menu_book</span>
+<span class="">Leer Documentación</span>
+</a>
+<a class="px-space-lg py-2.5 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors flex items-center gap-space-xs" data-path="cli-reference" href="#">
+<span class="material-symbols-outlined text-[18px] text-tertiary">code</span>
+<span class="">CLI Reference</span>
+</a>
+<a class="px-space-lg py-2.5 rounded bg-surface-container-high hover:bg-surface-variant text-on-surface font-label-md text-label-md transition-colors flex items-center gap-space-xs" href="#">
+<span class="text-primary">★</span>
+<span class="">GitHub (4.2k stars)</span>
+</a>
+</div>
+<div class="mt-space-lg font-code-sm text-code-sm text-on-surface-variant flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="">Open Source Apache-2.0 • Compatible con cualquier stack de testing moderno</span>
+</div>
+</div>
+</section>
+<!-- ========================================== -->
+<!-- CLIENT INTERACTION SCRIPTS                 -->
+<!-- ========================================== -->
+<script>
+    // 1. CLI COMMAND SWITCHER (NPM vs CURL)
+    const commands = {
+      npm: 'npm i -g @fromero/testform',
+      curl: 'curl -fsSL https://testform.dev/install.sh | bash'
+    };
+    let currentCli = 'npm';
+
+    function switchCliTab(type) {
+      currentCli = type;
+      const cmdText = document.getElementById('cli-command-text');
+      const tabNpm = document.getElementById('tab-npm');
+      const tabCurl = document.getElementById('tab-curl');
+
+      cmdText.textContent = commands[type];
+
+      if (type === 'npm') {
+        tabNpm.className = 'px-space-sm py-1 rounded font-label-md text-label-md transition-colors bg-surface-container-high text-on-surface font-semibold';
+        tabCurl.className = 'px-space-sm py-1 rounded font-label-md text-label-md transition-colors text-on-surface-variant hover:text-on-surface';
+      } else {
+        tabCurl.className = 'px-space-sm py-1 rounded font-label-md text-label-md transition-colors bg-surface-container-high text-on-surface font-semibold';
+        tabNpm.className = 'px-space-sm py-1 rounded font-label-md text-label-md transition-colors text-on-surface-variant hover:text-on-surface';
+      }
+    }
+
+    function copyCliCommand() {
+      const text = commands[currentCli];
+      navigator.clipboard.writeText(text).then(() => {
+        const label = document.getElementById('copy-btn-label');
+        label.textContent = '¡Copiado!';
+        setTimeout(() => { label.textContent = 'Copiar'; }, 2000);
+      });
+    }
+
+    function copyFinalCommand() {
+      navigator.clipboard.writeText('npm i -g @fromero/testform').then(() => {
+        const label = document.getElementById('final-btn-label');
+        label.textContent = '¡Comando Copiado!';
+        setTimeout(() => { label.textContent = 'Copiar Comando'; }, 2000);
+      });
+    }
+
+    // 2. UNIFIED WORKBENCH SPEC TABS
+    function selectEditorTab(tabKey) {
+      const tabs = ['testcase', 'testrun', 'testplan'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        const content = document.getElementById(`editor-content-${t}`);
+        if (t === tabKey) {
+          btn.className = 'px-space-sm py-1.5 rounded-t text-left font-code-sm text-code-sm transition-colors bg-surface-container-lowest text-primary font-semibold flex items-center gap-1.5 border-t-2 border-primary';
+          content.classList.remove('hidden');
+        } else {
+          btn.className = 'px-space-sm py-1.5 rounded-t text-left font-code-sm text-code-sm transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high flex items-center gap-1.5 border-t-2 border-transparent';
+          content.classList.add('hidden');
+        }
+      });
+    }
+
+    function manualEditorSelect(tabKey) {
+      selectEditorTab(tabKey);
+    }
+
+    // 3. REALTIME LIFECYCLE CONSOLE PHASES WITH AUTO-LOOP ANIMATION
+    const lifecycleOutputs = {
+      init: [
+        '<span class="text-secondary">$ testform init</span>',
+        '<span class="text-on-surface-variant">Inicializando backend de estado local / remoto S3...</span>',
+        '<span class="text-primary">✔ Proveedor "state/s3" validado con éxito.</span>',
+        '<span class="text-on-surface">✔ Descargando definiciones de schema TaC v0.19.4...</span>',
+        '<span class="text-secondary font-bold">testform ha sido inicializado exitosamente en este directorio.</span>',
+        '<span class="text-on-surface-variant">Tu repositorio ahora cuenta con backend de estado inmutable.</span>'
+      ],
+      plan: [
+        '<span class="text-secondary">$ testform plan --drift-guard</span>',
+        '<span class="text-on-surface-variant">Inspeccionando estado actual contra specs locales...</span>',
+        '<span class="text-tertiary">Calculando árbol de dependencias y discrepancias de ejecución:</span>',
+        '<span class="text-primary font-bold">+ [NEW]   auth/session_validation.feature (TC-AUTH-8820)</span>',
+        '<span class="text-primary font-bold">+ [NEW]   payments/stripe_webhooks.feature (TC-PAY-1044)</span>',
+        '<span class="text-primary font-bold">+ [NEW]   gateway/rate_limit.feature (TC-GW-902)</span>',
+        '<span class="text-on-surface-variant">--------------------------------------------------</span>',
+        '<span class="text-on-surface font-semibold">Plan: <span class="text-primary">3 to apply</span>, <span class="text-secondary">0 to modify</span>, <span class="text-on-surface-variant">0 drift detected</span>.</span>',
+        '<span class="text-primary">✔ Política de Drift Cero respetada. Aprobado para ejecución.</span>'
+      ],
+      apply: [
+        '<span class="text-secondary">$ testform apply --auto-approve</span>',
+        '<span class="text-on-surface-variant">Ejecutando suites declaradas en el plan...</span>',
+        '<span class="text-on-surface">Runner Playwright [worker 1]:</span> <span class="text-primary">TC-AUTH-8820 PASS (342ms)</span>',
+        '<span class="text-on-surface">Runner Jest       [worker 2]:</span> <span class="text-primary">TC-PAY-1044 PASS (118ms)</span>',
+        '<span class="text-on-surface">Runner K6         [worker 3]:</span> <span class="text-primary">TC-GW-902 PASS (890ms)</span>',
+        '<span class="text-on-surface-variant">Consolidando resultados en el estado central...</span>',
+        '<span class="text-primary font-bold">✔ Apply complete! Suites: 3 ejecutadas, 0 fallidas, 0 omitidas.</span>'
+      ],
+      audit: [
+        '<span class="text-secondary">$ testform audit --seal --json</span>',
+        '<span class="text-on-surface-variant">Construyendo ledger criptográfico y validando Git Blame...</span>',
+        '<span class="text-tertiary">Hash de Suite:   <span class="text-on-surface">0x4f8e91c7a209b531...</span></span>',
+        '<span class="text-tertiary">Commit Ref:      <span class="text-secondary">c4d8a1 (refs/heads/main)</span></span>',
+        '<span class="text-tertiary">Firma SHA-256:   <span class="text-primary font-bold">9b1c7e29a008f...OK [VERIFIED]</span></span>',
+        '<span class="text-primary font-bold">✔ Trazabilidad nativa y Git Blame verificados. Listo para compliance.</span>'
+      ]
+    };
+
+    const phaseConfig = {
+      init: { fileTab: 'testcase', label: 'FASE 1 / 4', hash: 'SHA: 0x8a4b...3f01' },
+      plan: { fileTab: 'testplan', label: 'FASE 2 / 4', hash: 'SHA: 0x3d12...PLAN' },
+      apply: { fileTab: 'testrun', label: 'FASE 3 / 4', hash: 'SHA: 0x4f8e...PASS' },
+      audit: { fileTab: 'testcase', label: 'FASE 4 / 4', hash: 'SHA: 0x9b1c...SEALED' }
+    };
+
+    const phaseSequence = ['init', 'plan', 'apply', 'audit'];
+    let currentPhaseIndex = 0;
+    let autoLoopInterval = null;
+
+    function applyPhaseState(phaseKey) {
+      // 1. Update Buttons
+      phaseSequence.forEach(p => {
+        const btn = document.getElementById(`btn-phase-${p}`);
+        if (btn) {
+          if (p === phaseKey) {
+            btn.className = 'px-space-sm py-1 rounded font-label-md text-label-md transition-all bg-primary text-on-primary font-bold shadow-sm';
+          } else {
+            btn.className = 'px-space-sm py-1 rounded font-label-md text-label-md transition-all bg-surface-container hover:bg-surface-variant text-on-surface';
+          }
+        }
+      });
+
+      // 2. Terminal dynamic output
+      const logContainer = document.getElementById('console-dynamic-log');
+      const lines = lifecycleOutputs[phaseKey] || [];
+      if (logContainer) {
+        logContainer.innerHTML = lines.map(line => `<div>${line}</div>`).join('');
+      }
+
+      // 3. Corresponding spec editor tab
+      const cfg = phaseConfig[phaseKey];
+      if (cfg) {
+        selectEditorTab(cfg.fileTab);
+        const tag = document.getElementById('phase-countdown-tag');
+        if (tag) tag.textContent = cfg.label;
+
+        const hashDisplay = document.getElementById('console-hash-text');
+        if (hashDisplay) {
+          hashDisplay.textContent = cfg.hash;
+          if (phaseKey === 'audit') {
+            hashDisplay.className = 'text-primary font-code-sm font-bold';
+          } else if (phaseKey === 'apply') {
+            hashDisplay.className = 'text-secondary font-code-sm';
+          } else {
+            hashDisplay.className = 'text-secondary font-code-sm';
+          }
+        }
+      }
+    }
+
+    function startAutoLoop() {
+      if (autoLoopInterval) clearInterval(autoLoopInterval);
+      autoLoopInterval = setInterval(() => {
+        currentPhaseIndex = (currentPhaseIndex + 1) % phaseSequence.length;
+        applyPhaseState(phaseSequence[currentPhaseIndex]);
+      }, 3500);
+    }
+
+    function manualPhaseSelect(phaseKey) {
+      currentPhaseIndex = phaseSequence.indexOf(phaseKey);
+      applyPhaseState(phaseKey);
+      // restart loop timer on manual interaction
+      startAutoLoop();
+    }
+
+    function restartLifecycleLoop() {
+      manualPhaseSelect('init');
+    }
+
+    // 4. ROI DYNAMIC CALCULATOR
+    function recalculateRoi() {
+      const devSlider = document.getElementById('dev-count-slider');
+      const costSlider = document.getElementById('seat-cost-slider');
+      if (!devSlider || !costSlider) return;
+
+      const devs = parseInt(devSlider.value, 10);
+      const seatCost = parseInt(costSlider.value, 10);
+
+      document.getElementById('dev-count-label').textContent = `${devs} Ingenieros`;
+      document.getElementById('seat-cost-label').textContent = `$${seatCost} USD / mes`;
+
+      // Annual license savings = devs * seatCost * 12 months
+      const annualSavings = devs * seatCost * 12;
+      document.getElementById('annual-savings-display').textContent = `$${annualSavings.toLocaleString('en-US')}`;
+
+      // Estimated manual hours saved = devs * 1.5 hrs/week * 52 weeks
+      const hoursSaved = Math.round(devs * 1.5 * 52);
+      document.getElementById('hours-saved-display').textContent = `${hoursSaved.toLocaleString('en-US')} hrs / año`;
+    }
+
+    // Initializer on Load
+    document.addEventListener('DOMContentLoaded', () => {
+      applyPhaseState('init');
+      startAutoLoop();
+      recalculateRoi();
+    });
+  </script>
+</div></main><footer class="w-full bg-surface-container-lowest"><div class="w-full px-margin md:px-margin-tablet lg:px-margin-desktop py-space-xl"><div class="grid grid-cols-1 md:grid-cols-4 gap-space-xl mb-space-xl"><div class="md:col-span-1 space-y-space-sm"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm font-bold text-on-surface">testform<span class="text-primary">.</span></span></div><p class="font-body-sm text-body-sm text-on-surface-variant">Declarative Test-as-Code state orchestration engine. Deterministic cloud testing with zero drift.</p><div class="flex items-center gap-space-xs font-code-sm text-code-sm text-primary"><span class="text-secondary">$</span><span class="">curl -fsSL https://get.testform.io | sh</span></div></div><div class="space-y-space-sm"><div class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-on-surface">Architecture</div><ul class="space-y-space-xs font-label-md text-label-md"><li class=""><a class="text-on-surface-variant hover:text-primary transition-colors" data-path="spec-engine" href="#">Declarative Spec (tm.hcl)</a></li><li class=""><a class="text-on-surface-variant hover:text-primary transition-colors" data-path="state-orchestration" href="#">Pipeline First Engine</a></li><li class=""><a class="text-on-surface-variant hover:text-primary transition-colors" data-path="overview" href="#">Drift Detection</a></li></ul></div><div class="space-y-space-sm"><div class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-on-surface">Documentation</div><ul class="space-y-space-xs font-label-md text-label-md"><li class=""><a class="text-on-surface-variant hover:text-primary transition-colors" data-path="documentation" href="#">Docs Quickstart</a></li><li class=""><a class="text-on-surface-variant hover:text-primary transition-colors" data-path="cli-reference" href="#">CLI Reference</a></li><li class=""><a class="text-on-surface-variant hover:text-primary transition-colors" href="#">API Specification</a></li></ul></div><div class="space-y-space-sm"><div class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-on-surface">Ecosystem &amp; Community</div><ul class="space-y-space-xs font-label-md text-label-md"><li class=""><a class="text-on-surface-variant hover:text-secondary transition-colors" data-path="overview" href="#">GitHub Repository</a></li><li class=""><a class="text-on-surface-variant hover:text-secondary transition-colors" data-path="overview" href="#">Discord Community</a></li><li class=""><a class="text-on-surface-variant hover:text-secondary transition-colors" data-path="overview" href="#">Telemetry &amp; Status</a></li></ul></div></div><div class="pt-space-md flex flex-col md:flex-row items-center justify-between gap-space-sm font-label-sm text-label-sm text-on-surface-variant"><div class="flex items-center gap-space-sm"><span class="">© 2025 testform Labs. Released under Apache 2.0 License.</span></div><div class="flex items-center gap-space-md"><span class="text-primary font-code-sm text-code-sm">hash: 0x9e7a...tm</span><span class="font-code-sm text-code-sm text-secondary">cluster: ready</span></div></div></div></footer>
+
+</body></html>

@@ -1,0 +1,49 @@
+---
+title: "Functions & Expressions API"
+---
+
+Testform includes a **native Abstract Syntax Tree (AST) parser** to evaluate computed expressions and validation rules without unsafe external dependencies or `eval()`. The syntax and function library follow Terraform HCL standards, offering predictability and determinism.
+
+---
+
+## Where Are Functions Used?
+
+Testform functions are evaluated in two primary areas:
+
+### 1. Local Variables (`locals.yml`)
+Transform data, compose dynamic URLs, and normalize strings without duplicating values:
+
+```yaml
+# locals.yml
+locals:
+  raw_env: "${lower(var.environment)}"
+  api_prefix: "${format('https://api.%s.company.com/v1', local.raw_env)}"
+  admin_tags: "${split(',', var.tag_list)}"
+  session_id: "${uuid()}"
+```
+
+### 2. Validation Rules (`variables.yml`)
+Ensure values provided in `testform.tfvars.yml` or via `--var` meet project constraints before executing any plan:
+
+```yaml
+# variables.yml
+variable:
+  environment:
+    type: string
+    default: "dev"
+    validation:
+      condition: "${contains(['dev', 'staging', 'production'], var.environment)}"
+      error_message: "Environment must be 'dev', 'staging', or 'production'."
+```
+
+---
+
+## Expression Engine Properties
+
+| Property | Description |
+| :--- | :--- |
+| **Sandboxed AST** | Every expression is tokenized and evaluated safely; no arbitrary code execution or `eval()`. |
+| **Safe Coercion** | Predictable type conversion between primitives (`string`, `number`, `boolean`, `list`, `map`). |
+| **Clean Interpolation** | Strings containing `${...}` resolve the internal expression; standalone `${...}` preserves native types (arrays/objects). |
+| **Descriptive Diagnostics** | Detailed error reporting with exact line numbers when arguments or variables are invalid. |
+

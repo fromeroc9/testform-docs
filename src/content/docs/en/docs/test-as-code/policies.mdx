@@ -1,0 +1,124 @@
+---
+title: "Policies & Quality Gates"
+---
+
+**Policies** in Testform serve as automated quality gates and governance rules that validate test specifications before they are checked by `validate`, calculated by `plan`, or reconciled by `apply`.
+
+The Testform policy engine combines **native built-in policies** with an extensible **custom policy system** discovered automatically from local directories or shared modules.
+
+---
+
+## 🛡️ Built-in System Policies
+
+Testform ships with 7 pre-configured system policies to ensure structural integrity and traceability:
+
+| Policy ID | Resource Scope | Severity | Description |
+| :--- | :--- | :--- | :--- |
+| **`identity-required`** | `testcase`, `testrun`, `testplan` | Error | Enforces valid identity tags (`@tc-X`, `@tr-X`, `@tp-X`) on all scenarios and features. |
+| **`identity-unique`** | `testcase`, `testrun`, `testplan` | Error | Verifies that identity tags are unique within their scope. |
+| **`no-feature-tags`** | `testcase`, `testrun`, `testplan` | Error | Restricts non-standard tags at the Feature level to keep scopes clean. |
+| **`required-fields`** | `testcase`, `testrun`, `testplan` | Error | Ensures mandatory configuration fields defined in `main.yml` are present. |
+| **`required-gherkin`** | `testcase` | Error | Validates that scenarios include essential steps (`Given`, `When`, `Then`) and valid syntax. |
+| **`undeclared-fields`** | `testcase` | Warning | Warns when scenarios contain fields not declared in the configuration `fields` block. |
+| **`duplicate-testruns-in-testplan`** | `testplan` | Error | Prevents duplicate testruns inside the same or across multiple testplans. |
+
+---
+
+## ⚙️ Enabling and Disabling Policies
+
+You can toggle policy enforcement via the CLI or declaratively in `main.yml`.
+
+### A. Via CLI (`testform policy`)
+
+Use `--disable` or `--enable` options:
+
+```bash
+# Disable a policy that is too strict during migration:
+$ testform policy --disable required-gherkin
+
+# Re-enable the policy:
+$ testform policy --enable required-gherkin
+
+# Inspect all policies and their current status:
+$ testform policy
+```
+
+### B. Declaratively in `main.yml`
+
+Configure exclusions directly in your project configuration:
+
+```yaml
+# main.yml
+policies:
+  disabled:
+    - required-gherkin
+    - undeclared-fields
+```
+
+Or configure individual policy statuses:
+
+```yaml
+# main.yml
+policies:
+  required-gherkin:
+    enabled: false
+  identity-unique:
+    enabled: true
+```
+
+---
+
+## 🧩 Custom Policies
+
+Define organization-specific standards such as requiring Jira tickets, preventing secrets leakage, or enforcing naming conventions.
+
+### Auto-Discovery by Convention
+
+Testform automatically scans and imports any `.js`, `.ts`, `.mjs`, or `.cjs` file in:
+1. **Local:** `.testform/policies/*.js` (or `./policies/*.js`).
+2. **Shared Modules:** `.testform/modules/**/policies/*.js`.
+
+### Export Formats
+
+For maximum developer ergonomics, policies can be exported directly without package dependencies:
+
+```javascript
+// .testform/policies/require-jira-ticket.js
+module.exports = {
+  id: "require-jira-ticket",
+  scope: ["testcase"],
+  description: "Ensures every scenario includes a valid Jira project tag (@PROJ-*)",
+  action: (scenarios, rules, scope) => {
+    for (const scenario of scenarios) {
+      const hasJiraTag = (scenario.tags || []).some(tag => /^@PROJ-\d+/i.test(tag));
+      if (!hasJiraTag) {
+        rules.push({
+          id: "missing-jira-tag",
+          type: "error", // or 'warning'
+          title: `Scenario "${scenario.name}" is missing a valid Jira tag`,
+          detail: "Add a tag matching @PROJ-1234 before the scenario.",
+          uri: scenario.uri,
+          line: scenario.location,
+          scenario: scenario.name
+        });
+      }
+    }
+  }
+};
+```
+
+---
+
+## 🏢 Shared Policies Across Many Projects
+
+Organizations managing hundreds of repositories do not need to duplicate policies:
+
+1. Centralize policies in a Git module:
+   ```yaml
+   # main.yml (in all repositories)
+   modules:
+     qa_standards:
+       source: git::https://github.com/my-org/testform-enterprise-standards.git
+   ```
+2. Running `testform init` downloads the module to `.testform/modules/qa_standards/`.
+3. Testform automatically discovers and runs all policies defined inside the module.

@@ -1,0 +1,91 @@
+---
+import MobileMenuFooter from 'virtual:starlight/components/MobileMenuFooter';
+import SidebarPersister from '@astrojs/starlight/components/SidebarPersister.astro';
+import SidebarSublist from '@astrojs/starlight/components/SidebarSublist.astro';
+
+const { sidebar, locale } = Astro.locals.starlightRoute;
+const lang = locale || 'es';
+const pathname = Astro.url.pathname;
+
+const isCli = pathname.includes('/cli/') || pathname.endsWith('/cli') || pathname.endsWith('/cli/');
+const isApi =
+  pathname.includes('/api/') ||
+  pathname.includes('/functions/') ||
+  pathname.endsWith('/api') ||
+  pathname.endsWith('/api/') ||
+  pathname.endsWith('/functions') ||
+  pathname.endsWith('/functions/');
+const isDocs = !isCli && !isApi;
+
+const docsGroup = sidebar.find((entry) => entry.type === 'group' && entry.label === 'DOCS');
+const cliGroup = sidebar.find((entry) => entry.type === 'group' && entry.label === 'CLI');
+const apiGroup = sidebar.find((entry) => entry.type === 'group' && entry.label === 'API');
+
+let currentSublist: any[] = [];
+
+if (isCli && cliGroup && 'entries' in cliGroup) {
+  currentSublist = cliGroup.entries;
+} else if (isApi && apiGroup && 'entries' in apiGroup) {
+  currentSublist = apiGroup.entries;
+} else if (docsGroup && 'entries' in docsGroup) {
+  currentSublist = docsGroup.entries;
+} else {
+  currentSublist = sidebar;
+}
+
+const docsHref = `/${lang}/docs/`;
+const cliHref = `/${lang}/cli/`;
+const apiHref = `/${lang}/api/`;
+---
+
+<!-- Mobile Navigation Switcher (Text tabs, not bulky buttons) -->
+<div class="mobile-section-nav md:sl-hidden">
+  <div class="mobile-section-tabs">
+    <a href={docsHref} class:list={['mobile-tab', { active: isDocs }]}>Docs</a>
+    <a href={cliHref} class:list={['mobile-tab', { active: isCli }]}>CLI</a>
+    <a href={apiHref} class:list={['mobile-tab', { active: isApi }]}>API</a>
+  </div>
+</div>
+
+<SidebarPersister>
+  <SidebarSublist sublist={currentSublist} />
+</SidebarPersister>
+
+<div class="md:sl-hidden">
+  <MobileMenuFooter />
+</div>
+
+<style>
+  .mobile-section-nav {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--sl-color-hairline);
+  }
+  .mobile-section-tabs {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .mobile-tab {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem;
+    border-radius: 0.375rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--sl-color-gray-2);
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+  .mobile-tab.active {
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--sl-color-accent, #2563eb);
+    font-weight: 600;
+  }
+  :root[data-theme='dark'] .mobile-tab.active {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+  }
+
+</style>

@@ -1,0 +1,147 @@
+---
+title: "Backends & State Storage"
+---
+
+A **Backend** in Testform defines where and how the state ledger (`testform.state`) is persisted and how concurrent locks (`state lock`) are acquired to prevent race conditions during parallel CI/CD runs.
+
+Following clean Terraform design conventions, backends are configured in **dictionary mode**, where the root key represents the backend type (without redundant `type:` fields).
+
+---
+
+## 🌐 1. Native HTTP / REST Backend (`http` or `rest`)
+
+Persists state to any remote REST API or HTTP endpoint compliant with Terraform's standard HTTP backend protocol:
+
+```yaml
+# main.yml
+backend:
+  http: # or 'rest'
+    address: "https://api.example.com/v1/states/testform.state"
+    lock_address: "https://api.example.com/v1/states/testform.state/lock"
+    unlock_address: "https://api.example.com/v1/states/testform.state/unlock"
+    headers:
+      Authorization: "Bearer ${env.STATE_API_TOKEN}"
+      Content-Type: "application/json"
+    update_method: "POST" # 'POST' or 'PUT' (default POST)
+```
+
+### HTTP Backend Options
+
+| Parameter | Type | Description |
+| :--- | :--- | :--- |
+| `address` | `string` | **Required.** URL for state read (`GET`) and write (`POST`/`PUT`) operations. |
+| `lock_address` | `string` | URL to acquire state locks via `POST`. |
+| `unlock_address` | `string` | URL to release state locks via `DELETE`. |
+| `headers` | `map` | Custom HTTP request headers (Bearer authentication, custom tokens). |
+| `username` / `password` | `string` | Basic authentication credentials. |
+
+:::tip[Dynamic Workspace Interpolation]
+For multi-environment architectures, include `{workspace}` or `${workspace}` in the URL:
+```yaml
+address: "https://api.example.com/v1/workspaces/{workspace}/state"
+```
+:::
+
+---
+
+## 🛠️ 2. Custom Backend (`custom`)
+
+For proprietary storage mechanisms, internal microservices, or custom vaults:
+
+```yaml
+# main.yml
+backend:
+  custom:
+    source: ".testform/backends/vault-backend.js" # or npm package
+    endpoint: "https://vault.internal.com"
+    tokenEnv: "VAULT_TOKEN"
+```
+
+### Implementation
+
+Create a class implementing the state storage interface:
+
+```javascript
+// .testform/backends/vault-backend.js
+class VaultBackend {
+  constructor(config, workspace) {
+    this.endpoint = config.endpoint;
+    this.token = process.env[config.tokenEnv || 'VAULT_TOKEN'];
+    this.workspace = workspace;
+  }
+
+  async read() {
+    const res = await fetch(`${this.endpoint}/state/${this.workspace}`, {
+      headers: { Authorization: `Bearer ${this.token}` }
+    });
+    if (res.status === 404) return null;
+    return await res.json();
+  }
+
+  async write(state) {
+    await fetch(`${this.endpoint}/state/${this.workspace}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.token}` },
+      body: JSON.stringify(state)
+    });
+  }
+
+  async exists() { return (await this.read()) !== null; }
+  async lock(timeout) { return true; }
+  async unlock() { return true; }
+  async forceUnlock(lockId) { return { success: true }; }
+  async isLocked() { return false; }
+  async listWorkspaces() { return ['default']; }
+  async deleteWorkspace(name) { return true; }
+}
+
+module.exports = VaultBackend;
+```
+
+---
+
+## 🪣 3. GitHub Native Branch Storage
+
+Stores the state ledger directly in a dedicated branch of your GitHub repository:
+
+```yaml
+# main.yml
+backend:
+  github:
+    owner: "fromeroc9"
+    repository: "testform"
+    branch: "testform-state"
+    path: "production.testform.state"
+    token_env: "GITHUB_TOKEN"
+```
+
+---
+
+## ☁️ 4. AWS S3 & Compatible Storage (MinIO, Cloudflare R2, Ceph, OCI)
+
+Supports AWS S3 and any S3-compatible object storage provider:
+
+```yaml
+# main.yml
+backend:
+  s3:
+    bucket: "company-qa-states"
+    key: "core/testform.state"
+    region: "us-east-1"
+    endpoint: "https://minio.internal.com:9000" # Custom endpoint for MinIO/R2
+    force_path_style: true                      # Required for MinIO or Ceph
+    dynamodb_table: "testform-locks"            # Optional DynamoDB locking table
+```
+
+---
+
+## 💻 5. Local Backend
+
+Stores state on local disk (default in local development):
+
+```yaml
+# main.yml
+backend:
+  local:
+    path: "./testform.state"
+```

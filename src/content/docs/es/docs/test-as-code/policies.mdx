@@ -1,0 +1,134 @@
+---
+title: "Políticas y Quality Gates"
+---
+
+Las **Políticas** en Testform actúan como compuertas de calidad (*Quality Gates*) y reglas de gobernanza que validan tus especificaciones de prueba antes de ser procesadas por `validate`, calculadas en `plan` o sincronizadas en `apply`.
+
+El motor de políticas de Testform combina **políticas del sistema nativas** con un sistema de **políticas personalizadas** auto-descubiertas desde el proyecto o compartidas mediante módulos.
+
+---
+
+## 🛡️ Políticas Nativas del Sistema
+
+Testform incluye 7 políticas preconfiguradas que garantizan la integridad estructural y la trazabilidad de tus pruebas:
+
+| ID de Política | Ámbito (*Scope*) | Severidad | Descripción |
+| :--- | :--- | :--- | :--- |
+| **`identity-required`** | `testcase`, `testrun`, `testplan` | Error | Exige que cada escenario o feature tenga un tag de identidad válido (`@tc-X`, `@tr-X`, `@tp-X`). |
+| **`identity-unique`** | `testcase`, `testrun`, `testplan` | Error | Verifica que los identificadores sean únicos dentro del archivo (testcase) o globalmente (testrun/testplan). |
+| **`no-feature-tags`** | `testcase`, `testrun`, `testplan` | Error | Restringe tags no estándar a nivel de Feature para mantener limpio el alcance. |
+| **`required-fields`** | `testcase`, `testrun`, `testplan` | Error | Comprueba que todos los campos marcados como obligatorios en `main.yml` estén definidos. |
+| **`required-gherkin`** | `testcase` | Error | Valida que cada escenario contenga pasos esenciales (`Given`, `When`, `Then`) y palabras clave válidas. |
+| **`undeclared-fields`** | `testcase` | Advertencia | Advierte si un escenario define campos que no existen en el bloque `fields` de la configuración. |
+| **`duplicate-testruns-in-testplan`** | `testplan` | Error | Previene la duplicación de testruns dentro del mismo plan o entre diferentes planes. |
+
+---
+
+## ⚙️ Activación y Desactivación de Políticas
+
+Puedes controlar el estado de cualquier política (nativa o personalizada) mediante el CLI o de forma declarativa en tu archivo de configuración `main.yml`.
+
+### A. Vía CLI (`testform policy`)
+
+Usa las opciones `--disable` o `--enable` del comando `policy`:
+
+```bash
+# Desactivar una política que sea demasiado estricta durante una migración:
+$ testform policy --disable required-gherkin
+
+# Volver a activarla:
+$ testform policy --enable required-gherkin
+
+# Listar todas las políticas y su estado actual:
+$ testform policy
+```
+
+### B. De forma Declarativa en `main.yml`
+
+Puedes registrar exclusiones directamente en la configuración:
+
+```yaml
+# main.yml
+policies:
+  disabled:
+    - required-gherkin
+    - undeclared-fields
+```
+
+O configurando el estado de cada política individualmente:
+
+```yaml
+# main.yml
+policies:
+  required-gherkin:
+    enabled: false
+  identity-unique:
+    enabled: true
+```
+
+---
+
+## 🧩 Políticas Personalizadas (*Custom Policies*)
+
+Puedes definir tus propias reglas organizacionales (como obligar a que todo escenario tenga un tag de Jira, verificar que no contenga datos sensibles, o validar nomenclatura corporativa).
+
+### Carga Automática por Convención
+
+Testform escaneará automáticamente cualquier archivo `.js`, `.ts`, `.mjs` o `.cjs` ubicado en:
+1. **Local:** `.testform/policies/*.js` (o `./policies/*.js`).
+2. **Módulos Compartidos:** `.testform/modules/**/policies/*.js`.
+
+### Modos de Exportación
+
+Para máxima ergonomía, puedes exportar la política directamente como objeto sin necesidad de imports de paquetes externos:
+
+```javascript
+// .testform/policies/require-jira-ticket.js
+module.exports = {
+  id: "require-jira-ticket",
+  scope: ["testcase"],
+  description: "Exige que cada caso de prueba tenga un tag vinculado a Jira (@PROJ-*)",
+  action: (scenarios, rules, scope) => {
+    for (const scenario of scenarios) {
+      const hasJiraTag = (scenario.tags || []).some(tag => /^@PROJ-\d+/i.test(tag));
+      if (!hasJiraTag) {
+        rules.push({
+          id: "missing-jira-tag",
+          type: "error", // o 'warning'
+          title: `El escenario "${scenario.name}" no tiene un tag de Jira válido`,
+          detail: "Añade un tag con el formato @PROJ-1234 antes del escenario.",
+          uri: scenario.uri,
+          line: scenario.location,
+          scenario: scenario.name
+        });
+      }
+    }
+  }
+};
+```
+
+También puedes exportar múltiples políticas en un array o usar una función factory:
+
+```javascript
+// Exportar múltiples reglas
+module.exports = [
+  { id: "rule-1", scope: ["testcase"], action: (s, r) => { /* ... */ } },
+  { id: "rule-2", scope: ["testrun"], action: (s, r) => { /* ... */ } }
+];
+```
+
+---
+
+## 🏢 Políticas Compartidas entre Múltiples Proyectos
+
+En organizaciones con decenas o cientos de repositorios, no es necesario copiar y pegar políticas en cada proyecto:
+
+1. Centraliza tus políticas en un módulo corporativo de Git:
+   ```yaml
+   # main.yml (en cada uno de los proyectos)
+   modules:
+     qa_standards:
+       source: git::https://github.com/mi-empresa/testform-enterprise-standards.git
+   ```
+2. Al ejecutar `testform init`, el módulo se descarga en `.testform/modules/qa_standards/`.
+3. Testform auto-descubre e incluye automáticamente todas las políticas contenidas en el módulo.

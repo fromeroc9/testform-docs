@@ -1,0 +1,53 @@
+---
+title: "Datos Sensibles"
+---
+
+En entornos de pruebas automatizadas y aseguramiento de calidad, los escenarios frecuentemente requieren credenciales de acceso, API keys, tokens de autenticación o secretos de infraestructura.
+
+Testform cuenta con un sistema nativo para proteger y enmascarar valores sensibles en consola y reportes.
+
+---
+
+## 🔒 Declaración de Outputs Sensibles
+
+Puedes marcar cualquier valor en el bloque `outputs:` con el atributo `sensitive: true`:
+
+```yaml
+# main.yml
+outputs:
+  total_cases:
+    value: "${testcase.*.count}"
+
+  service_account_token:
+    value: "${var.jwt_auth_secret}"
+    sensitive: true # Evita que el token se imprima en texto plano
+```
+
+### Comportamiento en Consola
+Cuando ejecutas `testform plan`, `testform apply` o `testform output`:
+
+```text
+Changes to Outputs:
+  + total_cases           = 14
+  + service_account_token = (sensitive value)
+```
+
+---
+
+## 🛡️ Variables de Entorno y Secretos
+
+Para evitar almacenar contraseñas en archivos Git versionados, las variables de Testform admiten valores por variables de entorno:
+
+```bash
+# Sobrescribe el valor de la variable en tiempo de ejecución
+export TESTFORM_VAR_admin_pass="MiContraseñaSegura123!"
+
+testform plan
+```
+
+O mediante el flag `-var`:
+```bash
+testform apply -var="admin_pass=${CI_SECRET_TOKEN}" -auto-approve
+```
+
+

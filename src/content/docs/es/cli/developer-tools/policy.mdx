@@ -1,0 +1,134 @@
+---
+title: "testform policy"
+---
+
+```bash
+testform [opciones globales] policy [opciones]
+```
+
+El comando `testform policy` permite inspeccionar, activar y desactivar políticas de gobernanza y validación para el espacio de trabajo actual, incluyendo tanto las **políticas nativas del sistema** como las **políticas personalizadas** definidas en el proyecto o importadas mediante módulos.
+
+:::note[Diseño Directo Sin Subcomandos]
+Al igual que otros comandos principales de Testform, no requiere subcomandos. Al ejecutar `testform policy` sin banderas, se lista directamente todo el catálogo de políticas activas e inactivas en formato tabular.
+:::
+
+## Listar Políticas
+
+Ejecuta el comando sin opciones para ver la tabla completa:
+
+```bash
+$ testform policy
+
+ID                              SCOPE                        TYPE      STATUS      DESCRIPTION
+──────────────────────────────  ───────────────────────────  ────────  ──────────  ──────────────────────────────
+duplicate-testruns-in-testplan  testplan                     system    enabled     Prevents duplicate testruns inside the same or across testplans
+identity-required               testcase, testrun, testplan  system    enabled     Enforces identity tags (@tc-X, @tr-X, @tp-X)
+identity-unique                 testcase, testrun, testplan  system    enabled     Verifies identity tag uniqueness within scope
+no-feature-tags                 testcase, testrun, testplan  system    enabled     Restricts non-standard tags at the Feature level
+required-fields                 testcase, testrun, testplan  system    enabled     Ensures required fields defined in configuration are present
+required-gherkin                testcase                     system    enabled     Validates required Gherkin structure and keywords (Given, When, Then)
+undeclared-fields               testcase                     system    enabled     Warns about scenario fields not declared in configuration
+```
+
+## Opciones Disponibles
+
+| Opción | Descripción |
+| :--- | :--- |
+| `--enable <id>` | Activa la política especificada y persiste el cambio en `main.yml`. |
+| `--disable <id>` | Desactiva la política especificada y persiste la exclusión en `main.yml`. |
+| `--show <id>` | Muestra la información detallada y reglas de una política específica. |
+| `-s, --scope <scope>` | Filtra las políticas por ámbito (`testcase`, `testrun`, `testplan`). |
+| `--json` | Emite la lista o detalle de políticas en formato JSON legible por máquinas. |
+| `-C, --chdir <dir>` | Cambia el directorio de trabajo antes de ejecutar el comando. |
+
+---
+
+## Desactivar una Política (`--disable`)
+
+Si una política del sistema o personalizada resulta demasiado estricta para tu flujo de trabajo o fase de migración, puedes desactivarla:
+
+```bash
+$ testform policy --disable required-gherkin
+
+Policy "required-gherkin" has been disabled.
+Updated configuration in main.yml
+```
+
+Testform actualiza automáticamente la sección `policies` en tu archivo `main.yml`:
+
+```yaml
+# main.yml
+policies:
+  disabled:
+    - required-gherkin
+```
+
+A partir de este momento, tanto `testform validate` como `testform plan` omitirán las reglas de dicha política durante la inspección.
+
+---
+
+## Habilitar una Política (`--enable`)
+
+Para volver a activar una política previamente deshabilitada:
+
+```bash
+$ testform policy --enable required-gherkin
+
+Success! Policy "required-gherkin" has been enabled.
+Updated configuration in main.yml
+```
+
+---
+
+## Inspeccionar Detalle (`--show`)
+
+Permite ver la ficha técnica completa de cualquier política:
+
+```bash
+$ testform policy --show identity-required
+
+Policy: identity-required
+  Type:        system (built-in)
+  Scope:       testcase, testrun, testplan
+  Status:      enabled
+  Description: Enforces identity tags (@tc-X, @tr-X, @tp-X)
+```
+
+---
+
+## Filtrar por Ámbito (`--scope`)
+
+Puedes filtrar las políticas aplicables únicamente a un tipo de recurso:
+
+```bash
+$ testform policy --scope testcase
+```
+
+---
+
+## Salida en Formato JSON (`--json`)
+
+Ideal para automatizaciones, linters y dashboards de CI/CD:
+
+```bash
+$ testform policy --json
+```
+
+```json
+[
+  {
+    "id": "identity-required",
+    "type": "system",
+    "scope": ["testcase", "testrun", "testplan"],
+    "description": "Enforces identity tags (@tc-X, @tr-X, @tp-X)",
+    "enabled": true
+  },
+  {
+    "id": "required-gherkin",
+    "type": "system",
+    "scope": ["testcase"],
+    "description": "Validates required Gherkin structure and keywords (Given, When, Then)",
+    "enabled": false
+  }
+]
+```

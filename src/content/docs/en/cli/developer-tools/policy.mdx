@@ -1,0 +1,115 @@
+---
+title: "testform policy"
+---
+
+```bash
+testform [global options] policy [options]
+```
+
+The `testform policy` command inspects, enables, or disables governance and validation policies for the current workspace, covering both **built-in system policies** and **custom policies** defined locally or loaded via shared modules.
+
+:::note[Direct Subcommand-Free Design]
+Following Testform's streamlined CLI philosophy, this command does not require subcommands. Running `testform policy` directly prints the full catalog of active and disabled policies in a clean tabular format.
+:::
+
+## List Policies
+
+Run the command without flags to view the full policy table:
+
+```bash
+$ testform policy
+
+ID                              SCOPE                        TYPE      STATUS      DESCRIPTION
+──────────────────────────────  ───────────────────────────  ────────  ──────────  ──────────────────────────────
+duplicate-testruns-in-testplan  testplan                     system    enabled     Prevents duplicate testruns inside the same or across testplans
+identity-required               testcase, testrun, testplan  system    enabled     Enforces identity tags (@tc-X, @tr-X, @tp-X)
+identity-unique                 testcase, testrun, testplan  system    enabled     Verifies identity tag uniqueness within scope
+no-feature-tags                 testcase, testrun, testplan  system    enabled     Restricts non-standard tags at the Feature level
+required-fields                 testcase, testrun, testplan  system    enabled     Ensures required fields defined in configuration are present
+required-gherkin                testcase                     system    enabled     Validates required Gherkin structure and keywords (Given, When, Then)
+undeclared-fields               testcase                     system    enabled     Warns about scenario fields not declared in configuration
+```
+
+## Available Options
+
+| Option | Description |
+| :--- | :--- |
+| `--enable <id>` | Enable the specified policy and save to `main.yml`. |
+| `--disable <id>` | Disable the specified policy and save exclusion to `main.yml`. |
+| `--show <id>` | Display detailed description and scope for a policy. |
+| `-s, --scope <scope>` | Filter policies by resource scope (`testcase`, `testrun`, `testplan`). |
+| `--json` | Output policies in machine-readable JSON format. |
+| `-C, --chdir <dir>` | Switch working directory before executing the command. |
+
+---
+
+## Disabling a Policy (`--disable`)
+
+If a built-in or custom policy is too strict for your current migration or workflow:
+
+```bash
+$ testform policy --disable required-gherkin
+
+Policy "required-gherkin" has been disabled.
+Updated configuration in main.yml
+```
+
+Testform automatically updates the `policies` block in `main.yml`:
+
+```yaml
+# main.yml
+policies:
+  disabled:
+    - required-gherkin
+```
+
+From this point on, `testform validate` and `testform plan` will skip this rule during execution.
+
+---
+
+## Enabling a Policy (`--enable`)
+
+To re-enable a previously disabled policy:
+
+```bash
+$ testform policy --enable required-gherkin
+
+Success! Policy "required-gherkin" has been enabled.
+Updated configuration in main.yml
+```
+
+---
+
+## Inspect Details (`--show`)
+
+View technical details for a specific policy:
+
+```bash
+$ testform policy --show identity-required
+
+Policy: identity-required
+  Type:        system (built-in)
+  Scope:       testcase, testrun, testplan
+  Status:      enabled
+  Description: Enforces identity tags (@tc-X, @tr-X, @tp-X)
+```
+
+---
+
+## Scope Filtering (`--scope`)
+
+Filter policies by targeted resource type:
+
+```bash
+$ testform policy --scope testcase
+```
+
+---
+
+## JSON Output (`--json`)
+
+Ideal for CI/CD pipelines, custom linters, and quality gates:
+
+```bash
+$ testform policy --json
+```
