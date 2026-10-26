@@ -10,7 +10,7 @@ El motor de expresiones de Testform permite interpretar dinámicamente sintaxis 
 ## 🚀 Funciones Exportadas
 
 ```typescript
-import { evaluateExpression, interpolateExpressions } from '@fromeroc9/testform';
+import { evaluateExpression, interpolateExpressions } from '@fromeroc9/testform@beta';
 
 /** Evalúa una expresión individual y devuelve el resultado tipado */
 function evaluateExpression(expr: string, context?: EvaluationContext): any;
@@ -53,7 +53,7 @@ export interface EvaluationContext {
 Permite calcular aserciones, transformaciones o valores lógicos:
 
 ```typescript
-import { evaluateExpression } from '@fromeroc9/testform';
+import { evaluateExpression } from '@fromeroc9/testform@beta';
 
 const context = {
   vars: {
@@ -84,7 +84,7 @@ console.log(host); // 'staging.api.corp.com'
 Interpolación de múltiples tokens en URLs, encabezados o payloads:
 
 ```typescript
-import { interpolateExpressions } from '@fromeroc9/testform';
+import { interpolateExpressions } from '@fromeroc9/testform@beta';
 
 const template = 'https://${lower(var.environment)}.service.internal:${var.port}/health';
 

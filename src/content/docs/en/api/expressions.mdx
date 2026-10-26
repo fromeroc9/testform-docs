@@ -10,7 +10,7 @@ Testform's expression engine parses and evaluates `${...}` configuration express
 ## 🚀 Exported Functions
 
 ```typescript
-import { evaluateExpression, interpolateExpressions } from '@fromeroc9/testform';
+import { evaluateExpression, interpolateExpressions } from '@fromeroc9/testform@beta';
 
 /** Evaluates an expression string and returns the typed result */
 function evaluateExpression(expr: string, context?: EvaluationContext): any;
@@ -51,7 +51,7 @@ export interface EvaluationContext {
 ### 1. `evaluateExpression` (Typed Evaluation)
 
 ```typescript
-import { evaluateExpression } from '@fromeroc9/testform';
+import { evaluateExpression } from '@fromeroc9/testform@beta';
 
 const context = {
   vars: {
@@ -82,7 +82,7 @@ console.log(host); // 'staging.api.corp.com'
 Interpolate multiple tokens into URLs, headers, or test payloads:
 
 ```typescript
-import { interpolateExpressions } from '@fromeroc9/testform';
+import { interpolateExpressions } from '@fromeroc9/testform@beta';
 
 const template = 'https://${lower(var.environment)}.service.internal:${var.port}/health';
 

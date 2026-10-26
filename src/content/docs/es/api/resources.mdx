@@ -10,7 +10,7 @@ El módulo de recursos define cómo se traducen los escenarios Gherkin (`Scenari
 ## 🚀 Firma de la Función
 
 ```typescript
-import { registerResource, ResourceTemplate } from '@fromeroc9/testform';
+import { registerResource, ResourceTemplate } from '@fromeroc9/testform@beta';
 
 function registerResource(template: ResourceTemplate): void;
 ```
@@ -116,7 +116,7 @@ module.exports = {
 La instancia `resource` permite consultar e inspeccionar los templates cargados:
 
 ```typescript
-import { resource } from '@fromeroc9/testform';
+import { resource } from '@fromeroc9/testform@beta';
 
 // Registrar programáticamente en código Node.js
 resource.registry(myCustomTemplate, 'user');

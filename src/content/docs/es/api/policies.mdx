@@ -10,7 +10,7 @@ El módulo de políticas permite auditar de forma estática los archivos Gherkin
 ## 🚀 Firma de la Función
 
 ```typescript
-import { registerPolicy, PolicyDefinition } from '@fromeroc9/testform';
+import { registerPolicy, PolicyDefinition } from '@fromeroc9/testform@beta';
 
 function registerPolicy(policyDefinition: PolicyDefinition): void;
 ```
@@ -24,7 +24,7 @@ function registerPolicy(policyDefinition: PolicyDefinition): void;
 Define el identificador, los alcances (*scopes*) aplicables y la función de evaluación:
 
 ```typescript
-import { IScope, ParserScenario, PolicyRule } from '@fromeroc9/testform';
+import { IScope, ParserScenario, PolicyRule } from '@fromeroc9/testform@beta';
 
 export interface PolicyDefinition {
   /** Identificador único de la política en kebab-case */
@@ -157,7 +157,7 @@ module.exports = ({ registerPolicy }) => {
 La instancia singleton `policy` permite manipular el registro en tiempo de ejecución:
 
 ```typescript
-import { policy } from '@fromeroc9/testform';
+import { policy } from '@fromeroc9/testform@beta';
 
 // Habilitar / Deshabilitar en runtime
 policy.disable('identity-unique');

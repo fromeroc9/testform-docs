@@ -10,7 +10,7 @@ The policy module statically audits Gherkin files (`*.feature`) during `testform
 ## 🚀 Function Signature
 
 ```typescript
-import { registerPolicy, PolicyDefinition } from '@fromeroc9/testform';
+import { registerPolicy, PolicyDefinition } from '@fromeroc9/testform@beta';
 
 function registerPolicy(policyDefinition: PolicyDefinition): void;
 ```
@@ -24,7 +24,7 @@ function registerPolicy(policyDefinition: PolicyDefinition): void;
 Defines the identifier, applicable scopes, and the audit callback:
 
 ```typescript
-import { IScope, ParserScenario, PolicyRule } from '@fromeroc9/testform';
+import { IScope, ParserScenario, PolicyRule } from '@fromeroc9/testform@beta';
 
 export interface PolicyDefinition {
   /** Unique policy identifier in kebab-case */
@@ -155,7 +155,7 @@ module.exports = ({ registerPolicy }) => {
 The `policy` singleton allows programmatic management at runtime:
 
 ```typescript
-import { policy } from '@fromeroc9/testform';
+import { policy } from '@fromeroc9/testform@beta';
 
 // Toggle in runtime
 policy.disable('identity-unique');

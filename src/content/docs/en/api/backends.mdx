@@ -14,7 +14,7 @@ You can author custom state storage connectors (Redis, DynamoDB, MongoDB, SQLite
 Every custom backend class must fulfill the following TypeScript interface:
 
 ```typescript
-import { IState } from '@fromeroc9/testform';
+import { IState } from '@fromeroc9/testform@beta';
 
 export interface IBackend {
   /** Reads and parses the current state for the active workspace */

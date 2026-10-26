@@ -10,7 +10,7 @@ La clase `State` es el núcleo de la máquina de estados de Testform. Gestiona l
 ## 🚀 Firma y Constructor
 
 ```typescript
-import { State } from '@fromeroc9/testform';
+import { State } from '@fromeroc9/testform@beta';
 
 const state = new State(
   dir: string,
@@ -45,7 +45,7 @@ const state = new State(
 ## 🛠️ Ejemplo de Uso Programático
 
 ```typescript
-import { State } from '@fromeroc9/testform';
+import { State } from '@fromeroc9/testform@beta';
 
 async function auditRepositoryState(projectDir: string) {
   const stateManager = new State(projectDir);

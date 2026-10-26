@@ -3,7 +3,7 @@ title: "Programmatic SDK & API Reference"
 description: "Overview of Testform's JavaScript/TypeScript API, architectural contracts, and extensibility points."
 ---
 
-The `@fromeroc9/testform` package exposes a **programmatic TypeScript / JavaScript API** designed for developers, QA platform engineers, and plugin authors.
+The `@fromeroc9/testform@beta` package exposes a **programmatic TypeScript / JavaScript API** designed for developers, QA platform engineers, and plugin authors.
 
 It allows registering custom quality policies, test resource templates, distributed storage backends, external platform providers, and evaluating configuration expressions directly from code.
 
@@ -14,13 +14,13 @@ It allows registering custom quality policies, test resource templates, distribu
 To interact with the Testform API in your automation scripts or custom plugin packages:
 
 ```bash
-npm install @fromeroc9/testform --save-dev
+npm install @fromeroc9/testform@beta --save-dev
 ```
 
 Or using Yarn / pnpm:
 
 ```bash
-pnpm add -D @fromeroc9/testform
+pnpm add -D @fromeroc9/testform@beta
 ```
 
 ---
@@ -45,7 +45,7 @@ import {
   // Configuration & State Management
   Config,
   State,
-} from '@fromeroc9/testform';
+} from '@fromeroc9/testform@beta';
 ```
 
 ---
