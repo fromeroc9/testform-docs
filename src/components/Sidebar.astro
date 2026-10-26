@@ -33,9 +33,10 @@ if (isCli && cliGroup && 'entries' in cliGroup) {
   currentSublist = sidebar;
 }
 
-const docsHref = `/${lang}/docs/`;
-const cliHref = `/${lang}/cli/`;
-const apiHref = `/${lang}/api/`;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const docsHref = `${base}/${lang}/docs/`;
+const cliHref = `${base}/${lang}/cli/`;
+const apiHref = `${base}/${lang}/api/`;
 ---
 
 <!-- Mobile Navigation Switcher (Text tabs, not bulky buttons) -->
