@@ -3,6 +3,7 @@ import starlight from '@astrojs/starlight';
 
 export default defineConfig({
   site: 'https://fromeroc9.github.io',
+  base: '/testform-docs',
   integrations: [
     starlight({
       title: 'testform',
@@ -12,7 +13,7 @@ export default defineConfig({
           tag: 'link',
           attrs: {
             rel: 'icon',
-            href: '/favicon.ico',
+            href: '/testform-docs/favicon.ico',
             sizes: '32x32',
           },
         },
@@ -20,7 +21,7 @@ export default defineConfig({
           tag: 'link',
           attrs: {
             rel: 'apple-touch-icon',
-            href: '/apple-touch-icon.png',
+            href: '/testform-docs/apple-touch-icon.png',
           },
         },
       ],
