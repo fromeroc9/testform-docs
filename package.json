@@ -1,7 +1,22 @@
 {
-  "name": "testform-docs",
+  "name": "@fromeroc9/testform-docs",
+	"description": "Testform transforms standard issue trackers into full-fledged Test Management ecosystems using declarative Gherkin configurations that can be shared, reviewed, and versioned as code.",
+	"author": "Flavio Romero <flavio.arc9@gmail.com>",
   "type": "module",
   "version": "1.1.0",
+  	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/fromeroc9/testform-docs.git"
+	},
+	"keywords": [
+		"test-management",
+		"test-as-code",
+		"gherkin",
+		"bdd",
+		"behavior-driven development",
+		"github",
+		"testform"
+	],
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
