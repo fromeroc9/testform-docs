@@ -28,7 +28,7 @@ It is essential not to confuse a **Testform Provider** with an automated **Test 
 
 ```mermaid
 graph TD
-    A[Testform: testform.yml + features + vars] --> B[Topological DAG Dependencies]
+    A[Testform: main.yml + features + vars] --> B[Topological DAG Dependencies]
     B --> C[1. API Test Runner: Rest / GraphQL]
     C -->|Outputs: tokens, IDs| D[2. E2E Test Runner: Playwright / Web]
     D --> E[3. Performance Test Runner: K6 / Load]

@@ -11,12 +11,12 @@ Testform implementa dos controles esenciales de `lifecycle`:
 
 ---
 
-## 1. Configuración en YAML (`testform.yml` o Dominio)
+## 1. Configuración en YAML (`main.yml` o Dominio)
 
 Puedes definir reglas de ciclo de vida a nivel global, por scope (`testcase`, `testrun`, `testplan`) o para recursos específicos mediante su dirección canónica.
 
 ```yaml
-# testform.yml o auth.yml
+# main.yml o auth.yml
 lifecycle:
   # 1. Reglas Globales por Defecto
   prevent_destroy: false

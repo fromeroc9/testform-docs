@@ -32,12 +32,12 @@ Scenario: Finalización exitosa de orden de compra
 
 ---
 
-## 2. Declaración en YAML (`testform.yml` o Dominio)
+## 2. Declaración en YAML (`main.yml` o Dominio)
 
-También es posible centralizar la matriz de dependencias en `testform.yml` o archivos de configuración por dominio:
+También es posible centralizar la matriz de dependencias en `main.yml` o archivos de configuración por dominio:
 
 ```yaml
-# testform.yml o checkout.yml
+# main.yml o checkout.yml
 dependencies:
   "checkout/checkout.case.feature.@tc-6":
     - "auth/login.case.feature.@tc-1"

@@ -7,7 +7,7 @@ Data sources allow Testform to query read-only information from external fixture
 
 ---
 
-## 1. Declaring Data Sources in `testform.yml`
+## 1. Declaring Data Sources in `main.yml`
 
 ```yaml
 data:
@@ -33,7 +33,7 @@ Scenario: Login using data source
   Then user identity matches "${data.existing_login.identity}"
 ```
 
-And in `testform.yml`:
+And in `main.yml`:
 
 ```yaml
 outputs:

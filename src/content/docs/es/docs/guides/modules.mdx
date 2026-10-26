@@ -32,7 +32,7 @@ Feature: Módulo de Autenticación
 
 Los pasos pueden utilizar comodines de ángulo `<param>` o sintaxis de variable `${var.param}` que serán inyectados dinámicamente durante la invocación.
 
-### B. Declaración en `testform.yml`
+### B. Declaración en `main.yml`
 
 Puedes registrar módulos reutilizables centralmente con sus variables por defecto:
 
@@ -84,7 +84,7 @@ Los parámetros declarados en `vars={...}` sustituyen los valores `<user>` y `<r
 
 ### B. Invocación por Nombre de Módulo
 
-Si el módulo fue registrado en `testform.yml`, puedes invocarlo directamente por su nombre o sobreescribir variables:
+Si el módulo fue registrado en `main.yml`, puedes invocarlo directamente por su nombre o sobreescribir variables:
 
 ```gherkin
 @tc-checkout-standard
@@ -140,7 +140,7 @@ outputs:
 El proyecto principal o cualquier escenario que consuma el módulo accede al output utilizando el prefijo `module.<nombre>.<output>`:
 
 ```yaml
-# testform.yml
+# main.yml
 outputs:
   active_admin_token:
     description: "Token de sesión del módulo de autenticación"

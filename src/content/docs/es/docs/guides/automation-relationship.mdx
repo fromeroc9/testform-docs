@@ -27,7 +27,7 @@ Es fundamental no confundir un **Provider de Testform** con un **Test Runner**:
 
 ```mermaid
 graph TD
-    A[Testform: testform.yml + features + vars] --> B[Grafo de Dependencias DAG]
+    A[Testform: main.yml + features + vars] --> B[Grafo de Dependencias DAG]
     B --> C[1. API Test Runner: Rest / GraphQL]
     C -->|Outputs: tokens, IDs| D[2. E2E Test Runner: Playwright / Web]
     D --> E[3. Performance Test Runner: K6 / Carga]

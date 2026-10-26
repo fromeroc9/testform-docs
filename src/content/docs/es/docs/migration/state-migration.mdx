@@ -13,7 +13,7 @@ Si deseas migrar tu archivo de estado desde almacenamiento local a un bucket de 
    ```bash
    npx testform state pull > backup.state
    ```
-2. **Actualizar `testform.yml`:** Modifica el bloque `backend` con la configuracion del nuevo proveedor cloud (ejemplo: S3 o OCI).
+2. **Actualizar `main.yml`:** Modifica el bloque `backend` con la configuracion del nuevo proveedor cloud (ejemplo: S3 o OCI).
 3. **Inicializar y Empujar el Estado:**
    ```bash
    npx testform init -migrate-state

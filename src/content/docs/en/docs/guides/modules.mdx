@@ -33,7 +33,7 @@ Feature: Authentication Module
 
 Steps can use angle brackets `<param>` or variable syntax `${var.param}`, which are dynamically replaced when the module is invoked.
 
-### B. Declaration in `testform.yml`
+### B. Declaration in `main.yml`
 
 You can centrally register reusable modules with their default variables:
 
@@ -85,7 +85,7 @@ The parameters declared in `vars={...}` replace `<user>` and `<role>` in the inh
 
 ### B. Invocation by Module Name
 
-If the module is registered in `testform.yml`, you can invoke it directly by name or override variables:
+If the module is registered in `main.yml`, you can invoke it directly by name or override variables:
 
 ```gherkin
 @tc-checkout-standard
@@ -141,7 +141,7 @@ outputs:
 The root project or any consuming scenario references the output using the `module.<name>.<output>` prefix:
 
 ```yaml
-# testform.yml
+# main.yml
 outputs:
   active_admin_token:
     description: "Session token from auth module"

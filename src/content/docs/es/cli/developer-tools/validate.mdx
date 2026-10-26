@@ -6,7 +6,7 @@ title: "testform validate"
 testform [opciones globales] validate [opciones]
 ```
 
-El comando `testform validate` comprueba la sintaxis y coherencia de tus archivos de configuración (tanto los archivos `.feature` como `testform.yml`). Valida que los pasos cumplan con la gramática de Gherkin, que los campos personalizados coincidan con los esquemas declarados y que no existan transgresiones de políticas.
+El comando `testform validate` comprueba la sintaxis y coherencia de tus archivos de configuración (tanto los archivos `.feature` como `main.yml`). Valida que los pasos cumplan con la gramática de Gherkin, que los campos personalizados coincidan con los esquemas declarados y que no existan transgresiones de políticas.
 
 La validación se realiza a nivel estrictamente local y **no** realiza peticiones a APIs remotas ni valida credenciales externas.
 
@@ -33,7 +33,7 @@ $ testform validate
 │ Warning: Undeclared field 'tipo_prueba'
 │ 
 │   in tests/cart.case.feature:
-│ The field 'tipo_prueba' is used but not declared in testform.yml schema.
+│ The field 'tipo_prueba' is used but not declared in main.yml schema.
 ╵
 Success! The configuration is valid, but there were some warnings.
 ```

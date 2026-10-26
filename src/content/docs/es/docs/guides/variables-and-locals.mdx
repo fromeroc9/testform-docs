@@ -59,7 +59,7 @@ Cuando un mismo parámetro o variable se define en múltiples lugares, Testform 
 │  [Nivel 4] Archivos CLI:         -var-file="staging.yml"
 │  [Nivel 2] Dominio / Carpetas:   auth/auth.yml, inventory/inventory.yml, etc.
 │  [Nivel 1] Estándar Terraform:   vars.yml, local.yml
-│  [Nivel 0] Monolito Base:        testform.yml (defaults globales)
+│  [Nivel 0] Manifiesto Base:       main.yml (defaults globales)
 ▼ BASE / MENOR PRIORIDAD
 ```
 
@@ -69,11 +69,11 @@ Cuando un mismo parámetro o variable se define en múltiples lugares, Testform 
 
 ### Descripción de cada Nivel
 
-#### [Nivel 0] Monolito Base: `testform.yml`
+#### [Nivel 0] Manifiesto Base: `main.yml`
 Es el punto de partida del proyecto. Define los valores por defecto globales para que el proyecto pueda inicializarse y ejecutarse sin configuraciones adicionales.
 
 #### [Nivel 1] Estándar Terraform: `vars.yml` y `local.yml`
-Separación limpia en la raíz del proyecto para equipos que prefieren no sobrecargar `testform.yml`.
+Separación limpia en la raíz del proyecto para equipos que prefieren no sobrecargar `main.yml`.
 - `vars.yml`: Contiene únicamente el bloque raíz `vars:`.
 - `local.yml`: Contiene únicamente el bloque raíz `local:`.
 
