@@ -155,7 +155,7 @@ When adding or updating documentation:
 
 1. **Bilingual Parity:** Always maintain parity between Spanish (`src/content/docs/es/`) and English (`src/content/docs/en/`). Every page created or modified in one language must have its counterpart in the other.
 2. **Canonical Manifest:** Always reference **`main.yml`** as the primary Testform configuration file (do not reference legacy `testform.yml`).
-3. **Terraform Diagnostic Standards:** When documenting CLI errors or warnings, follow the HashiCorp Terraform box format:
+3. **Diagnostic Standards:** When documenting CLI errors or warnings, follow the HashiCorp Terraform box format:
    ```text
    ╷
    │ Error: Instance cannot be destroyed
@@ -196,3 +196,4 @@ Deployments are fully automated via GitHub Actions:
 This documentation portal is open-source software licensed under the **[GPL-3.0-or-later](https://github.com/fromeroc9/testform/blob/main/LICENSE)**.
 
 Developed and maintained by **Flavio Romero** (<flavio.arc9@gmail.com>).
+
