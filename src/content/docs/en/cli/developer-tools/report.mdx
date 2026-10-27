@@ -31,7 +31,7 @@ Unlike legacy tools requiring dedicated reporting blocks in `main.yml`, Testform
 
 ---
 
-## 📦 Core Report Catalog
+## Core report catalog
 
 Testform includes 9 built-in report types categorized by scope, plus a raw data extractor (`raw`):
 
@@ -59,7 +59,7 @@ Testform includes 9 built-in report types categorized by scope, plus a raw data 
 
 ---
 
-## 🔍 Unified Filtering & Grouping (`StateQuery`)
+## Unified filtering and grouping (`StateQuery`)
 
 The `report` command shares the query engine with `testform query`:
 
@@ -100,7 +100,7 @@ testform report coverage -groupBy label
 
 ---
 
-## 🎯 Target Scoping (`-target`)
+## Target scoping (`-target`)
 
 The `-target` flag limits the scope of the report to a specific entity and its execution dependencies:
 
@@ -139,7 +139,7 @@ testform report testrun-detailed -target="@tp-2" -filter "status=failed"
 
 ---
 
-## 🎨 Native Output Formats
+## Native output formats
 
 :::note[Optional Packages for Word & Excel]
 To keep Testform's core package lightweight and ultra fast to download, binary generators for Word (`docx`) and Excel (`exceljs`) are managed as **optional peer dependencies**. When you wish to output these formats, simply install the required driver globally or in your project:
@@ -190,16 +190,16 @@ testform report coverage -format=xlsx -out=coverage.xlsx
 
 ---
 
-## 📑 Dynamic Templates with `${...}` Syntax
+## Dynamic templates with `${...}` syntax
 
 To maintain complete consistency with Testform variable resolution and avoid syntax collisions, **all Word and Excel templates use standard `${...}` placeholders**:
 
 | Placeholder | Description | Example Resolution |
 | :--- | :--- | :--- |
-| `${var.<name>}` | Environment or project variable loaded from `vars.yml` or `-var`. | `${var.company}` ➔ `ACME Corp` |
-| `${report.title}` | Active report title. | `${report.title}` ➔ `Test Run Summary` |
-| `${date}` | Report generation timestamp. | `${date}` ➔ `2026-10-26 14:30:00` |
-| `${<metric>}` | Key-value report metric (`total`, `passed`, `failed`, etc.). | `${total}` ➔ `45` |
+| `${var.<name>}` | Environment or project variable loaded from `vars.yml` or `-var`. | `${var.company}` -> `ACME Corp` |
+| `${report.title}` | Active report title. | `${report.title}` -> `Test Run Summary` |
+| `${date}` | Report generation timestamp. | `${date}` -> `2026-10-26 14:30:00` |
+| `${<metric>}` | Key-value report metric (`total`, `passed`, `failed`, etc.). | `${total}` -> `45` |
 | `${table}` or `${report.table}` | **Dynamic table anchor**. Replaced by the generated dataset table. | *Table with headers and rows* |
 
 ```bash
@@ -208,7 +208,7 @@ testform report testrun-summary -format=docx -template=templates/qa-report.docx 
 
 ---
 
-## 🔌 Extensibility: Autoloading from `.testform/reports/`
+## Extensibility and autoloading from `.testform/reports/`
 
 You can register custom reports, custom output formats, or default project templates without touching `main.yml`:
 
@@ -224,11 +224,11 @@ my-project/
 └── tests/
 ```
 
-See the [Modular Reports Guide](../../docs/guides/reports) for complete implementation details and developer interfaces.
+See the [Reports API Reference](../../../api/reports) for development contracts, type definitions, and code examples.
 
 ---
 
-## 🤖 CI/CD Integration (GitHub Actions)
+## CI/CD Integration (GitHub Actions)
 
 ```yaml
 - name: Generate QA Report

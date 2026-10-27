@@ -8,7 +8,7 @@ Following clean Terraform design conventions, backends are configured in **dicti
 
 ---
 
-## 🌐 1. Native HTTP / REST Backend (`http` or `rest`)
+ 1. Native HTTP / REST Backend (`http` or `rest`)
 
 Persists state to any remote REST API or HTTP endpoint compliant with Terraform's standard HTTP backend protocol:
 
@@ -44,7 +44,7 @@ address: "https://api.example.com/v1/workspaces/{workspace}/state"
 
 ---
 
-## 🛠️ 2. Custom Backend (`custom`)
+ 2. Custom Backend (`custom`)
 
 For proprietary storage mechanisms, internal microservices, or custom vaults:
 
@@ -100,7 +100,7 @@ module.exports = VaultBackend;
 
 ---
 
-## 🪣 3. GitHub Native Branch Storage
+ 3. GitHub Native Branch Storage
 
 Stores the state ledger directly in a dedicated branch of your GitHub repository:
 
@@ -117,7 +117,7 @@ backend:
 
 ---
 
-## ☁️ 4. AWS S3 & Compatible Storage (MinIO, Cloudflare R2, Ceph, OCI)
+ 4. AWS S3 & Compatible Storage (MinIO, Cloudflare R2, Ceph, OCI)
 
 Supports AWS S3 and any S3-compatible object storage provider:
 
@@ -135,7 +135,7 @@ backend:
 
 ---
 
-## 💻 5. Local Backend
+ 5. Local Backend
 
 Stores state on local disk (default in local development):
 

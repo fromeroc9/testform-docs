@@ -1,19 +1,22 @@
 ---
 title: "Developer Tools"
+description: "Utilidades operativas para desarrolladores e ingenieros de calidad que optimizan el formateo, la validación, el análisis y el reporte de pruebas."
 ---
 
-
-Utilidades operativas para desarrolladores e ingenieros de calidad que optimizan el formateo, la validacion, el analisis y el reporte de pruebas.
+Utilidades operativas para desarrolladores e ingenieros de calidad que optimizan el formateo, la validación, el análisis, la inspección y el reporte de pruebas.
 
 ## Comandos Disponibles
 
-- **[`testform suite`](./suite):** Orquesta la ejecucion de suites de prueba automatizadas mediante ejecutores reales (Playwright, Cypress, Vitest).
-- **[`testform validate`](./validate):** Valida de forma estatica la sintaxis de archivos `.feature` y las politicas de gobernanza.
-- **[`testform fmt`](./fmt):** Reformatea archivos Gherkin y configuraciones YAML segun las convenciones canonicas de estilo.
-- **[`testform diff`](./diff):** Muestra diferencias detalladas linea por linea entre las especificaciones locales y el estado registrado.
-- **[`testform show`](./show):** Inspecciona archivos de plan binarios o instantaneas de estado en formato legible para humanos o JSON.
+- **[`testform suite`](./suite):** Orquesta la gestión de suites de pruebas (`init`, `-fill`, `-link`, `-mark`, `-tags`).
+- **[`testform validate`](./validate):** Valida de forma estática la sintaxis de archivos `.feature` y las políticas de gobernanza.
+- **[`testform fmt`](./fmt):** Reformatea archivos Gherkin y configuraciones YAML según las convenciones canónicas de estilo.
+- **[`testform diff`](./diff):** Muestra diferencias detalladas línea por línea entre las especificaciones locales y el estado registrado.
+- **[`testform show`](./show):** Inspecciona archivos de plan o instantáneas de estado en formato legible para humanos o JSON.
 - **[`testform query`](./query):** Realiza consultas avanzadas sobre los recursos del repositorio utilizando expresiones de tags y metadatos.
 - **[`testform policy`](./policy):** Inspecciona, activa y desactiva políticas de calidad y gobernanza en tiempo de ejecución.
-- **[`testform graph`](./graph):** Genera la representacion visual del Grafo Aciclico Dirigido (DAG) en formato DOT o Mermaid.
+- **[`testform modules`](./modules):** Muestra todos los módulos declarados en el espacio de trabajo y sus versiones resueltas.
+- **[`testform providers`](./providers):** Muestra el árbol de requisitos de proveedores y los esquemas de recursos de la configuración.
+- **[`testform functions`](./functions):** Inspecciona y evalúa interactivamente las funciones integradas de expresiones.
+- **[`testform print`](./print):** Analiza un archivo `.feature` e imprime su Árbol de Sintaxis Abstracta (AST) en JSON.
+- **[`testform graph`](./graph):** Genera la representación visual del Grafo Acíclico Dirigido (DAG) en formato DOT, Mermaid o árbol.
 - **[`testform report`](./report):** Genera informes analíticos multidimensionales en Markdown, Word (.docx), Excel (.xlsx), JSON y CSV.
-

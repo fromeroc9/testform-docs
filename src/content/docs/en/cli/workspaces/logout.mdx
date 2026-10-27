@@ -1,0 +1,51 @@
+---
+title: "testform logout"
+description: "Removes locally-stored credentials for a remote host."
+---
+
+```bash
+testform [global options] logout [hostname]
+```
+
+The `testform logout` command removes locally stored authentication credentials for the specified hostname (defaults to `github.com`).
+
+Note that the API token is only removed from local storage (`~/.testform.d/credentials.json`); it is not revoked or destroyed on the remote server, so it will remain valid until manually revoked in your provider account.
+
+---
+
+## Arguments
+
+| Argument | Default | Description |
+| :--- | :--- | :--- |
+| `hostname` | `github.com` | Domain name of the remote host whose credentials should be removed (e.g. `github.com`, `gitlab.com`). |
+
+---
+
+## Usage Examples
+
+### 1. Remove Default Credentials (GitHub)
+
+```bash
+$ testform logout
+Success! Removed credentials for github.com.
+```
+
+### 2. Remove Credentials for a Custom Host
+
+```bash
+$ testform logout gitlab.com
+Success! Removed credentials for gitlab.com.
+```
+
+If no credentials exist for the specified host:
+
+```bash
+$ testform logout gitlab.com
+Warning: No credentials found for gitlab.com.
+```
+
+---
+
+## Exit Codes
+
+- `0`: Logout completed successfully.

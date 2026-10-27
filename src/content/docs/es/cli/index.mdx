@@ -1,8 +1,9 @@
 ---
 title: "Resumen de la CLI"
+description: "Referencia completa de la interfaz de línea de comandos de Testform."
 ---
 
-La interfaz de línea de comandos (CLI) de Testform es la herramienta operativa central para gestionar tu infraestructura de pruebas. Diseñada bajo las convenciones de HashiCorp Terraform, ofrece un flujo de trabajo intuitivo, predecible y consistente.
+La interfaz de línea de comandos (CLI) de Testform es la herramienta operativa central para gestionar tu infraestructura de pruebas como código. Diseñada bajo las convenciones y la filosofía de HashiCorp Terraform, ofrece un flujo de trabajo intuitivo, predecible y consistente.
 
 ## Sintaxis de Comandos
 
@@ -18,7 +19,7 @@ Las opciones globales pueden anteponerse a cualquier subcomando:
 | :--- | :--- | :--- |
 | `-chdir=DIR` | `-C` | Cambia el directorio de trabajo a `DIR` antes de ejecutar el comando. |
 | `-scope=SCOPE` | `-s` | Limita la ejecución a `testcase`, `testrun` o `testplan`. |
-| `-projectId=ID`| — | Sobrescribe el ID de GitHub Projects V2 configurado en `main.yml`. |
+| `-project-id=ID`| — | Sobrescribe el ID de GitHub Projects V2 configurado en `main.yml`. |
 | `-no-color` | — | Desactiva los colores ANSI (ideal para servidores de logs continuos). |
 | `-json` | — | Emite la salida estructurada en formato JSON para automatización y CI/CD. |
 | `-help` | `-h` | Muestra la ayuda detallada y opciones para cualquier comando. |
@@ -38,10 +39,67 @@ testform testrun apply
 testform testplan destroy
 ```
 
-## Categorías de Subcomandos
+## Directorios Operativos
 
-- **[Comandos del Flujo Principal](./cli/commands)**: `init`, `validate`, `plan`, `apply`, `destroy`.
-- **[Comandos de Inspección](./cli/inspection)**: `show`, `diff`, `graph`, `report`, `query`.
-- **[Operaciones de Estado](./cli/state-ops)**: `state`, `refresh`, `taint`, `import`, `force-unlock`.
-- **[Espacios de Trabajo y Utilidades](./cli/utilities)**: `workspace`, `fmt`, `login`, `suite`, `ephemeral`.
+Testform administra de forma automática el directorio local [`.testform/`](./directories) para almacenar metadatos de backends, módulos descargados y extensiones, así como el directorio global [`~/.testform.d/`](./directories) para credenciales de acceso. Consulta [El Directorio .testform y ~/.testform.d](./directories) para más detalles.
 
+---
+
+## Índice Completo de Comandos
+
+### [Flujo de Trabajo Principal](./workflow)
+
+Comandos para el ciclo de vida central de infraestructura de pruebas:
+
+| Comando | Descripción |
+| :--- | :--- |
+| [`testform init`](./workflow/init) | Prepara el directorio de trabajo, descarga dependencias e inicializa el backend. |
+| [`testform plan`](./workflow/plan) | Muestra los cambios requeridos por la configuración actual respecto al estado. |
+| [`testform apply`](./workflow/apply) | Crea o actualiza recursos de prueba en los proveedores remotos. |
+| [`testform refresh`](./workflow/refresh) | Actualiza el estado local para reflejar los sistemas remotos. |
+| [`testform destroy`](./workflow/destroy) | Destruye los recursos gestionados previamente creados. |
+
+### [Herramientas de Desarrollador](./developer-tools)
+
+Comandos de inspección, análisis, validación y reporte:
+
+| Comando | Descripción |
+| :--- | :--- |
+| [`testform validate`](./developer-tools/validate) | Comprueba de forma estática si la sintaxis y gobernanza son válidas. |
+| [`testform fmt`](./developer-tools/fmt) | Reformatea los archivos de configuración y `.feature` al estilo estándar. |
+| [`testform diff`](./developer-tools/diff) | Muestra el desfase (drift) entre la configuración local y el estado. |
+| [`testform show`](./developer-tools/show) | Muestra el estado actual o un plan guardado en formato legible o JSON. |
+| [`testform query`](./developer-tools/query) | Consulta y filtra recursos gestionados en el estado mediante expresiones. |
+| [`testform policy`](./developer-tools/policy) | Inspecciona, activa o desactiva políticas de calidad y gobernanza. |
+| [`testform modules`](./developer-tools/modules) | Muestra todos los módulos declarados en el espacio de trabajo. |
+| [`testform providers`](./developer-tools/providers) | Muestra el árbol de proveedores requeridos y esquemas de recursos. |
+| [`testform functions`](./developer-tools/functions) | Inspecciona y evalúa funciones integradas de expresiones. |
+| [`testform print`](./developer-tools/print) | Analiza un archivo `.feature` e imprime su AST en formato JSON. |
+| [`testform graph`](./developer-tools/graph) | Genera un grafo de dependencias en Graphviz (DOT), Mermaid o árbol. |
+| [`testform report`](./developer-tools/report) | Genera informes analíticos multidimensionales (Markdown, Word, Excel, JSON). |
+| [`testform suite`](./developer-tools/suite) | Gestiona suites de pruebas y archivos de ejecución (`init`, `-fill`, `-link`, `-mark`). |
+
+### [Almacenamiento y Estado](./storage)
+
+Gestión avanzada del ledger de estado:
+
+| Comando | Descripción |
+| :--- | :--- |
+| [`testform state`](./storage/state) | Gestión avanzada del ledger de estado (`list`, `show`, `mv`, `rm`, `pull`, `push`). |
+| [`testform output`](./storage/output) | Muestra valores de salida guardados en el estado o módulo raíz. |
+| [`testform import`](./storage/import) | Asocia infraestructura existente con un recurso de Testform. |
+| [`testform taint`](./storage/taint) | Marca una instancia de recurso como degradada para forzar su reemplazo. |
+| [`testform untaint`](./storage/untaint) | Remueve el estado de dañado de una instancia de recurso. |
+| [`testform force-unlock`](./storage/force-unlock) | Libera manualmente un bloqueo abandonado en el workspace actual. |
+
+### [Espacios de Trabajo y Sesiones](./workspaces)
+
+Múltiples entornos, autenticación y versiones:
+
+| Comando | Descripción |
+| :--- | :--- |
+| [`testform workspace`](./workspaces/workspace) | Gestión de múltiples espacios de trabajo aislados (`list`, `new`, `select`, `delete`). |
+| [`testform login`](./workspaces/login) | Obtiene y guarda credenciales de autenticación para un host remoto. |
+| [`testform logout`](./workspaces/logout) | Elimina credenciales de autenticación almacenadas localmente. |
+| [`testform ephemeral`](./workspaces/ephemeral) | Gestiona sandboxes temporales de prueba en pipelines CI/CD. |
+| [`testform version`](./workspaces/version) | Muestra la versión actual de Testform y comprueba actualizaciones. |

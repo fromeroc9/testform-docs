@@ -1,13 +1,14 @@
 ---
 title: "Sessions & Workspaces"
+description: "Commands for managing isolated workspaces, authentication sessions, ephemeral sandboxes, and version info."
 ---
 
-
-Commands for managing multiple parallel environments, provider authentication sessions, and ephemeral sandbox testing.
+Commands for managing isolated parallel environments, authentication sessions, ephemeral test sandboxes, and runtime version details.
 
 ## Available Commands
 
-- **[`testform workspace`](./workspace):** Manages parallel isolated state ledgers (`list`, `new`, `select`, `delete`).
-- **[`testform login` / `testform logout`](./login-logout):** Authenticates and revokes sessions against cloud storage and remote providers.
-- **[`testform ephemeral`](./ephemeral):** Provisions, attaches, and tears down short-lived ephemeral environments for isolated PR testing.
-
+- **[`testform workspace`](./workspace):** Manages isolated workspaces with independent state files (`list`, `new`, `select`, `delete`).
+- **[`testform login`](./login):** Interactively logs into and saves API credentials for a remote host.
+- **[`testform logout`](./logout):** Removes locally-stored credentials for a remote provider host.
+- **[`testform ephemeral`](./ephemeral):** Creates, inspects, and destroys isolated ephemeral test sandboxes for CI/CD.
+- **[`testform version`](./version):** Displays current Testform version, installed plugins, and checks for upgrades.

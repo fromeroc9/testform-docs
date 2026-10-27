@@ -1,0 +1,83 @@
+---
+title: "testform output"
+description: "Lee valores de salida declarados en el archivo de estado de Testform."
+---
+
+```bash
+testform [opciones globales] output [opciones] [NAME]
+```
+
+El comando `testform output` extrae y presenta el valor de las variables de salida (`outputs`) definidas en la configuración y persistidas en el archivo de estado (`testform.state`).
+
+Si se ejecuta sin argumentos adicionales, muestra todas las salidas del módulo raíz. Si se proporciona un `NAME` específico, muestra únicamente el valor correspondiente a esa variable.
+
+---
+
+## Opciones del Comando
+
+| Opción | Por Defecto | Descripción |
+| :--- | :--- | :--- |
+| `NAME` | (todos) | Nombre de la variable de salida específica a consultar. |
+| `-state=path` | `testform.state` | Ruta al archivo de estado a consultar. |
+| `-json` | `false` | Emite los valores de salida en formato JSON estructurado. |
+| `-raw` | `false` | Imprime el valor de una salida nombrada sin comillas ni formato adicional (ideal para scripts de shell). |
+
+---
+
+## Ejemplos de Uso
+
+### 1. Listar todas las salidas
+
+```bash
+$ testform output
+testcase_count = 42
+testrun_id = "tr-20261027-01"
+quality_gate_passed = true
+```
+
+### 2. Consultar una salida específica
+
+```bash
+$ testform output testrun_id
+"tr-20261027-01"
+```
+
+### 3. Salida sin formato para pipelines (`-raw`)
+
+Ideal para asignar valores a variables de entorno en flujos de CI/CD:
+
+```bash
+$ RUN_ID=$(testform output -raw testrun_id)
+$ echo "El ID del Testrun es: $RUN_ID"
+El ID del Testrun es: tr-20261027-01
+```
+
+### 4. Salida en formato JSON (`-json`)
+
+```bash
+$ testform output -json
+{
+  "testcase_count": {
+    "sensitive": false,
+    "type": "number",
+    "value": 42
+  },
+  "testrun_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "tr-20261027-01"
+  },
+  "quality_gate_passed": {
+    "sensitive": false,
+    "type": "bool",
+    "value": true
+  }
+}
+```
+
+---
+
+## Códigos de Salida
+
+- `0`: Salidas leídas y mostradas exitosamente.
+- `1`: Archivo de estado no encontrado o la variable de salida especificada no existe.

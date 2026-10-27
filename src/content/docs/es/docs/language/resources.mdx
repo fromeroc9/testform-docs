@@ -48,7 +48,7 @@ registerResource({
         // Formato Markdown personalizado para el cuerpo del Issue
         { 
             name: 'body', 
-            value: (s) => `## 📋 Caso de Prueba: ${s.name}\n\n### Pasos a Ejecutar:\n` + 
+            value: (s) => `## Caso de Prueba: ${s.name}\n\n### Pasos a Ejecutar:\n` + 
                           s.steps.map(step => `- **${step.keyword}** ${step.text}`).join('\n') 
         },
 

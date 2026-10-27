@@ -1,0 +1,133 @@
+---
+title: "The .testform and ~/.testform.d Directories"
+description: "Structure, purpose, and lifecycle of the local .testform working directory and the global ~/.testform.d user configuration."
+---
+
+Just as HashiCorp Terraform relies on `.terraform` and `~/.terraform.d`, **Testform** utilizes two dedicated support directories to manage its operational state, local caches, extensions, and user credentials:
+
+1. **`.testform/` (Project Working Directory):** Created in the root of the project workspace where `main.yml` resides. It serves as the local scratch and cache area where Testform stores backend metadata, downloaded modules, ephemeral sandboxes, and discovered extensions.
+2. **`~/.testform.d/` (Global User Directory):** Located in the operating system user's home directory. It securely stores authentication credentials and persistent CLI session configurations.
+
+---
+
+## Project Directory Structure (`.testform/`)
+
+```text
+my-project/
+├── main.yml
+├── testform.state
+└── .testform/
+    ├── backend.json               # Initialized active backend configuration (testform init)
+    ├── environment                # Name of the currently selected workspace
+    ├── modules/                   # Remote modules downloaded from Git repositories
+    │   └── <module_name>/
+    │       ├── main.yml
+    │       ├── policies/          # Quality policies inherited from the shared module
+    │       └── resources/         # Resource templates inherited from the shared module
+    ├── policies/                  # Local custom validation policies (.ts, .js)
+    ├── resources/                 # Local custom resource templates (.ts, .js)
+    ├── reports/                   # Custom report extensions (.ts), formats (.format.ts), and templates (.docx, .xlsx)
+    ├── backends/                  # Local custom backend storage drivers
+    └── ephemeral/                 # Metadata of active ephemeral test sandboxes (testform ephemeral)
+```
+
+---
+
+## Components and Files in `.testform/`
+
+### 1. `backend.json`
+- **When it is generated:** During execution of `testform init`.
+- **Purpose:** Stores the active configuration and hash of the configured state backend (storage provider, bucket, region, or connection parameters).
+- **Safety mechanism:** If you change the `backend` block in `main.yml` or supply conflicting `-backend-config` flags, Testform compares the values against `.testform/backend.json` and halts execution to protect state integrity, advising you to run `testform init -reconfigure` or `testform init -migrate-state`.
+
+### 2. `environment`
+- **When it is generated:** When managing workspaces via `testform workspace new <name>` or `testform workspace select <name>`.
+- **Purpose:** A single-line plain text file storing the name of the currently selected workspace (e.g. `staging` or `production`). If absent, Testform defaults to the `default` workspace.
+
+### 3. `modules/`
+- **When it is generated:** During `testform init`, whenever `main.yml` declares module blocks referencing remote sources (`git::https://...`).
+- **Purpose:** Holds frozen local copies of remote test modules. This ensures subsequent runs of `testform plan` and `testform apply` remain deterministic and do not depend on continuous internet access or external version control hosts.
+
+> [!NOTE]
+> Testform automatically inspects the `policies/` and `resources/` directories inside each downloaded module under `.testform/modules/<name>/`, inheriting enterprise quality gates without manual registration.
+
+### 4. `policies/`
+- **When it is used:** Created manually by QA engineers or governance teams.
+- **Purpose:** Holds custom validation rules in TypeScript or JavaScript (`.ts`, `.js`, `.mjs`, `.cjs`) registered via the `registerPolicy()` API. Testform auto-discovers and evaluates these policies during `testform validate` and `testform apply`.
+
+### 5. `resources/`
+- **When it is used:** Created to define resource connectors or mappings to external systems (Jira, Azure DevOps, TestRail, internal APIs).
+- **Purpose:** Contains resource definitions (`registerResource()`) that Testform dynamically compiles and loads at runtime without pre-compilation steps.
+
+### 6. `reports/`
+- **When it is used:** Created to extend the analytical reporting capabilities of `testform report`.
+- **Purpose:**
+  - **Custom reports:** `<name>.ts` scripts implementing `IReport`.
+  - **Custom formats:** `<format>.format.ts` scripts implementing `IReportFormat` (e.g., exporters for Slack, PDF, or XML).
+  - **Canonical templates:** `report.docx` or `report.xlsx` placed in this directory are loaded transparently as the default template without requiring the `-template` flag.
+
+### 7. `ephemeral/`
+- **When it is generated:** When invoking `testform ephemeral up`.
+- **Purpose:** Stores session IDs, port allocations, and metadata for temporary QA sandboxes deployed in CI/CD branches, allowing inspection with `testform ephemeral list` and teardown via `testform ephemeral down`.
+
+### 8. `backends/`
+- **When it is used:** To store local custom state backend drivers (`.ts` / `.js`) implementing the `IBackend` interface.
+
+---
+
+## Global User Directory (`~/.testform.d/`)
+
+At the developer machine or CI/CD worker level, Testform maintains a global configuration independent of individual project repositories:
+
+- **Linux / macOS:** `~/.testform.d/`
+- **Windows:** `C:\Users\<username>\.testform.d\`
+
+### File `credentials.json`
+- **When it is generated:** When running `testform login <hostname>` (e.g., `testform login github.com`).
+- **When it is modified:** When running `testform logout <hostname>`.
+- **Purpose:** Securely stores provider authentication tokens (e.g., GitHub or GitLab Personal Access Tokens) so the CLI can authenticate against remote APIs without requiring manual environment variables in every shell session:
+
+```json
+{
+  "hosts": {
+    "github.com": {
+      "token": "ghp_xxxxxxxxxxxxxxxxxxxx"
+    }
+  }
+}
+```
+
+---
+
+## `.gitignore` Configuration
+
+The `.testform/` directory is designed to be transient and specific to each machine or execution environment. It should always be included in your project's `.gitignore`:
+
+```text
+# Testform local working directory
+.testform/
+
+# Binary plan files and state backups
+*.tfplan
+*.backup
+
+# Local provider simulated database (when using provider: local)
+testform.data
+
+# State file if using a remote backend (S3, GCS, Azure Blob)
+# Note: If using local backend and versioning state in Git,
+# testform.state may be committed according to team policy.
+```
+
+> [!WARNING]
+> Never commit or push `~/.testform.d/credentials.json` to a shared repository, as it contains sensitive API tokens.
+
+---
+
+## Regeneration and Recovery
+
+If the `.testform/` directory is accidentally deleted or you clone the repository onto a new machine:
+
+1. Run `testform init`.
+2. Testform automatically re-creates the base directory structure, regenerates `.testform/backend.json`, and re-downloads all declared modules into `.testform/modules/`.
+3. If your project was using a workspace other than `default`, switch to it using `testform workspace select <name>`.

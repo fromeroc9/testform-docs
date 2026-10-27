@@ -7,7 +7,7 @@ Testform's reporting engine provides an enterprise analytics and reporting platf
 
 ---
 
-## 🏛️ Engine Architecture
+## Engine architecture
 
 The reporting system divides responsibilities into three distinct layers:
 
@@ -43,11 +43,11 @@ The reporting system divides responsibilities into three distinct layers:
 
 ---
 
-## 📑 Dynamic Templates in Word & Excel
+## Dynamic templates in Word & Excel
 
 Testform allows customizing the visual layout of executive reports using preconfigured templates. To maintain complete consistency with Testform's variable engine and avoid syntax collisions, **all templates use standard `${...}` placeholders**.
 
-### Interpolation Placeholders
+### Interpolation placeholders
 
 | Placeholder | Description | Injected Value |
 | :--- | :--- | :--- |
@@ -57,7 +57,7 @@ Testform allows customizing the visual layout of executive reports using preconf
 | `${<metric>}` | Key-value report metric (`total`, `passed`, etc.). | Numerical value or percentage string. |
 | `${table}` / `${report.table}` | **Table insertion anchor**. | Substituted with the complete generated dataset table. |
 
-### Creating a Word Template (.docx)
+### Creating a Word template (.docx)
 
 1. Open Microsoft Word and design your corporate header, covers, or branding.
 2. Add paragraphs containing template placeholders:
@@ -67,7 +67,7 @@ Testform allows customizing the visual layout of executive reports using preconf
 3. In the location where the data table should be placed, add the text `${table}` in an independent paragraph.
 4. Save the file as `report.docx` inside `.testform/reports/` (used automatically) or supply it via `-template=path.docx`.
 
-### Creating an Excel Template (.xlsx)
+### Creating an Excel template (.xlsx)
 
 1. Open Excel and format header rows and company branding.
 2. In metadata cells, add expressions like `Environment: ${var.environment}` or `Passed: ${passed}`.
@@ -76,7 +76,7 @@ Testform allows customizing the visual layout of executive reports using preconf
 
 ---
 
-## 🔌 Extensibility: Zero-Pollution Autoloading
+## Extensibility and autoloading
 
 In line with Terraform's design principles, extending Testform requires zero configuration overhead in `main.yml`. Extensions work by convention inside `.testform/reports/`:
 
@@ -153,7 +153,7 @@ export const SlackFormat: IReportFormat = {
     const blocks = [
       {
         type: 'header',
-        text: { type: 'plain_text', text: `📊 ${data.title}` }
+        text: { type: 'plain_text', text: `${data.title}` }
       },
       {
         type: 'section',
@@ -178,7 +178,7 @@ testform report testrun-summary -format=slack -out=dist/slack-payload.json
 
 ---
 
-## 🧭 Format Comparison Matrix
+## Supported native formats
 
 | Format | Flag | Extension | Type | Recommended Use Case |
 | :--- | :--- | :--- | :--- | :--- |

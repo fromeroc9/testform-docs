@@ -49,14 +49,14 @@ Like Terraform, Testform classifies data types into **primitive** and **complex*
 
 | Type | Category | Testform Support | Active Validation |
 | :--- | :--- | :--- | :--- |
-| **`string`** | Primitive | ✅ **100% Supported** | Direct string interpolation and injection. |
-| **`number`** | Primitive | ✅ **100% Supported** | Strict numeric check; fails if non-numeric. |
-| **`boolean`** | Primitive | ✅ **100% Supported** | Strict check to `true` or `false`. |
-| **`enum`** | Restriction | ✅ **100% Supported** | Fails with structured diagnostic if value is not allowed. |
-| **`validation`** | AST Logic | ✅ **100% Supported** | Evaluated via sandboxed AST expression engine with custom message. |
-| **`list(...)`** | Collection | ⚠️ **Partial / Limitation** | Stored flattened as string (`"a,b"`). Does not validate element types. |
-| **`map(...)`** | Collection | ⚠️ **Partial / Limitation** | Does not validate homogeneous value types. |
-| **`object`** | Structural | ⚠️ **Partial / Limitation** | Does not validate nested property schemas or required fields. |
+| **`string`** | Primitive | **100% Supported** | Direct string interpolation and injection. |
+| **`number`** | Primitive | **100% Supported** | Strict numeric check; fails if non-numeric. |
+| **`boolean`** | Primitive | **100% Supported** | Strict check to `true` or `false`. |
+| **`enum`** | Restriction | **100% Supported** | Fails with structured diagnostic if value is not allowed. |
+| **`validation`** | AST Logic | **100% Supported** | Evaluated via sandboxed AST expression engine with custom message. |
+| **`list(...)`** | Collection | **Partial / Limitation** | Stored flattened as string (`"a,b"`). Does not validate element types. |
+| **`map(...)`** | Collection | **Partial / Limitation** | Does not validate homogeneous value types. |
+| **`object`** | Structural | **Partial / Limitation** | Does not validate nested property schemas or required fields. |
 
 ### Practical Examples of Primitive Types
 

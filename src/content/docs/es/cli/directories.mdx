@@ -1,0 +1,133 @@
+---
+title: "El Directorio .testform y ~/.testform.d"
+description: "Estructura, propósito y ciclo de vida del directorio de trabajo local .testform y la configuración global ~/.testform.d."
+---
+
+Al igual que HashiCorp Terraform utiliza `.terraform` y `~/.terraform.d`, **Testform** utiliza dos directorios de soporte para gestionar su estado operativo, cachés locales, extensiones y credenciales de usuario:
+
+1. **`.testform/` (Directorio de Proyecto):** Creado en la raíz del espacio de trabajo donde reside `main.yml`. Es el área de trabajo local donde Testform almacena metadatos del backend, módulos descargados, sandboxes efímeros y extensiones descubiertas.
+2. **`~/.testform.d/` (Directorio Global de Usuario):** Ubicado en el directorio personal (*home*) del usuario del sistema operativo. Almacena credenciales de autenticación y configuraciones de sesión persistentes.
+
+---
+
+## Estructura del Directorio de Proyecto (`.testform/`)
+
+```text
+mi-proyecto/
+├── main.yml
+├── testform.state
+└── .testform/
+    ├── backend.json               # Configuración del backend activo inicializado (testform init)
+    ├── environment                # Nombre del workspace actualmente seleccionado
+    ├── modules/                   # Módulos remotos descargados desde repositorios Git
+    │   └── <nombre_modulo>/
+    │       ├── main.yml
+    │       ├── policies/          # Políticas heredadas del módulo compartido
+    │       └── resources/         # Plantillas de recursos del módulo compartido
+    ├── policies/                  # Políticas de validación personalizadas locales (.ts, .js)
+    ├── resources/                 # Plantillas de recursos personalizadas locales (.ts, .js)
+    ├── reports/                   # Extensiones de reportes (.ts), formatos (.format.ts) y plantillas (.docx, .xlsx)
+    ├── backends/                  # Drivers de backends personalizados locales
+    └── ephemeral/                 # Metadatos de sandboxes efímeros activos (testform ephemeral)
+```
+
+---
+
+## Componentes y Archivos en `.testform/`
+
+### 1. `backend.json`
+- **Cuándo se genera:** Durante la ejecución de `testform init`.
+- **Propósito:** Almacena la configuración activa y el hash del backend configurado (tipo de almacenamiento, bucket, región o parámetros de conexión).
+- **Mecanismo de seguridad:** Si modificas el bloque `backend` en `main.yml` o pasas banderas `-backend-config` divergentes, Testform compara los valores contra `.testform/backend.json` y detiene la ejecución para evitar corrupción de estado, solicitando ejecutar `testform init -reconfigure` o `testform init -migrate-state`.
+
+### 2. `environment`
+- **Cuándo se genera:** Al gestionar espacios de trabajo mediante `testform workspace new <nombre>` o `testform workspace select <nombre>`.
+- **Propósito:** Archivo de texto plano de una sola línea que indica cuál es el workspace activo del directorio actual (por ejemplo: `staging` o `production`). Si no existe, Testform opera en el workspace por defecto (`default`).
+
+### 3. `modules/`
+- **Cuándo se genera:** Durante `testform init`, cuando `main.yml` declara módulos con fuentes remotas (`git::https://...`).
+- **Propósito:** Almacena copias locales congeladas de los módulos de prueba. Permite que las ejecuciones posteriores de `testform plan` y `testform apply` funcionen de forma determinista y sin depender de conexión constante a la red o a servidores de control de versiones.
+
+> [!NOTE]
+> Testform también inspecciona automáticamente las carpetas `policies/` y `resources/` dentro de cada módulo descargado en `.testform/modules/<nombre>/`, heredando reglas corporativas de calidad sin configuración adicional.
+
+### 4. `policies/`
+- **Cuándo se utiliza:** Creado manualmente por ingenieros de QA o equipos de gobernanza.
+- **Propósito:** Contiene reglas de validación en TypeScript o JavaScript (`.ts`, `.js`, `.mjs`, `.cjs`) registradas mediante la API `registerPolicy()`. Testform auto-descubre y evalúa estas políticas durante `testform validate` y `testform apply`.
+
+### 5. `resources/`
+- **Cuándo se utiliza:** Creado para extender conectores o mapeos de recursos hacia sistemas externos (Jira, Azure DevOps, TestRail, APIs internas).
+- **Propósito:** Contiene definiciones de recursos (`registerResource()`) que Testform compila y carga dinámicamente en tiempo de ejecución.
+
+### 6. `reports/`
+- **Cuándo se utiliza:** Creado para extender el motor analítico de `testform report`.
+- **Propósito:**
+  - **Reportes personalizados:** Archivos `<nombre>.ts` que implementan `IReport`.
+  - **Formatos personalizados:** Archivos `<formato>.format.ts` que implementan `IReportFormat` (por ejemplo, exportadores a Slack, PDF o XML).
+  - **Plantillas canónicas:** Archivos `report.docx` o `report.xlsx` ubicados en esta carpeta se cargan automáticamente como plantilla predeterminada sin necesidad de pasar el argumento `-template`.
+
+### 7. `ephemeral/`
+- **Cuándo se genera:** Al invocar `testform ephemeral up`.
+- **Propósito:** Almacena los identificadores de sesión, puertos y metadatos de los sandboxes temporales de prueba desplegados en ramas de CI/CD, permitiendo su inspección con `testform ephemeral list` y su posterior limpieza con `testform ephemeral down`.
+
+### 8. `backends/`
+- **Cuándo se utiliza:** Para almacenar drivers de backend personalizados locales (`.ts` / `.js`) que implementan la interfaz `IBackend`.
+
+---
+
+## El Directorio Global de Usuario (`~/.testform.d/`)
+
+A nivel de máquina de desarrollo o agente de ejecución de CI/CD, Testform mantiene una configuración global independiente de los repositorios:
+
+- **Linux / macOS:** `~/.testform.d/`
+- **Windows:** `C:\Users\<usuario>\.testform.d\`
+
+### Archivo `credentials.json`
+- **Cuándo se genera:** Al ejecutar `testform login <hostname>` (por ejemplo: `testform login github.com`).
+- **Cuándo se modifica:** Al ejecutar `testform logout <hostname>`.
+- **Propósito:** Almacena de forma segura los tokens de autenticación de proveedores (ej. Personal Access Tokens de GitHub o GitLab) para que el CLI pueda interactuar con las APIs remotas sin requerir exportar variables de entorno en cada terminal:
+
+```json
+{
+  "hosts": {
+    "github.com": {
+      "token": "ghp_xxxxxxxxxxxxxxxxxxxx"
+    }
+  }
+}
+```
+
+---
+
+## Configuración en `.gitignore`
+
+El directorio `.testform/` está diseñado para ser transitorio y específico de cada máquina o entorno de ejecución. Debe agregarse al archivo `.gitignore` del proyecto:
+
+```text
+# Directorio de trabajo local de Testform
+.testform/
+
+# Archivos de plan binarios y copias de seguridad de estado
+*.tfplan
+*.backup
+
+# Base de datos simulada del proveedor local (si se usa provider: local)
+testform.data
+
+# Archivo de estado si se utiliza un backend remoto (S3, GCS, Azure Blob)
+# Nota: Si se utiliza backend local y se requiere control de versiones en equipo,
+# testform.state puede incluirse en el repositorio según las políticas internas.
+```
+
+> [!WARNING]
+> Nunca agregues ni confirmes el archivo `~/.testform.d/credentials.json` a un repositorio público o compartido, ya que contiene credenciales de acceso sensibles.
+
+---
+
+## Regeneración y Recuperación
+
+Si el directorio `.testform/` se elimina accidentalmente o se clona el proyecto en una nueva máquina:
+
+1. Ejecuta `testform init`.
+2. Testform reconstruirá automáticamente la estructura base, recreará `.testform/backend.json` y descargará nuevamente los módulos declarados en `.testform/modules/`.
+3. Si el proyecto utilizaba un workspace diferente a `default`, selecciónalo con `testform workspace select <nombre>`.

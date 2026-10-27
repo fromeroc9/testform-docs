@@ -1,0 +1,70 @@
+---
+title: "testform version"
+description: "Muestra la versión actual de Testform y los proveedores instalados."
+---
+
+```bash
+testform [opciones globales] version [opciones]
+```
+
+El comando `testform version` muestra la versión instalada de la herramienta de línea de comandos Testform, la arquitectura del sistema operativo subyacente y las versiones de los plugins de proveedores activos.
+
+Además, consulta de forma asíncrona el registro de paquetes para alertar al usuario si existe una versión más reciente disponible para actualizar.
+
+También puede invocarse usando los alias de opciones globales `testform -version` o `testform -v`.
+
+---
+
+## Opciones del Comando
+
+| Opción | Por Defecto | Descripción |
+| :--- | :--- | :--- |
+| `-json` | `false` | Emite la información detallada de versiones y proveedores en formato JSON estructurado. |
+
+---
+
+## Ejemplos de Uso
+
+### 1. Salida en texto estándar
+
+```bash
+$ testform version
+Testform v1.1.0
+on windows_amd64
++ provider registry.testform.io/fromeroc9/github v1.0.0
+```
+
+Si la versión instalada no es la más reciente:
+
+```bash
+$ testform version
+Testform v1.0.0
+on linux_amd64
++ provider registry.testform.io/fromeroc9/github v1.0.0
+
+Your version of Testform is out of date! The latest version
+is 1.1.0. You can update by running:
+  npm install -g @fromeroc9/testform
+```
+
+### 2. Salida en formato JSON (`-json`)
+
+Ideal para auditorías de seguridad e inventario de herramientas en pipelines de CI/CD:
+
+```bash
+$ testform version -json
+{
+  "testform_version": "1.1.0",
+  "platform": "windows_amd64",
+  "provider_selections": {
+    "registry.testform.io/fromeroc9/github": "1.0.0"
+  },
+  "testform_outdated": false
+}
+```
+
+---
+
+## Códigos de Salida
+
+- `0`: Versión consultada e impresa exitosamente.

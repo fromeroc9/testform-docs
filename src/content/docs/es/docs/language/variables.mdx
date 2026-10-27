@@ -49,14 +49,14 @@ Al igual que Terraform, Testform clasifica los tipos de datos en **primitivos** 
 
 | Tipo | Categoría | Estado en Testform | Validación Activa |
 | :--- | :--- | :--- | :--- |
-| **`string`** | Primitivo | ✅ **100% Soportado** | Inyección e interpolación directa en texto. |
-| **`number`** | Primitivo | ✅ **100% Soportado** | Verificación estricta con error si no es numérico. |
-| **`boolean`** | Primitivo | ✅ **100% Soportado** | Restricción estricta a `true` o `false`. |
-| **`enum`** | Restricción | ✅ **100% Soportado** | Bloqueo si el valor no está en la lista permitida. |
-| **`validation`** | Lógica AST | ✅ **100% Soportado** | Evaluación de expresiones booleanas y mensaje de error. |
-| **`list(...)`** | Colección | ⚠️ **Parcial / Limitación** | Se almacena aplanado a string (`"a,b"`). No valida tipo de hijos. |
-| **`map(...)`** | Colección | ⚠️ **Parcial / Limitación** | No valida esquemas homogéneos de valores. |
-| **`object`** | Estructural | ⚠️ **Parcial / Limitación** | No valida esquemas recursivos ni atributos requeridos. |
+| **`string`** | Primitivo | **100% Soportado** | Inyección e interpolación directa en texto. |
+| **`number`** | Primitivo | **100% Soportado** | Verificación estricta con error si no es numérico. |
+| **`boolean`** | Primitivo | **100% Soportado** | Restricción estricta a `true` o `false`. |
+| **`enum`** | Restricción | **100% Soportado** | Bloqueo si el valor no está en la lista permitida. |
+| **`validation`** | Lógica AST | **100% Soportado** | Evaluación de expresiones booleanas y mensaje de error. |
+| **`list(...)`** | Colección | **Parcial / Limitación** | Se almacena aplanado a string (`"a,b"`). No valida tipo de hijos. |
+| **`map(...)`** | Colección | **Parcial / Limitación** | No valida esquemas homogéneos de valores. |
+| **`object`** | Estructural | **Parcial / Limitación** | No valida esquemas recursivos ni atributos requeridos. |
 
 ### Ejemplos Prácticos de Tipos Primitivos
 

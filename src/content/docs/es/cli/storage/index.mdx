@@ -1,14 +1,15 @@
 ---
 title: "State & Storage"
+description: "Comandos para la inspección, manipulación directa, importación y liberación de bloqueos del ledger de estado."
 ---
 
-
-Comandos para la inspeccion, manipulacion directa, importacion y liberacion de bloqueos del ledger de estado.
+Comandos para la inspección, manipulación directa, importación y liberación de bloqueos del ledger de estado.
 
 ## Comandos de Estado y Almacenamiento
 
-- **[`testform state`](./state):** Inspecciona y modifica directamente las entradas registradas en el ledger de estado (`list`, `show`, `rm`, `pull`, `push`).
+- **[`testform state`](./state):** Inspecciona y modifica directamente las entradas registradas en el ledger de estado (`list`, `show`, `rm`, `pull`, `push`, `mv`, `replace-provider`, `clean`).
+- **[`testform output`](./output):** Lee y emite los valores de salida (`outputs`) persistidos en el archivo de estado.
 - **[`testform import`](./import):** Incorpora casos de prueba o incidencias preexistentes en herramientas remotas dentro del ledger de estado.
-- **[`testform taint`](./taint):** Marca un recurso especifico para obligar su recreacion en la proxima aplicacion.
+- **[`testform taint`](./taint):** Marca un recurso específico para forzar su recreación en la próxima aplicación.
+- **[`testform untaint`](./untaint):** Remueve la marca de dañado de un recurso previamente marcado con taint.
 - **[`testform force-unlock`](./force-unlock):** Libera manualmente un bloqueo distribuido de estado abandonado por un fallo en el pipeline.
-

@@ -8,7 +8,7 @@ Siguiendo el diseño idiomático de Testform y Terraform, la configuración se d
 
 ---
 
-## 🌐 1. Backend REST / HTTP Nativo (`http` o `rest`)
+ 1. Backend REST / HTTP Nativo (`http` o `rest`)
 
 Permite almacenar el estado en cualquier API REST remota o servicio web HTTP compatible con el protocolo estándar de Terraform:
 
@@ -44,7 +44,7 @@ address: "https://api.empresa.com/v1/workspaces/{workspace}/state"
 
 ---
 
-## 🛠️ 2. Custom Backend (`custom`)
+ 2. Custom Backend (`custom`)
 
 Si tu infraestructura requiere almacenamiento propietario, conexiones directas a bases de datos, Vault corporativo o firmas criptográficas personalizadas, puedes implementar tu propio backend:
 
@@ -101,7 +101,7 @@ module.exports = VaultBackend;
 
 ---
 
-## 🪣 3. GitHub como Bucket de Estado Nativo
+ 3. GitHub como Bucket de Estado Nativo
 
 Almacena el estado directamente en una rama Git de tu repositorio sin requerir infraestructura externa:
 
@@ -118,7 +118,7 @@ backend:
 
 ---
 
-## ☁️ 4. AWS S3 y Almacenamiento Compatible (MinIO, Cloudflare R2, Ceph, OCI)
+ 4. AWS S3 y Almacenamiento Compatible (MinIO, Cloudflare R2, Ceph, OCI)
 
 Soporta AWS S3 nativo y cualquier servicio compatible con la API de S3:
 
@@ -136,7 +136,7 @@ backend:
 
 ---
 
-## 💻 5. Backend Local
+ 5. Backend Local
 
 Almacena el estado en el disco local (predeterminado en desarrollo):
 
@@ -149,7 +149,7 @@ backend:
 
 ---
 
-## 🔒 State Locking y Desbloqueo Forzado
+ State Locking y Desbloqueo Forzado
 
 Cuando se ejecutan operaciones concurrentes, Testform adquiere automáticamente un bloqueo:
 

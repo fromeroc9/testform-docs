@@ -1,0 +1,190 @@
+---
+title: "String Functions"
+description: "Reference guide for string manipulation, normalization, slicing, and formatting functions in Testform."
+---
+
+String functions allow manipulating, normalizing, trimming, and formatting character strings in `locals.yml` expressions and `variables.yml` validation conditions.
+
+---
+
+## Function Index
+
+| Function | Signature | Description |
+| :--- | :--- | :--- |
+| [`lower`](#lower) | `lower(string)` | Converts all characters to lowercase. |
+| [`upper`](#upper) | `upper(string)` | Converts all characters to uppercase. |
+| [`trim`](#trim) | `trim(string, [cutset])` | Removes leading and trailing whitespace or specified characters. |
+| [`trimprefix`](#trimprefix) | `trimprefix(string, prefix)` | Removes the specified prefix if present. |
+| [`trimsuffix`](#trimsuffix) | `trimsuffix(string, suffix)` | Removes the specified suffix if present. |
+| [`startswith`](#startswith) | `startswith(string, prefix)` | Returns `true` if the string starts with prefix. |
+| [`endswith`](#endswith) | `endswith(string, suffix)` | Returns `true` if the string ends with suffix. |
+| [`replace`](#replace) | `replace(string, search, rep)` | Replaces all occurrences of a search pattern. |
+| [`split`](#split) | `split(separator, string)` | Splits a string into a list by separator. |
+| [`join`](#join) | `join(separator, list)` | Joins list elements into a single string. |
+| [`format`](#format) | `format(format, ...args)` | Formats a string using printf-style verbs (`%s`, `%d`, `%j`, `%%`). |
+| [`substr`](#substr) | `substr(string, offset, len)` | Extracts a substring from an offset. |
+
+---
+
+## `lower`
+
+Converts all characters in a string to lowercase.
+
+```bash
+testform functions --eval "lower('STAGING-APP')"
+# => "staging-app"
+```
+
+```yaml
+# locals.yml
+locals:
+  canonical_env: "${lower(var.environment)}"
+```
+
+---
+
+## `upper`
+
+Converts all characters in a string to uppercase.
+
+```bash
+testform functions --eval "upper('qa_suite')"
+# => "QA_SUITE"
+```
+
+---
+
+## `trim`
+
+Removes leading and trailing whitespace. Optionally accepts a second argument specifying the character set to remove.
+
+```bash
+testform functions --eval "trim('   hello world   ')"
+# => "hello world"
+
+testform functions --eval "trim('---alert---', '-')"
+# => "alert"
+```
+
+---
+
+## `trimprefix`
+
+Removes the specified prefix from the beginning of the string if present.
+
+```bash
+testform functions --eval "trimprefix('https://api.example.com', 'https://')"
+# => "api.example.com"
+```
+
+---
+
+## `trimsuffix`
+
+Removes the specified suffix from the end of the string if present.
+
+```bash
+testform functions --eval "trimsuffix('tests/runs/suite.run.feature', '.run.feature')"
+# => "tests/runs/suite"
+```
+
+---
+
+## `startswith`
+
+Returns `true` if the string begins with the indicated prefix. Useful for input variable validation.
+
+```yaml
+# variables.yml
+variable:
+  api_endpoint:
+    type: string
+    validation:
+      condition: "${startswith(var.api_endpoint, 'https://')}"
+      error_message: "API URL must use the secure HTTPS protocol."
+```
+
+---
+
+## `endswith`
+
+Returns `true` if the string ends with the indicated suffix.
+
+```yaml
+# variables.yml
+variable:
+  spec_file:
+    type: string
+    validation:
+      condition: "${endswith(var.spec_file, '.case.feature')}"
+      error_message: "Specification file must end with .case.feature."
+```
+
+---
+
+## `replace`
+
+Replaces all occurrences of a search pattern with a replacement string.
+
+```bash
+testform functions --eval "replace('192.168.1.1', '.', '-')"
+# => "192-168-1-1"
+```
+
+---
+
+## `split`
+
+Divides a string into a list of strings using the specified delimiter.
+
+```bash
+testform functions --eval "split(',', 'smoke,regression,e2e')"
+# => ["smoke", "regression", "e2e"]
+```
+
+---
+
+## `join`
+
+Concatenates elements of a string list using a delimiter.
+
+```bash
+testform functions --eval "join(' / ', ['Checkout', 'Payments', 'Card'])"
+# => "Checkout / Payments / Card"
+```
+
+---
+
+## `format`
+
+Formats a string using C / Terraform-style format specifiers:
+- `%s`: String substitution.
+- `%d`: Integer substitution.
+- `%j`: Serialized JSON substitution.
+- `%%`: Literal `%` escape.
+
+```bash
+testform functions --eval "format('https://%s.example.com:%d/v1', 'api', 8080)"
+# => "https://api.example.com:8080/v1"
+```
+
+```yaml
+# locals.yml
+locals:
+  service_url: "${format('https://%s.%s', var.subdomain, var.domain)}"
+```
+
+---
+
+## `substr`
+
+Extracts a substring of length `len` starting at `offset`. If `offset` is negative, it counts backwards from the end of the string.
+
+```bash
+testform functions --eval "substr('20261025_release', 0, 8)"
+# => "20261025"
+
+testform functions --eval "substr('file.json', -4, 4)"
+# => "json"
+```
+

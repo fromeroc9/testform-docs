@@ -49,10 +49,10 @@ When integrating Testform with GitHub to synchronize test cases, execution runs,
    - Exported as an environment variable (e.g. `export GITHUB_TOKEN="ghp_..."`) or configured via `testform login`.
 
    :::note
-   **💡 GitHub Actions Recommendation:** The default `GITHUB_TOKEN` provided by Actions lacks the necessary permissions to manipulate organization-level GitHub Projects (V2). In automated CI/CD pipelines, configure a dedicated repository secret with a custom PAT (e.g., `secrets.TESTFORM_GITHUB_TOKEN`) so test runs can transition issue states and sync project boards.
+   **GitHub Actions Recommendation:** The default `GITHUB_TOKEN` provided by Actions lacks the necessary permissions to manipulate organization-level GitHub Projects (V2). In automated CI/CD pipelines, configure a dedicated repository secret with a custom PAT (e.g., `secrets.TESTFORM_GITHUB_TOKEN`) so test runs can transition issue states and sync project boards.
    :::
 
-4. **🚀 Automated Setup Workflow (Recommended):**
+4. **Automated Setup Workflow (Recommended):**
    To automate the setup of labels and project board in seconds, we recommend using the official **Install Testform Labels and Project** workflow (`.github/workflows/install.yml`). It automatically:
    - Creates the 5 required labels (`bug`, `testcase`, `testplan`, `testreport`, `testrun`).
    - Clones the official [Testform Template Project](https://github.com/users/fromeroc9/projects/4) into your account or organization and links it to your repository.

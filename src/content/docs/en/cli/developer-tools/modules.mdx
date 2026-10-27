@@ -1,0 +1,91 @@
+---
+title: "testform modules"
+description: "Shows all declared modules in a working directory."
+---
+
+```bash
+testform [global options] modules [options]
+```
+
+The `testform modules` command prints out a list or tree of all declared Testform modules and their resolved versions in the current working directory.
+
+It adheres to the same philosophy and schema as `terraform modules`, allowing you to audit the origin, versions, and installation paths of reusable local and remote (Git) test modules.
+
+---
+
+## Command Options
+
+| Option | Default | Description |
+| :--- | :--- | :--- |
+| `-json` | `false` | If specified, output declared Testform modules and their resolved versions in a machine-readable format. |
+| `-var 'foo=bar'` | — | Set a value for one of the input variables in the root module of the configuration. Use this option more than once to set more than one variable. |
+| `-var-file=filename` | — | Load variable values from the given file, in addition to the default files `testform.vars.yml` and `*.auto.vars.yml`. |
+
+---
+
+## Usage Examples
+
+### 1. No Modules Declared
+
+```bash
+$ testform modules
+No modules found in configuration.
+```
+
+And with JSON output:
+
+```bash
+$ testform modules -json
+{"format_version":"1.0","modules":null}
+```
+
+### 2. Tree View (with declared modules)
+
+```bash
+$ testform modules
+
+Modules declared in configuration:
+.
+├── module.auth_standard
+│   source: ./modules/auth/login.case.feature
+│   scenario: @tc-login
+│   vars: user="admin", timeout=5000
+└── module.auth_shared
+    source: git::https://github.com/my-org/qa-modules.git//auth?ref=v1.2.0
+    version: v1.2.0
+    dir: .testform/modules/auth_shared
+```
+
+### 3. Machine-Readable JSON Output (`-json`)
+
+```bash
+$ testform modules -json
+{
+  "format_version": "1.0",
+  "modules": [
+    {
+      "Key": "",
+      "Source": "",
+      "Dir": "."
+    },
+    {
+      "Key": "auth_standard",
+      "Source": "./modules/auth/login.case.feature",
+      "Dir": "modules/auth"
+    },
+    {
+      "Key": "auth_shared",
+      "Source": "git::https://github.com/my-org/qa-modules.git//auth?ref=v1.2.0",
+      "Version": "v1.2.0",
+      "Dir": ".testform/modules/auth_shared"
+    }
+  ]
+}
+```
+
+---
+
+## Exit Codes
+
+- `0`: Command executed successfully.
+- `1`: Configuration read error or malformed configuration file.

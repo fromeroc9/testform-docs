@@ -1,0 +1,138 @@
+---
+title: "testform functions"
+description: "Inspect, explore, and evaluate built-in expression functions interactively."
+---
+
+```bash
+testform functions [name] [options]
+```
+
+The `testform functions` command allows you to inspect, explore, and interactively evaluate the built-in function library of Testform's expression engine. These functions are used both in `locals.yml` for dynamic computations and in validation conditions within `variables.yml`.
+
+---
+
+## Usage Modes
+
+### 1. General Function Catalog
+Running the command without arguments displays all available functions organized by category:
+
+```bash
+testform functions
+```
+
+Terminal output:
+```text
+Testform Expression Engine — Built-in Functions Catalog
+
+Available in locals.yml expressions, variables.yml validation conditions, and CLI:
+
+• String & Text:
+  lower(string)                          → Converts all letters in a string to lowercase.
+  upper(string)                          → Converts all letters in a string to uppercase.
+  trim(string, [cutset])                 → Removes leading and trailing whitespace or specified characters.
+  trimprefix(string, prefix)             → Removes the specified prefix from the beginning of a string.
+  trimsuffix(string, suffix)             → Removes the specified suffix from the end of a string.
+  startswith(string, prefix)             → Returns true if the string begins with the specified prefix.
+  endswith(string, suffix)               → Returns true if the string ends with the specified suffix.
+  replace(string, search, replacement)   → Replaces all occurrences of a search string.
+  split(separator, string)               → Divides a string into a list of substrings.
+  join(separator, list)                  → Concatenates elements of a list into a single string.
+  format(format, ...args)                → Formats a string using verbs (%s, %d, %j, %%).
+  substr(string, offset, length)         → Extracts a substring from offset up to length characters.
+
+• Collections & Logic:
+  coalesce(...args)                      → Returns the first argument that is not null or empty.
+  lookup(map, key, [default])            → Retrieves the value of a key from a map.
+  contains(list_or_string, value)        → Checks whether a list or string contains a value.
+  length(value)                          → Returns the number of elements, keys, or characters.
+  element(list, index)                   → Retrieves an element at the specified index.
+  slice(list, start, [end])              → Returns a sublist of elements.
+  merge(...maps)                         → Merges multiple maps into a single map.
+
+• System & Encoding:
+  env(name)                              → Reads an environment variable from the host process.
+  uuid()                                 → Generates a random RFC 4122 version 4 UUID.
+  timestamp()                            → Returns current UTC date and time formatted in ISO 8601.
+  jsonencode(value)                      → Serializes a value into a standard JSON string.
+  jsondecode(string)                     → Parses a JSON string into its native data structure.
+  file(path)                             → Reads the contents of a local file as UTF-8 text.
+```
+
+---
+
+## 2. Detailed Function Documentation
+To inspect the complete signature, argument types, and usage examples for a specific function:
+
+```bash
+testform functions format
+```
+
+Terminal output:
+```text
+Testform Expression Function: format
+  Category:    String & Text
+  Signature:   format(format, ...args) -> string
+  Description: Formats a string using verbs (%s for string, %d for integer, %j for JSON, %% for literal %).
+
+Arguments:
+  - format [string]: Format string containing placeholders.
+  - args [any...]: Values to interpolate.
+
+Examples:
+  $ format("%s/%s", var.base_url, "api/v1")
+    => "https://example.com/api/v1"
+  $ format("run-%03d", 5)
+    => "run-5"
+```
+
+Another example:
+```bash
+testform functions contains
+```
+
+---
+
+## 3. Live Evaluation with `--eval`
+You can test any mathematical expression, logical condition, or function call in real time directly from your terminal to verify the resulting value and type:
+
+```bash
+testform functions --eval "format('%s/%s', 'https://api.example.com', 'v1')"
+```
+
+Output:
+```text
+Expression Evaluation:
+  Input:  format('%s/%s', 'https://api.example.com', 'v1')
+  Type:   string
+  Result: "https://api.example.com/v1"
+```
+
+Evaluating collections and logic:
+```bash
+testform functions --eval "contains(['dev', 'staging', 'prod'], 'qa')"
+```
+
+Output:
+```text
+Expression Evaluation:
+  Input:  contains(['dev', 'staging', 'prod'], 'qa')
+  Type:   boolean
+  Result: false
+```
+
+---
+
+## Options
+
+| Option | Description |
+| :--- | :--- |
+| `[name]` | Name of the built-in function to inspect (`lower`, `upper`, `format`, `contains`, etc.). |
+| `--eval "<expr>"` | Evaluates a test expression in real time and prints the resulting type and value. |
+
+---
+
+## Exit Codes
+
+- `0`: Command executed successfully.
+- `1`: Malformed expression or syntax error encountered during AST parsing.
+

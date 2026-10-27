@@ -108,6 +108,7 @@ export default defineConfig({
             { slug: 'cli/getting-started' },
             { slug: 'cli/core-concepts' },
             { slug: 'cli/configuration' },
+            { slug: 'cli/directories', label: 'El Directorio .testform', translations: { en: 'The .testform Directory' } },
             {
               label: 'Flujo de Trabajo',
               translations: { en: 'Core Workflow' },

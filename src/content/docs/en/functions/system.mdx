@@ -1,0 +1,121 @@
+---
+title: "System & Encoding"
+description: "Reference guide for interacting with host environment variables, UUID generation, timestamps, and JSON serialization in Testform."
+---
+
+System and encoding functions allow interacting with the host execution environment, generating unique identifiers, retrieving timestamps, and serializing or deserializing JSON and filesystem data.
+
+---
+
+## Function Index
+
+| Function | Signature | Description |
+| :--- | :--- | :--- |
+| [`env`](#env) | `env(name)` | Reads an environment variable from the host process. |
+| [`uuid`](#uuid) | `uuid()` | Generates a random RFC 4122 version 4 UUID. |
+| [`timestamp`](#timestamp) | `timestamp()` | Returns current UTC date and time in ISO 8601 format. |
+| [`jsonencode`](#jsonencode) | `jsonencode(value)` | Serializes a data structure into a valid JSON string. |
+| [`jsondecode`](#jsondecode) | `jsondecode(string)` | Parses a JSON string into native data types. |
+| [`file`](#file) | `file(path)` | Reads a local file's content as UTF-8 text. |
+
+---
+
+## `env`
+
+Reads the value of an environment variable present in the host operating system during execution. If the variable is undefined, returns `null`.
+
+```yaml
+# locals.yml
+locals:
+  ci_job_id: "${coalesce(env('GITHUB_RUN_ID'), env('BUILD_NUMBER'), 'local')}"
+  api_key: "${env('TESTFORM_API_KEY')}"
+```
+
+```bash
+testform functions --eval "env('USER') || env('USERNAME')"
+# => "flavi"
+```
+
+---
+
+## `uuid`
+
+Generates a cryptographically random Universally Unique Identifier (RFC 4122 version 4). Ideal for session correlation tokens or ephemeral execution IDs:
+
+```yaml
+# locals.yml
+locals:
+  execution_correlation_id: "${uuid()}"
+```
+
+```bash
+testform functions --eval "uuid()"
+# => "d1a7b4c2-9e81-4328-984f-e2c7f4618e90"
+```
+
+---
+
+## `timestamp`
+
+Returns the current UTC date and time formatted according to ISO 8601 (`YYYY-MM-DDTHH:mm:ssZ`):
+
+```yaml
+# locals.yml
+locals:
+  started_at: "${timestamp()}"
+```
+
+```bash
+testform functions --eval "timestamp()"
+# => "2026-10-25T05:18:22Z"
+```
+
+---
+
+## `jsonencode`
+
+Transforms any native data structure (lists, objects, numbers, booleans) into a standard JSON-encoded string:
+
+```yaml
+# locals.yml
+locals:
+  payload:
+    build: "${env('GITHUB_RUN_ID')}"
+    passed: true
+    tags: ["smoke", "regression"]
+
+  json_body: "${jsonencode(local.payload)}"
+```
+
+```bash
+testform functions --eval "jsonencode({ active: true, retries: 5 })"
+# => "{\"active\":true,\"retries\":5}"
+```
+
+---
+
+## `jsondecode`
+
+Parses a valid JSON string into native objects and primitives for further expression querying:
+
+```bash
+testform functions --eval "jsondecode('{\"db\": {\"host\": \"localhost\", \"port\": 5432}}').db.port"
+# => 5432
+```
+
+---
+
+## `file`
+
+Reads the entire content of a local filesystem text file in UTF-8 encoding.
+
+```yaml
+# locals.yml
+locals:
+  public_key: "${trim(file('~/.ssh/id_rsa.pub'))}"
+  schema_data: "${jsondecode(file('schemas/issue_payload.json'))}"
+```
+
+> [!NOTE]
+> Relative paths passed to `file()` resolve against the active working directory where the root configuration (`main.yml`) resides.
+

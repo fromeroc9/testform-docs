@@ -1,80 +1,161 @@
 ---
 title: "Reports: IReport & IReportFormat"
-description: "Programmatic API reference for implementing modular reports and formats in Testform."
+description: "Programmatic API reference for authoring modular reports, formats, and templates in Testform."
 ---
 
-The reports module exposes the core interfaces and data structures required to build custom analytics reports and output formats in Testform.
+Testform's reporting module provides interfaces, data structures, and resolution mechanisms that decouple state analytics collection from output format projection (Markdown, JSON, CSV, Excel, Word, HTML, or proprietary integrations).
+
+Following Testform's modular design, both reports and formats can be extended without editing the workspace's `main.yml` configuration, leveraging zero-configuration autoloading in the `.testform/reports/` directory.
 
 ---
 
-## 📋 Core Types & Interfaces
+## Reporting engine architecture
+
+The lifecycle of a report execution is structured across three sequential phases:
+
+1. **Query and normalization (`StateQuery`):** The engine loads state (`testform.state`), evaluates target scopes (`-target`), applies attribute or text filters (`-filter`), and constructs the `ReportContext`.
+2. **Extraction and aggregation (`IReport.collect`):** The selected report computes metrics, column headers, and tabular data rows from state items, returning a decoupled `ReportData` object.
+3. **Rendering and template resolution (`IReportFormat.render`):** The target format projects the tabular data into its final representation (UTF-8 string or binary buffer), resolving and injecting any supplied template (`template`).
+
+```
+┌─────────────────────────────────┐
+│         testform.state          │
+└────────────────┬────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────┐
+│        StateQuery Engine        │ ◀── -filter, -target, -groupBy
+└────────────────┬────────────────┘
+                 │
+                 ▼ (ReportContext)
+┌─────────────────────────────────┐
+│        IReport.collect()        │ ◀── .testform/reports/<name>.ts
+└────────────────┬────────────────┘
+                 │
+                 ▼ (ReportData)
+┌─────────────────────────────────┐
+│      resolveTemplate(...)       │ ◀── -template / IReport.templates / report.<fmt>
+└────────────────┬────────────────┘
+                 │
+                 ▼ (template: string | Buffer | undefined)
+┌─────────────────────────────────┐
+│      IReportFormat.render       │ ◀── .testform/reports/<fmt>.format.ts
+└────────────────┬────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────┐
+│     stdout or Output File       │ ◀── -out=... (or report.<ext> when isBinary)
+└─────────────────────────────────┘
+```
+
+---
+
+## Core types and interfaces
 
 ```typescript
-import type { 
-  IReport, 
-  IReportFormat, 
-  ReportContext, 
+import type {
+  IReport,
+  IReportFormat,
+  ReportContext,
   ReportData,
   QueryResultItem,
-  ReportStats 
+  ReportStats,
+  StateQuery
 } from '@fromeroc9/testform';
 ```
 
 ---
 
-## `IReport`
+### `IReport`
 
-Defines the contract for creating a custom analytics report.
+Defines the contract for implementing an analytical report type.
 
 ```typescript
 export interface IReport {
-  /** Unique identifier for the report (e.g., "testcase-summary", "team-velocity") */
+  /** Canonical identifier for the report (e.g., "testcase-summary", "team-velocity") */
   readonly name: string;
 
-  /** Brief description shown in CLI help outputs */
+  /** Concise summary displayed in CLI help outputs */
   readonly description?: string;
 
-  /** 
-   * Extracts and processes state items into a structured ReportData object.
+  /**
+   * Collects metrics and produces tabular rows from the state context.
    */
   collect(context: ReportContext): ReportData | Promise<ReportData>;
 
-  /** 
-   * Optional default template path or Buffer associated with this report.
+  /**
+   * Template paths or dynamic resolution function indexed by format name (optional).
    */
-  template?: string | Buffer | ((format: string) => string | Buffer);
+  templates?:
+    | Record<string, string | Buffer | undefined>
+    | ((format: string, context: ReportContext) => string | Buffer | undefined);
+
+  /**
+   * Local format renderers or format overrides scoped to this report (optional).
+   */
+  formats?: Record<
+    string,
+    (data: ReportData, context: ReportContext) => Promise<string | Buffer> | string | Buffer
+  >;
 }
 ```
 
+#### Properties of `IReport`
+
+| Property | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `name` | `string` | Yes | Canonical report identifier invoked via `testform report <name>`. |
+| `description` | `string` | No | Short description shown in CLI command listings. |
+| `collect` | `(ctx: ReportContext) => Promise<ReportData> \| ReportData` | Yes | Extraction function that builds metrics and rows. |
+| `templates` | `Record<string, string \| Buffer> \| Function` | No | Mapping of default templates associated per format. |
+| `formats` | `Record<string, Function>` | No | Embedded formats exclusive to this report type. |
+
 ---
 
-## `IReportFormat`
+### `IReportFormat`
 
-Defines the contract for implementing a custom output format renderer.
+Defines the contract for implementing an output format renderer.
 
 ```typescript
 export interface IReportFormat {
-  /** Format identifier (e.g., "md", "json", "docx", "slack") */
+  /** Format identifier invoked via '-format=<name>' (e.g., "md", "html", "docx") */
   readonly name: string;
 
-  /** Corresponding file extension (e.g., ".md", ".docx", ".json") */
+  /** Target file extension including leading dot (e.g., ".md", ".html", ".docx") */
   readonly extension: string;
 
-  /** Specifies whether output is a binary Buffer (true) or UTF-8 string (false) */
+  /**
+   * Specifies whether the output is a binary Buffer (true) or a UTF-8 string (false).
+   * When true, protects terminal output by defaulting destination to an output file.
+   */
   readonly isBinary?: boolean;
 
   /**
-   * Renders tabular data and metrics into the target format.
+   * Renders the ReportData object into the target format representation.
+   * If a resolved template is available, it is supplied via the third parameter.
    */
-  render(data: ReportData, context: ReportContext): Promise<string | Buffer>;
+  render(
+    data: ReportData,
+    context: ReportContext,
+    template?: string | Buffer
+  ): Promise<string | Buffer> | string | Buffer;
 }
 ```
 
+#### Properties of `IReportFormat`
+
+| Property | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `name` | `string` | Yes | Format identifier specified with `-format=<name>`. |
+| `extension` | `string` | Yes | Default file extension including leading period (e.g. `.docx`). |
+| `isBinary` | `boolean` | No | Indicates whether output is raw bytes (`Buffer`) or UTF-8 text. |
+| `render` | `(data, ctx, template?) => Promise<string \| Buffer>` | Yes | Rendering function transforming data into the final document. |
+
 ---
 
-## `ReportData`
+### `ReportData`
 
-Standardized data payload returned by `IReport.collect()`:
+Standardized data payload returned by `IReport.collect()` and consumed by `IReportFormat.render()`:
 
 ```typescript
 export interface ReportData {
@@ -84,29 +165,29 @@ export interface ReportData {
   /** Key-value metrics and KPIs */
   metrics?: Record<string, string | number>;
 
-  /** Column names for the tabular dataset */
+  /** Column header names for the tabular dataset */
   headers: string[];
 
-  /** Rows representing the body of the report */
+  /** Tabular data rows representing the report body */
   rows: (string | number)[][];
 
-  /** Optional raw or supplementary metadata */
+  /** Optional raw items or supplementary metadata */
   metadata?: Record<string, any>;
 }
 ```
 
 ---
 
-## `ReportContext`
+### `ReportContext`
 
-Execution context provided by the engine to `collect()` and `render()`:
+Execution context injected by the engine into `collect()` and `render()`:
 
 ```typescript
 export interface ReportContext {
-  /** Filtered state items that matched active criteria (-filter) */
+  /** State items that satisfied active filter criteria */
   items: QueryResultItem[];
 
-  /** Precomputed statistics across the filtered items */
+  /** Statistical metrics calculated across filtered items */
   stats: ReportStats;
 
   /** Active variable map (${var.*}) from vars.yml and CLI flags */
@@ -115,21 +196,318 @@ export interface ReportContext {
   /** Dynamic group-by field if specified (-groupBy) */
   groupBy?: string;
 
-  /** Command-line options passed during invocation */
+  /** Applied scope target (@tr-N, @tp-N, or feature file path) */
+  target?: string | string[];
+
+  /** Full options map passed to the CLI command */
   options: Record<string, any>;
+
+  /** Active StateQuery engine instance */
+  stateQuery: StateQuery;
 }
 ```
 
 ---
 
-## 🛠️ Utility Functions
+## Output modes and binary protection (`isBinary`)
+
+The `isBinary` property on `IReportFormat` defines the output behavior when a user does not pass the `-out=<path>` flag:
+
+```
+                  ┌──────────────────────┐
+                  │ Was -out specified?  │
+                  └──────────┬───────────┘
+                             │
+              ┌──────────────┴──────────────┐
+              │ Yes                         │ No
+              ▼                             ▼
+   ┌─────────────────────┐       ┌──────────────────────┐
+   │ Save to specified   │       │   Is isBinary true?  │
+   │ destination file    │       └──────────┬───────────┘
+   └─────────────────────┘                  │
+                             ┌──────────────┴──────────────┐
+                             │ Yes                         │ No
+                             ▼                             ▼
+                  ┌─────────────────────┐       ┌─────────────────────┐
+                  │ Save to default     │       │ Stream directly to  │
+                  │ output file:        │       │ standard output     │
+                  │ 'report.<extension>'│       │ (stdout) for pipes  │
+                  └─────────────────────┘       └─────────────────────┘
+```
+
+1. **When `isBinary: false` (or omitted):**
+   - The result is a UTF-8 text string (Markdown, JSON, CSV, HTML, etc.).
+   - If `-out` is omitted, the content streams directly to `stdout`, enabling UNIX terminal pipelines (`testform report -format=json | jq .`).
+
+2. **When `isBinary: true`:**
+   - The result is a binary `Buffer` (Word `.docx`, Excel `.xlsx`, PDF, etc.).
+   - If `-out` is omitted, Testform **avoids corrupting the terminal** with binary characters and automatically persists the result to `report<extension>` (e.g., `report.docx`), printing a confirmation notice to the console.
+
+---
+
+## Template resolution lifecycle
+
+When an output format supports templates (such as Word, Excel, or HTML), Testform resolves the `template` parameter following three tiers of precedence:
+
+1. **Tier 1 (Explicit CLI flag):**
+   When invoked with `-template=<path>`, Testform reads the file from disk and delivers its contents (`Buffer` or `string`) directly into `render()`.
+2. **Tier 2 (Report-level declaration):**
+   When the report declares `templates: { <format>: 'path/to/template.ext' }`, the engine resolves and reads that file automatically.
+3. **Tier 3 (Autoload convention in `.testform/reports/`):**
+   When neither a flag nor a report declaration is provided, the engine checks for the existence of `report.<format>` in `.testform/reports/` (e.g., `.testform/reports/report.docx`, `.testform/reports/report.html`). If present, it loads transparently.
+
+If no template is discovered across all three tiers, the `template` argument arrives as `undefined`, allowing formats to fall back to an internal code-generated layout.
+
+### Supported template placeholders
+
+Official formats (`docx`, `xlsx`, `md`) process the following interpolation placeholders within template files:
+
+| Placeholder | Data Type | Description |
+| :--- | :--- | :--- |
+| `${report.title}` or `${title}` | Text | Main title defined in `ReportData.title`. |
+| `${date}` | Date | Generation timestamp formatted as `DD/MM/YYYY`. |
+| `${var.<name>}` | Variable | Value resolved from `*.vars.yml` or `-var="key=value"`. |
+| `${total}` | Number | Total test case or execution count in the report. |
+| `${passed}`, `${failed}`, `${pending}` | Number | Totals partitioned by execution status. |
+| `${tasa_exito}` | Percentage | Computed pass rate percentage (e.g. `85%`). |
+| `${report.metrics.<key>}` | Dynamic | Any custom metric registered in the `metrics` map. |
+| `${table}` or `${report.table}` | Structure | Positional marker where the styled data grid is inserted. |
+
+---
+
+## Implementation examples
+
+### 1. Authoring a custom analytics report
+
+Create `.testform/reports/team-velocity.ts`:
+
+```typescript
+// .testform/reports/team-velocity.ts
+import type { IReport, ReportContext, ReportData } from '@fromeroc9/testform';
+
+export const TeamVelocityReport: IReport = {
+  name: 'team-velocity',
+  description: 'Execution velocity and quality metrics partitioned by team',
+
+  async collect(ctx: ReportContext): Promise<ReportData> {
+    const total = ctx.items.length;
+    const passed = ctx.items.filter(i => i.status === 'passed').length;
+    const failed = ctx.items.filter(i => i.status === 'failed').length;
+    const teamName = ctx.variables['team'] || 'Core QA';
+    const successRate = total > 0 ? `${Math.round((passed / total) * 100)}%` : '0%';
+
+    return {
+      title: `Test Velocity & Quality - ${teamName}`,
+      metrics: {
+        'Team': teamName,
+        'Total Cases': total,
+        'Passed': passed,
+        'Failed': failed,
+        'Success Rate': successRate
+      },
+      headers: ['ID', 'Scenario', 'Assignee', 'Status'],
+      rows: ctx.items.map(item => [
+        item.id,
+        item.title,
+        item.assignee || 'Unassigned',
+        item.status
+      ])
+    };
+  }
+};
+
+export default TeamVelocityReport;
+```
+
+Execution via CLI:
+
+```bash
+testform report team-velocity -format=md
+testform report team-velocity -format=json -var="team=Digital Payments"
+```
+
+---
+
+### 2. Authoring a custom text format with template support (HTML)
+
+Create `.testform/reports/html.format.ts`:
+
+```typescript
+// .testform/reports/html.format.ts
+import type { IReportFormat, ReportData, ReportContext } from '@fromeroc9/testform';
+
+export const HtmlFormat: IReportFormat = {
+  name: 'html',
+  extension: '.html',
+  isBinary: false,
+
+  render(data: ReportData, ctx: ReportContext, template?: string | Buffer): string {
+    // Generate HTML table for injection
+    const tableHtml = `
+      <table class="report-table">
+        <thead>
+          <tr>${data.headers.map(h => `<th>${h}</th>`).join('')}</tr>
+        </thead>
+        <tbody>
+          ${data.rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table>
+    `;
+
+    // 1. If an external template is supplied, interpolate placeholders
+    if (template) {
+      const raw = typeof template === 'string' ? template : template.toString('utf-8');
+      return raw
+        .replace(/\${title}/g, data.title)
+        .replace(/\${table}/g, tableHtml)
+        .replace(/\${date}/g, new Date().toLocaleDateString());
+    }
+
+    // 2. Default built-in fallback layout
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${data.title}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 2rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #e2e8f0; padding: 0.5rem 1rem; text-align: left; }
+    th { background: #f8fafc; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>${data.title}</h1>
+  ${tableHtml}
+</body>
+</html>`;
+  }
+};
+
+export default HtmlFormat;
+```
+
+Execution with explicit template or default fallback:
+
+```bash
+# With explicit external template
+testform report testcase-summary -format=html -template=./custom-template.html -out=dist/report.html
+
+# Using default fallback (streams to standard output)
+testform report testcase-summary -format=html
+```
+
+---
+
+### 3. Authoring a custom binary format (`isBinary: true`)
+
+Create `.testform/reports/zip.format.ts`:
+
+```typescript
+// .testform/reports/zip.format.ts
+import type { IReportFormat, ReportData, ReportContext } from '@fromeroc9/testform';
+
+export const ZipFormat: IReportFormat = {
+  name: 'zip',
+  extension: '.zip',
+  isBinary: true, // Indicates render() yields raw binary bytes
+
+  async render(data: ReportData, ctx: ReportContext): Promise<Buffer> {
+    // Illustrative example packaging report payload into a binary buffer
+    const manifest = JSON.stringify(data, null, 2);
+    return Buffer.from(manifest, 'utf-8');
+  }
+};
+
+export default ZipFormat;
+```
+
+When run without `-out`, Testform safely saves the result into `report.zip` rather than emitting raw bytes to the terminal.
+
+---
+
+### 4. Declaring associated templates inside a report
+
+When a report requires predefined templates for each supported format, configure them directly in the `templates` property:
+
+```typescript
+// .testform/reports/audit.ts
+import type { IReport, ReportContext, ReportData } from '@fromeroc9/testform';
+
+export const AuditReport: IReport = {
+  name: 'audit',
+  description: 'Formal QA governance and traceability audit report',
+
+  async collect(ctx: ReportContext): Promise<ReportData> {
+    return {
+      title: 'QA Governance Audit',
+      headers: ['ID', 'Requirement', 'Status'],
+      rows: ctx.items.map(i => [i.id, i.labels.join(', '), i.status])
+    };
+  },
+
+  // Automatic template mappings per format
+  templates: {
+    docx: 'templates/audit-template.docx',
+    xlsx: 'templates/audit-template.xlsx',
+    html: 'templates/audit-template.html'
+  }
+};
+
+export default AuditReport;
+```
+
+---
+
+## Autoload file conventions
+
+To eliminate configuration overhead, Testform automatically discovers and loads custom reports and formats from the `.testform/reports/` directory:
+
+```text
+my-project/
+├── main.yml
+├── tests/
+└── .testform/
+    └── reports/
+        ├── report.docx              # Default institutional Word template
+        ├── report.xlsx              # Default institutional Excel template
+        ├── team-velocity.ts         # Report: "testform report team-velocity"
+        ├── audit.ts                 # Report: "testform report audit"
+        └── html.format.ts           # Format: "testform report ... -format=html"
+```
+
+* **Reports:** Any `.ts` or `.js` file without `.format.` in its filename is registered as an analytical report (`IReport`).
+* **Formats:** Any file matching `<name>.format.ts` or `<name>.format.js` is registered as an output format renderer (`IReportFormat`).
+* **Base templates:** Files named `report.<format>` (e.g. `report.docx`, `report.xlsx`, `report.html`) are automatically associated with the matching format.
+
+---
+
+## Utility functions
 
 ### `formatReportTable`
+
+Formats tabular arrays of headers and rows as structured ASCII tables for terminal output.
 
 ```typescript
 import { formatReportTable } from '@fromeroc9/testform';
 
-const asciiTable = formatReportTable(headers, rows);
-```
-Renders an aligned ASCII table with styled borders and headers for console output.
+const headers = ['ID', 'Test Case', 'Status'];
+const rows = [
+  ['@tc-1', 'OAuth2 Authentication Flow', 'passed'],
+  ['@tc-2', 'Token Refresh Upon Expiry', 'failed']
+];
 
+const tableString = formatReportTable(headers, rows);
+console.log(tableString);
+```
+
+Generated output:
+
+```text
+┌───────┬──────────────────────────────┬────────┐
+│ ID    │ Test Case                    │ Status │
+├───────┼──────────────────────────────┼────────┤
+│ @tc-1 │ OAuth2 Authentication Flow   │ passed │
+│ @tc-2 │ Token Refresh Upon Expiry    │ failed │
+└───────┴──────────────────────────────┴────────┘
+```

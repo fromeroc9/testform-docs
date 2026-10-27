@@ -1,0 +1,70 @@
+---
+title: "testform version"
+description: "Displays the version of Testform and all installed plugins."
+---
+
+```bash
+testform [global options] version [options]
+```
+
+The `testform version` command displays the installed version of the Testform CLI binary, the host operating system platform and architecture, and the versions of any active provider plugins.
+
+It also checks the official registry to notify you if an upgrade is available.
+
+You can also run this command using the global flag aliases `testform -version` or `testform -v`.
+
+---
+
+## Command Options
+
+| Option | Default | Description |
+| :--- | :--- | :--- |
+| `-json` | `false` | Emits version and provider selection information in structured JSON format. |
+
+---
+
+## Usage Examples
+
+### 1. Human-Readable Standard Output
+
+```bash
+$ testform version
+Testform v1.1.0
+on windows_amd64
++ provider registry.testform.io/fromeroc9/github v1.0.0
+```
+
+When an update is available:
+
+```bash
+$ testform version
+Testform v1.0.0
+on linux_amd64
++ provider registry.testform.io/fromeroc9/github v1.0.0
+
+Your version of Testform is out of date! The latest version
+is 1.1.0. You can update by running:
+  npm install -g @fromeroc9/testform
+```
+
+### 2. Machine-Readable JSON Output (`-json`)
+
+Ideal for CI/CD audit logs and environment validation steps:
+
+```bash
+$ testform version -json
+{
+  "testform_version": "1.1.0",
+  "platform": "windows_amd64",
+  "provider_selections": {
+    "registry.testform.io/fromeroc9/github": "1.0.0"
+  },
+  "testform_outdated": false
+}
+```
+
+---
+
+## Exit Codes
+
+- `0`: Version information retrieved and printed successfully.

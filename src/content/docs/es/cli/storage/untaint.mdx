@@ -1,0 +1,62 @@
+---
+title: "testform untaint"
+description: "Remueve la marca de dañado (tainted) de una instancia de recurso en el estado."
+---
+
+```bash
+testform [opciones globales] untaint [opciones] <direccion>
+```
+
+Testform utiliza el término **dañado (tainted)** para describir una instancia de recurso que puede no ser completamente funcional, ya sea porque su creación falló parcialmente o porque fue marcada manualmente con `testform taint`.
+
+El comando `testform untaint` remueve esa marca del archivo de estado, haciendo que Testform vuelva a considerar el recurso como completamente operativo y evitando que se planifique su destrucción y reemplazo en la siguiente operación.
+
+Este comando no modifica la infraestructura remota directamente.
+
+---
+
+## Opciones del Comando
+
+| Opción | Por Defecto | Descripción |
+| :--- | :--- | :--- |
+| `<direccion>` | (requerido) | Dirección canónica o etiqueta de identidad del recurso (ej: `"login.case.feature.@tc-1"`). |
+| `-allow-missing` | `false` | Si se especifica, el comando finaliza con código 0 incluso si el recurso no existe en el estado. |
+| `-lock=false` | `true` | No adquiere un bloqueo de estado durante la operación. |
+| `-lock-timeout=0s` | `0s` | Duración para reintentar la adquisición del bloqueo de estado. |
+| `-state=path` | `testform.state` | Ruta al archivo de estado a utilizar. |
+
+---
+
+## Ejemplos de Uso
+
+### 1. Desmarcar un recurso dañado
+
+```bash
+$ testform untaint "login.case.feature.@tc-1"
+Resource instance login.case.feature.@tc-1 has been successfully untainted.
+```
+
+### 2. Desmarcar con `-allow-missing` en scripts automatizados
+
+```bash
+$ testform untaint -allow-missing "checkout.case.feature.@tc-2"
+Resource not found in state, but allow-missing is set. Exiting successfully.
+```
+
+---
+
+## Verificación con `testform plan`
+
+Tras remover el estado de taint, al ejecutar `testform plan` verificarás que el recurso ya no está marcado para reemplazo (`-/+`):
+
+```bash
+$ testform plan
+No changes. Your infrastructure matches the configuration.
+```
+
+---
+
+## Códigos de Salida
+
+- `0`: Recurso desmarcado exitosamente (o no encontrado con `-allow-missing`).
+- `1`: Dirección del recurso no encontrada en el archivo de estado o fallo al adquirir el bloqueo.

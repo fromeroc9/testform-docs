@@ -1,0 +1,89 @@
+---
+title: "testform providers"
+description: "Muestra el árbol de requisitos de proveedores y esquemas de recursos de la configuración."
+---
+
+```bash
+testform [opciones globales] providers [subcomando] [opciones] [DIR]
+```
+
+El comando `testform providers` analiza la configuración del módulo raíz y de todos los módulos hijos referenciados, mostrando un árbol detallado de los requisitos de proveedores (`providers`) necesarios para la ejecución.
+
+Permite auditar qué versiones de plugins de proveedores están seleccionadas y por qué son requeridas.
+
+---
+
+## Subcomandos
+
+### 1. Árbol de Proveedores (por defecto)
+
+Muestra los proveedores requeridos por la configuración activa:
+
+```bash
+$ testform providers
+
+Providers required by configuration:
+.
+└── provider[registry.testform.com/fromeroc9/github] 1.0.0
+```
+
+### 2. `testform providers schema`
+
+Inspecciona la definición formal del esquema (atributos, tipos de datos y obligatoriedad) provisto por el proveedor activo:
+
+```bash
+$ testform providers schema
+
+Provider Schema: fromeroc9/github
+──────────────────────────────────────────────────
+Resource: github_testcase
+  - identity: string (required)
+  - title: string (optional)
+  - labels: list of string (optional)
+  - assignees: list of string (optional)
+  - custom_fields: map of string (optional)
+Resource: github_testrun
+  - identity: string (required)
+  - rules: list of rule
+Resource: github_testplan
+  - identity: string (required)
+  - runs: list of testrun
+```
+
+### 3. `testform providers lock`
+
+Verifica la integridad y congruencia de las dependencias y hashes de los proveedores contra los registros autorizados:
+
+```bash
+$ testform providers lock
+
+Success! Dependencies for provider "fromeroc9/github" verified.
+```
+
+### 4. `testform providers mirror [targetDir]`
+
+Descarga y copia los plugins de proveedores requeridos a un directorio local (por defecto `./plugins`), habilitando ejecuciones aisladas en entornos sin conexión a internet (air-gapped):
+
+```bash
+$ testform providers mirror ./vendor-plugins
+- Mirroring provider "fromeroc9/github" to ./vendor-plugins...
+
+Success! Provider plugins mirrored to ./vendor-plugins.
+```
+
+---
+
+## Opciones del Comando
+
+| Opción | Por Defecto | Descripción |
+| :--- | :--- | :--- |
+| `-test-directory=DIR` | `tests` | Directorio de pruebas de Testform donde buscar especificaciones. |
+| `-var 'foo=bar'` | — | Define una variable en el módulo raíz. Puede usarse varias veces. |
+| `-var-file=filename` | — | Carga variables desde un archivo (`testform.vars.yml` o `*.auto.vars.yml`). |
+
+---
+
+## Códigos de Salida
+
+- `0`: Subcomando ejecutado exitosamente.
+- `1`: Error de resolución de proveedores o configuración no válida.

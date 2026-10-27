@@ -1,0 +1,62 @@
+---
+title: "testform untaint"
+description: "Removes the tainted status from a resource instance in the state."
+---
+
+```bash
+testform [global options] untaint [options] <address>
+```
+
+Testform uses the term **tainted** to describe a resource instance that may not be fully functional, either because its creation partially failed or because you manually marked it as such using `testform taint`.
+
+The `testform untaint` command removes that state from a resource instance, causing Testform to see it as healthy and functional again. This avoids Testform planning to replace the tainted instance in a subsequent `apply` operation.
+
+This command will not modify your remote test entities directly.
+
+---
+
+## Command Options
+
+| Option | Default | Description |
+| :--- | :--- | :--- |
+| `<address>` | (required) | Canonical address or identity tag of the resource (e.g. `"login.case.feature.@tc-1"`). |
+| `-allow-missing` | `false` | If specified, the command succeeds (exit code 0) even if the resource is missing from state. |
+| `-lock=false` | `true` | Do not hold a state lock during the operation. |
+| `-lock-timeout=0s` | `0s` | Duration to retry a state lock. |
+| `-state=path` | `testform.state` | Custom path to the state file. |
+
+---
+
+## Usage Examples
+
+### 1. Untaint a Resource Instance
+
+```bash
+$ testform untaint "login.case.feature.@tc-1"
+Resource instance login.case.feature.@tc-1 has been successfully untainted.
+```
+
+### 2. Idempotent Untaint in Automation Scripts (`-allow-missing`)
+
+```bash
+$ testform untaint -allow-missing "checkout.case.feature.@tc-2"
+Resource not found in state, but allow-missing is set. Exiting successfully.
+```
+
+---
+
+## Verification with `testform plan`
+
+After removing the tainted status, running `testform plan` verifies that the resource is no longer scheduled for replacement (`-/+`):
+
+```bash
+$ testform plan
+No changes. Your infrastructure matches the configuration.
+```
+
+---
+
+## Exit Codes
+
+- `0`: Resource successfully untainted (or missing when `-allow-missing` is set).
+- `1`: Resource address was not found in the state ledger or failed to acquire state lock.

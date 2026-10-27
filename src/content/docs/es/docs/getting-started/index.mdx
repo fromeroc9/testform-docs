@@ -48,10 +48,10 @@ Al conectar Testform con GitHub para sincronizar casos de prueba, ejecuciones y 
    - El token debe exportarse en tu terminal como variable de entorno (por ejemplo, `export GITHUB_TOKEN="ghp_..."`) o configurarse mediante `testform login`.
    
    :::note
-   **💡 Nota sobre GitHub Actions:** El token por defecto `GITHUB_TOKEN` que proporciona GitHub Actions carece de permisos para manipular GitHub Projects V2 a nivel de organización. En tus pipelines de CI/CD, configura un GitHub Secret con un PAT dedicado (ej. `secrets.TESTFORM_GITHUB_TOKEN`) para permitir la sincronización automática de tableros y transiciones de estado.
+   **Nota sobre GitHub Actions:** El token por defecto `GITHUB_TOKEN` que proporciona GitHub Actions carece de permisos para manipular GitHub Projects V2 a nivel de organización. En tus pipelines de CI/CD, configura un GitHub Secret con un PAT dedicado (ej. `secrets.TESTFORM_GITHUB_TOKEN`) para permitir la sincronización automática de tableros y transiciones de estado.
    :::
 
-4. **🚀 Configuración Automatizada con Workflow (Recomendado):**
+4. **Configuración Automatizada con Workflow (Recomendado):**
    Para automatizar la creación de etiquetas y la vinculación del proyecto en cuestión de segundos, recomendamos utilizar el workflow oficial **Install Testform Labels and Project** (`.github/workflows/install.yml`). Este flujo automatizado:
    - Crea automáticamente las 5 etiquetas requeridas (`bug`, `testcase`, `testplan`, `testreport`, `testrun`).
    - Clona el [Proyecto Plantilla de Testform](https://github.com/users/fromeroc9/projects/4) en tu cuenta u organización y lo vincula a tu repositorio.

@@ -1,13 +1,14 @@
 ---
 title: "Sessions & Workspaces"
+description: "Comandos para gestionar múltiples entornos paralelos, sesiones de autenticación y ambientes efímeros de prueba."
 ---
 
-
-Comandos para gestionar multiples entornos paralelos, sesiones de autenticacion y ambientes efimeros de prueba.
+Comandos para gestionar múltiples entornos paralelos, sesiones de autenticación, ambientes efímeros de prueba e información de versión.
 
 ## Comandos Disponibles
 
 - **[`testform workspace`](./workspace):** Administra entornos paralelos aislados con ledgers de estado independientes (`list`, `new`, `select`, `delete`).
-- **[`testform login` / `testform logout`](./login-logout):** Inicia y cierra sesiones de autenticacion con proveedores en la nube y repositorios remotos.
-- **[`testform ephemeral`](./ephemeral):** Crea, conecta y destruye entornos efimeros de prueba para validaciones temporales en ramas de corta duracion.
-
+- **[`testform login`](./login):** Inicia sesión de autenticación interactiva y guarda credenciales para un proveedor remoto.
+- **[`testform logout`](./logout):** Remueve las credenciales de autenticación almacenadas localmente para un host remoto.
+- **[`testform ephemeral`](./ephemeral):** Crea, conecta y destruye sandboxes efímeros de prueba para validaciones temporales en CI/CD.
+- **[`testform version`](./version):** Muestra la versión actual de Testform, los proveedores instalados y comprueba si existen actualizaciones.

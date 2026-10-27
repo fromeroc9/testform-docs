@@ -1,0 +1,64 @@
+---
+title: "testform login"
+description: "Obtiene y guarda credenciales de autenticación para un host o proveedor remoto."
+---
+
+```bash
+testform [opciones globales] login [hostname]
+```
+
+El comando `testform login` recupera un token de autenticación para el host remoto especificado (por defecto `github.com`) y lo almacena de manera segura en un archivo de credenciales local en el directorio del usuario:
+
+```text
+~/.testform.d/credentials.json
+```
+
+Una vez guardadas las credenciales, Testform las utiliza automáticamente para todas las operaciones de API con proveedores (como crear, consultar o cerrar issues en GitHub o GitLab), sin necesidad de configurar manualmente tokens en variables de entorno para cada ejecución.
+
+---
+
+## Argumentos
+
+| Argumento | Por Defecto | Descripción |
+| :--- | :--- | :--- |
+| `hostname` | `github.com` | El nombre de dominio del proveedor remoto para el cual se obtendrán las credenciales (ej: `github.com`, `gitlab.com`). |
+
+---
+
+## Flujo Interactivo
+
+Al invocar el comando, Testform solicitará de forma interactiva el token de acceso personal (PAT):
+
+```bash
+$ testform login github.com
+
+TestForm must now request authentication credentials for github.com.
+These credentials will be stored locally at ~/.testform.d/credentials.json.
+
+Token (PAT) for github.com: ****************************************
+
+Success! Configuration saved for github.com.
+```
+
+---
+
+## Archivo de Credenciales
+
+Las credenciales se conservan en formato JSON:
+
+```json
+{
+  "hosts": {
+    "github.com": {
+      "token": "ghp_xxxxxxxxxxxxxxxxxxxx"
+    }
+  }
+}
+```
+
+---
+
+## Códigos de Salida
+
+- `0`: Credenciales validadas y guardadas exitosamente.
+- `1`: Token vacío o cancelado por el usuario.

@@ -1,0 +1,53 @@
+---
+title: "Sensitive Data"
+description: "Protecting and masking secrets, tokens, and sensitive values in console and execution reports."
+---
+
+In automated testing and QA environments, test scenarios frequently require credentials, API keys, authentication tokens, or infrastructure secrets.
+
+Testform provides built-in mechanisms to protect and mask sensitive values across console outputs and execution reports.
+
+---
+
+## Declaring Sensitive Outputs
+
+You can mark any output in the `outputs:` block with the attribute `sensitive: true`:
+
+```yaml
+# main.yml
+outputs:
+  total_cases:
+    value: "${testcase.*.count}"
+
+  service_account_token:
+    value: "${var.jwt_auth_secret}"
+    sensitive: true # Prevents the token from being printed in plain text
+```
+
+### Console Behavior
+When running `testform plan`, `testform apply`, or `testform output`:
+
+```text
+Changes to Outputs:
+  + total_cases           = 14
+  + service_account_token = (sensitive value)
+```
+
+---
+
+## Environment Variables and Secrets
+
+To avoid committing sensitive passwords into Git version control, Testform variables accept runtime values from environment variables using the `TESTFORM_VAR_` prefix:
+
+```bash
+# Overrides variable value at runtime
+export TESTFORM_VAR_admin_pass="MySecretToken123!"
+
+testform plan
+```
+
+Or via the `-var` CLI flag:
+```bash
+testform apply -var="admin_pass=${CI_SECRET_TOKEN}" -auto-approve
+```
+

@@ -1,14 +1,15 @@
 ---
 title: "State & Storage"
+description: "Commands for inspecting, modifying, importing, and unlocking the state ledger."
 ---
 
-
-Commands for inspecting, mutating, importing, and unlocking the underlying cryptographic state ledger.
+Commands for inspecting, directly modifying, importing, and clearing locks on the state ledger.
 
 ## State and Storage Commands
 
-- **[`testform state`](./state):** Inspects and manages entries stored inside the state ledger (`list`, `show`, `rm`, `pull`, `push`).
-- **[`testform import`](./import):** Ingests pre-existing external QA issues and maps them directly to declarative resources.
-- **[`testform taint`](./taint):** Marks a specific resource for forced re-creation on the subsequent apply run.
-- **[`testform force-unlock`](./force-unlock):** Manually releases an abandoned distributed mutex lock following an aborted pipeline.
-
+- **[`testform state`](./state):** Directly inspects and modifies entries in the state ledger (`list`, `show`, `rm`, `pull`, `push`, `mv`, `replace-provider`, `clean`).
+- **[`testform output`](./output):** Reads and emits output variables saved in the active state file.
+- **[`testform import`](./import):** Imports existing test entities from remote issue trackers into the state ledger.
+- **[`testform taint`](./taint):** Marks a specific resource instance as degraded to force recreation on the next apply.
+- **[`testform untaint`](./untaint):** Removes the tainted mark from a resource instance in state.
+- **[`testform force-unlock`](./force-unlock):** Manually releases a stuck state lock left behind by an aborted pipeline.

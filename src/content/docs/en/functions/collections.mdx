@@ -1,0 +1,148 @@
+---
+title: "Collections & Logic"
+description: "Reference guide for collection manipulation, map lookups, and conditional logic functions in Testform."
+---
+
+Collection and logic functions allow querying, inspecting, and validating lists and maps in Testform expressions.
+
+---
+
+## Function Index
+
+| Function | Signature | Description |
+| :--- | :--- | :--- |
+| [`contains`](#contains) | `contains(list_or_string, val)` | Checks if a list or string contains a specific element. |
+| [`coalesce`](#coalesce) | `coalesce(...args)` | Returns the first non-null, non-empty argument. |
+| [`lookup`](#lookup) | `lookup(map, key, [default])` | Safely retrieves a key value from a map. |
+| [`length`](#length) | `length(value)` | Returns the number of elements, characters, or keys. |
+| [`element`](#element) | `element(list, index)` | Accesses an element at a given index with circular wrap-around. |
+| [`slice`](#slice) | `slice(list, start, [end])` | Returns a sublist slice between indices. |
+| [`merge`](#merge) | `merge(...maps)` | Combines multiple maps into a single map. |
+
+---
+
+## `contains`
+
+Evaluates whether a list contains a search value, or whether a substring exists within a string. This is the standard function for validating `enums` in `variables.yml`.
+
+```yaml
+# variables.yml
+variable:
+  environment:
+    type: string
+    validation:
+      condition: "${contains(['dev', 'staging', 'production'], var.environment)}"
+      error_message: "The environment must be 'dev', 'staging', or 'production'."
+```
+
+Interactive evaluation:
+```bash
+testform functions --eval "contains(['chrome', 'firefox', 'edge'], 'safari')"
+# => false
+```
+
+---
+
+## `coalesce`
+
+Takes an arbitrary number of arguments and returns the **first value** that is not `null`, `undefined`, or an empty string `""`.
+
+```yaml
+# locals.yml
+locals:
+  # Uses the explicit variable; if missing, falls back to env, then default IP
+  active_host: "${coalesce(var.custom_host, env('HOST_NAME'), '127.0.0.1')}"
+```
+
+```bash
+testform functions --eval "coalesce(null, '', 'fallback', 'other')"
+# => "fallback"
+```
+
+---
+
+## `lookup`
+
+Retrieves the value of a key from a map or object. If the key does not exist, returns the provided default value (or raises an error if no default was specified).
+
+```yaml
+# locals.yml
+locals:
+  ports_by_env:
+    dev: 3000
+    staging: 8080
+    production: 443
+
+  active_port: "${lookup(local.ports_by_env, var.environment, 8080)}"
+```
+
+---
+
+## `length`
+
+Determines the length or count based on the data type:
+- In a **list**: number of elements.
+- In a **string**: character count.
+- In a **map/object**: number of keys.
+
+```yaml
+# variables.yml
+variable:
+  password:
+    type: string
+    sensitive: true
+    validation:
+      condition: "${length(var.password) >= 8}"
+      error_message: "Password must contain at least 8 characters."
+
+  target_browsers:
+    type: list(string)
+    validation:
+      condition: "${length(var.target_browsers) > 0}"
+      error_message: "Must specify at least one target browser."
+```
+
+---
+
+## `element`
+
+Returns the element at the specified zero-based `index` in a list. If the index exceeds the list bounds, it wraps around safely using modulo arithmetic (`index % length`).
+
+```bash
+testform functions --eval "element(['a', 'b', 'c'], 1)"
+# => "b"
+
+testform functions --eval "element(['a', 'b', 'c'], 3)"
+# => "a" (circular wrap-around)
+```
+
+---
+
+## `slice`
+
+Extracts a subset of elements from a list between `start` and `end` indices (non-inclusive).
+
+```bash
+testform functions --eval "slice(['smoke', 'auth', 'checkout', 'reports'], 1, 3)"
+# => ["auth", "checkout"]
+```
+
+---
+
+## `merge`
+
+Merges multiple maps or objects into a single map. In the event of key collisions, rightmost arguments take precedence.
+
+```yaml
+# locals.yml
+locals:
+  default_headers:
+    Content-Type: "application/json"
+    Accept: "application/json"
+
+  auth_headers:
+    Authorization: "Bearer ${var.api_token}"
+
+  all_headers: "${merge(local.default_headers, local.auth_headers)}"
+```
+

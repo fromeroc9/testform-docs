@@ -1,0 +1,66 @@
+---
+title: "testform print"
+description: "Parses a feature file and prints its JSON Abstract Syntax Tree (AST)."
+---
+
+```bash
+testform [global options] print [options] <file>
+```
+
+The `testform print` command parses a specific `.feature` file and prints its JSON Abstract Syntax Tree (AST) directly to stdout.
+
+Designed as a developer and diagnostics utility, it allows engineers to inspect how Testform evaluates scenarios, interpolates expression variables, resolves identity tags (`@tc-*`, `@tr-*`, `@tp-*`), and applies scoping filters.
+
+---
+
+## Command Options
+
+| Option | Default | Description |
+| :--- | :--- | :--- |
+| `<file>` | (required) | Path or name of the `.feature` file to parse and inspect. |
+| `-format=format` | `testform` | Output AST format: `testform` (filtered and enriched by Testform) or `gherkin` (raw Cucumber/Gherkin AST). |
+| `-scope=scope` | `testcase` | Limits the parsing scope (`testcase`, `testrun`, `testplan`). |
+| `-var 'foo=bar'` | — | Sets an input variable for expression evaluation. |
+| `-var-file=filename` | — | Loads input variables from a JSON or YAML file. |
+
+---
+
+## Usage Examples
+
+### 1. Inspect Enriched Testform AST
+
+```bash
+$ testform print tests/auth/login.case.feature
+[
+  {
+    "identity": "@tc-1",
+    "name": "Valid credentials allow user login",
+    "rule": "Authentication Rules",
+    "tags": [
+      "@smoke",
+      "@auth"
+    ],
+    "steps": [
+      "Given the user is on the login page",
+      "When the user submits valid credentials",
+      "Then the user is redirected to the dashboard"
+    ],
+    "uri": "tests/auth/login.case.feature"
+  }
+]
+```
+
+### 2. Inspect Raw Gherkin AST (`-format=gherkin`)
+
+```bash
+$ testform print tests/auth/login.case.feature -format=gherkin
+```
+
+Outputs the raw tokenizer output from the underlying Gherkin parser, including line locations, raw comments, and unparsed tags.
+
+---
+
+## Exit Codes
+
+- `0`: Feature file parsed and output printed successfully.
+- `1`: File not found, Gherkin syntax error, or invalid format parameter.

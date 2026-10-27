@@ -7,7 +7,7 @@ El motor de reportes de Testform proporciona una plataforma de análisis y repor
 
 ---
 
-## 🏛️ Arquitectura del Motor
+## Arquitectura del motor
 
 El sistema de reportes divide la responsabilidad en tres capas independientes:
 
@@ -43,11 +43,11 @@ El sistema de reportes divide la responsabilidad en tres capas independientes:
 
 ---
 
-## 📑 Plantillas Dinámicas en Word y Excel
+## Plantillas dinámicas en Word y Excel
 
 Testform permite personalizar visualmente los informes ejecutivos mediante plantillas preconfiguradas. Para evitar discrepancias con el motor de variables de Testform, **todas las plantillas utilizan delimitadores estándar `${...}`**.
 
-### Marcadores de Interpolación
+### Marcadores de interpolación
 
 | Expresión | Descripción | Valor Inyectado |
 | :--- | :--- | :--- |
@@ -57,7 +57,7 @@ Testform permite personalizar visualmente los informes ejecutivos mediante plant
 | `${<metrica>}` | Métricas clave del reporte (`total`, `passed`, etc.). | Valor numérico o porcentual. |
 | `${table}` / `${report.table}` | **Marcador de inserción de tabla**. | Reemplazado por la tabla de datos completa. |
 
-### Cómo Crear una Plantilla Word (.docx)
+### Creación de una plantilla Word (.docx)
 
 1. En Microsoft Word, diseña la portada o encabezado de tu empresa.
 2. Agrega párrafos con variables como:
@@ -67,7 +67,7 @@ Testform permite personalizar visualmente los informes ejecutivos mediante plant
 3. En el lugar donde deba situarse la tabla de datos, escribe el texto `${table}` en un párrafo independiente.
 4. Guarda el archivo como `report.docx` en `.testform/reports/` (se usará automáticamente) o pásalo vía `-template=ruta.docx`.
 
-### Cómo Crear una Plantilla Excel (.xlsx)
+### Creación de una plantilla Excel (.xlsx)
 
 1. En Excel, diseña las celdas de encabezado con los logotipos o títulos de tu organización.
 2. En las celdas de información, utiliza expresiones como `${var.environment}` o `Total: ${total}`.
@@ -76,7 +76,7 @@ Testform permite personalizar visualmente los informes ejecutivos mediante plant
 
 ---
 
-## 🔌 Extensibilidad sin Configuración (Zero-Pollution)
+## Extensibilidad sin configuración
 
 En línea con el diseño de Terraform, la extensión de Testform no requiere registrar módulos ni modificar `main.yml`. Toda extensión se realiza por convención dentro del directorio `.testform/reports/`:
 
@@ -150,7 +150,7 @@ export const SlackFormat: IReportFormat = {
     const blocks = [
       {
         type: 'header',
-        text: { type: 'plain_text', text: `📊 ${data.title}` }
+        text: { type: 'plain_text', text: `${data.title}` }
       },
       {
         type: 'section',
@@ -175,7 +175,7 @@ testform report testrun-summary -format=slack -out=dist/slack-payload.json
 
 ---
 
-## 🧭 Tabla de Comparación de Formatos Nativos
+## Formatos nativos soportados
 
 | Formato | Flag | Extensión | Naturaleza | Caso de Uso Recomendado |
 | :--- | :--- | :--- | :--- | :--- |

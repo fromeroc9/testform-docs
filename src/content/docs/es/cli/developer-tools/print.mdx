@@ -1,0 +1,66 @@
+---
+title: "testform print"
+description: "Analiza un archivo de características y muestra su árbol de sintaxis abstracta (AST) en JSON."
+---
+
+```bash
+testform [opciones globales] print [opciones] <archivo>
+```
+
+El comando `testform print` analiza un archivo `.feature` específico y genera en la terminal su Árbol de Sintaxis Abstracta (AST) en formato JSON.
+
+Está diseñado como una herramienta de depuración para ingenieros y desarrolladores, permitiendo inspeccionar cómo Testform analiza los escenarios Gherkin, interpola variables, procesa tags de identidad (`@tc-*`, `@tr-*`, `@tp-*`) y aplica filtros de convención.
+
+---
+
+## Opciones del Comando
+
+| Opción | Por Defecto | Descripción |
+| :--- | :--- | :--- |
+| `<archivo>` | (requerido) | Ruta o nombre del archivo de características `.feature` a procesar. |
+| `-format=format` | `testform` | Formato del AST generado: `testform` (enriquecido y filtrado por Testform) o `gherkin` (AST puro de Cucumber/Gherkin). |
+| `-scope=scope` | `testcase` | Limita el alcance del análisis (`testcase`, `testrun`, `testplan`). |
+| `-var 'foo=bar'` | — | Define una variable para la interpolación en expresiones. |
+| `-var-file=filename` | — | Carga variables desde un archivo JSON o YAML. |
+
+---
+
+## Ejemplos de Uso
+
+### 1. Inspeccionar AST enriquecido por Testform
+
+```bash
+$ testform print tests/auth/login.case.feature
+[
+  {
+    "identity": "@tc-1",
+    "name": "Valid credentials allow user login",
+    "rule": "Authentication Rules",
+    "tags": [
+      "@smoke",
+      "@auth"
+    ],
+    "steps": [
+      "Given the user is on the login page",
+      "When the user submits valid credentials",
+      "Then the user is redirected to the dashboard"
+    ],
+    "uri": "tests/auth/login.case.feature"
+  }
+]
+```
+
+### 2. Inspeccionar AST nativo de Gherkin (`-format=gherkin`)
+
+```bash
+$ testform print tests/auth/login.case.feature -format=gherkin
+```
+
+Muestra la estructura pura del parseador Gherkin, incluyendo metadatos de tokens, posiciones de líneas y bloques de comentarios.
+
+---
+
+## Códigos de Salida
+
+- `0`: Archivo analizado e impreso exitosamente.
+- `1`: El archivo especificado no existe, tiene errores de sintaxis Gherkin o formato no válido.

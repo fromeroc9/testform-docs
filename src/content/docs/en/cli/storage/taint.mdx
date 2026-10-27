@@ -1,31 +1,46 @@
 ---
 title: "testform taint"
+description: "Manually marks a managed resource instance as degraded to force its replacement."
 ---
 
-
 ```bash
-testform taint [options] <address>
-testform untaint [options] <address>
+testform [global options] taint [options] <address>
 ```
 
-The `testform taint` command manually marks a managed resource as **tainted** in the state file. A tainted resource is considered corrupted, partially failed, or in need of fresh recreation.
+The `testform taint` command manually marks a managed resource instance as **tainted** in the state file. An instance marked this way is considered corrupted, partially failed, or in need of complete rebuilding.
 
-During the next `testform apply`, Testform will execute a **replace operation** (`-/+`), destroying the current remote issue and creating a brand new one from scratch.
+During the next execution of `testform apply`, Testform will execute a **replacement operation** (`-/+`), destroying the current remote issue/entity and provisioning a fresh one from scratch.
+
+---
 
 ## When to Taint a Resource
 
-1. A GitHub Issue's thread or comments became cluttered and you need a completely clean slate.
-2. A remote issue was corrupted by an external automation tool.
-3. You changed immutable project settings that require recreation.
+1. The comment stream on a GitHub Issue has become chaotic or corrupted and needs a clean slate.
+2. A remote test issue was altered out-of-band by an external automation tool.
+3. Immutable properties were updated that require recreating the entity.
+
+---
+
+## Command Options
+
+| Option | Default | Description |
+| :--- | :--- | :--- |
+| `<address>` | (required) | Canonical address or identity tag of the resource (e.g. `"login.case.feature.@tc-1"`). |
+| `-allow-missing` | `false` | If specified, the command succeeds (exit code 0) even if the resource is missing from state. |
+| `-lock=false` | `true` | Do not hold a state lock during the operation. |
+| `-lock-timeout=0s` | `0s` | Duration to retry a state lock. |
+| `-state=path` | `testform.state` | Path to the state file to use. |
+
+---
 
 ## Real Execution Example
 
 ```bash
-# Mark resource as tainted
+# Mark resource instance as tainted
 $ testform taint "login.case.feature.@tc-1"
-Resource instance github_testcase.login_case_feature__1 has been marked as tainted.
+Resource instance login.case.feature.@tc-1 has been marked as tainted.
 
-# Run plan to verify replacement
+# Run plan to verify planned replacement
 $ testform plan
 Testform will perform the following actions:
 
@@ -37,17 +52,20 @@ Testform will perform the following actions:
 Plan: 1 to add, 0 to change, 1 to destroy.
 ```
 
-## Reversing Taint with `untaint`
+---
 
-If you tainted a resource by mistake, you can undo it before running `apply`:
+## Reverting Taint with `untaint`
+
+If you marked a resource by mistake, you can revert the action before running `apply` using the [`testform untaint`](./untaint) command:
 
 ```bash
 $ testform untaint "login.case.feature.@tc-1"
-Resource instance github_testcase.login_case_feature__1 has been successfully untainted.
+Resource instance login.case.feature.@tc-1 has been successfully untainted.
 ```
+
+---
 
 ## Exit Codes
 
-- `0`: Resource taint state updated successfully.
-- `1`: Resource address not found in state.
-
+- `0`: Taint status successfully recorded.
+- `1`: Resource address was not found in the state ledger or failed to acquire state lock.

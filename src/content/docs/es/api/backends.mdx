@@ -9,7 +9,7 @@ Puedes implementar tu propio conector de almacenamiento (Redis, DynamoDB, MongoD
 
 ---
 
-## 📋 Contrato de la Interfaz `IBackend`
+ Contrato de la Interfaz `IBackend`
 
 Cualquier backend personalizado debe satisfacer la siguiente interfaz de TypeScript:
 
@@ -52,7 +52,7 @@ export interface IBackend {
 
 ---
 
-## 🏛️ Estructura del Estado (`IState`)
+ Estructura del Estado (`IState`)
 
 El objeto devuelto por `read()` y persistido por `write()` cumple la siguiente especificación:
 
@@ -83,7 +83,7 @@ export interface IState {
 
 ---
 
-## 🛠️ Creación de un Backend Personalizado
+ Creación de un Backend Personalizado
 
 Para registrar un backend propio, crea un archivo JavaScript o TypeScript (por ejemplo `./backends/redis-backend.js`) que exporte tu clase:
 
@@ -171,7 +171,7 @@ module.exports = RedisBackend;
 
 ---
 
-## ⚙️ Configuración en `main.yml`
+ Configuración en `main.yml`
 
 Asocia tu conector en modo diccionario mediante el bloque `backend.custom:` especificando `source:`:
 

@@ -1,0 +1,83 @@
+---
+title: "testform output"
+description: "Reads output values from a Testform state file."
+---
+
+```bash
+testform [global options] output [options] [NAME]
+```
+
+The `testform output` command extracts and displays the values of output variables defined in your configuration and stored in the state ledger (`testform.state`).
+
+When invoked with no additional arguments, it prints all outputs for the root module. An optional `NAME` argument can be provided to display only that specific output value.
+
+---
+
+## Command Options
+
+| Option | Default | Description |
+| :--- | :--- | :--- |
+| `NAME` | (all) | Name of a specific output variable to inspect. |
+| `-state=path` | `testform.state` | Path to the state file to read. |
+| `-json` | `false` | Emits output values in machine-readable JSON format. |
+| `-raw` | `false` | Prints a single named output value without formatting or quotes (ideal for shell scripts). |
+
+---
+
+## Usage Examples
+
+### 1. List All Outputs
+
+```bash
+$ testform output
+testcase_count = 42
+testrun_id = "tr-20261027-01"
+quality_gate_passed = true
+```
+
+### 2. Query a Single Output
+
+```bash
+$ testform output testrun_id
+"tr-20261027-01"
+```
+
+### 3. Raw Output for Scripting (`-raw`)
+
+Ideal for passing values directly into environment variables or shell pipelines:
+
+```bash
+$ RUN_ID=$(testform output -raw testrun_id)
+$ echo "Testrun ID is: $RUN_ID"
+Testrun ID is: tr-20261027-01
+```
+
+### 4. Machine-Readable JSON Output (`-json`)
+
+```bash
+$ testform output -json
+{
+  "testcase_count": {
+    "sensitive": false,
+    "type": "number",
+    "value": 42
+  },
+  "testrun_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "tr-20261027-01"
+  },
+  "quality_gate_passed": {
+    "sensitive": false,
+    "type": "bool",
+    "value": true
+  }
+}
+```
+
+---
+
+## Exit Codes
+
+- `0`: Outputs read and displayed successfully.
+- `1`: State file was not found or the requested output variable does not exist.

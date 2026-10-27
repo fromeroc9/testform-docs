@@ -1,9 +1,9 @@
 ---
 title: "CLI Overview"
+description: "Comprehensive reference for the Testform Command Line Interface."
 ---
 
-
-The Testform Command Line Interface (CLI) is the central operational tool for managing your testing infrastructure. Designed following the conventions of HashiCorp's Terraform, it provides an intuitive, predictable workflow.
+The Testform Command Line Interface (CLI) is the central operational tool for managing your test infrastructure as code. Designed following the conventions and philosophy of HashiCorp's Terraform, it provides an intuitive, predictable, and consistent workflow.
 
 ## Command Syntax
 
@@ -19,9 +19,9 @@ Global options can be provided before any subcommand:
 | :--- | :--- | :--- |
 | `-chdir=DIR` | `-C` | Switches working directory to `DIR` before executing the command. |
 | `-scope=SCOPE` | `-s` | Limits execution to `testcase`, `testrun`, or `testplan`. |
-| `-projectId=ID`| — | Overrides the default GitHub Projects V2 ID configured in `main.yml`. |
-| `-no-color` | â€” | Disables ANSI color escapes (ideal for plain log aggregators). |
-| `-json` | â€” | Emits machine-readable JSON output for automated scripting and CI/CD pipelines. |
+| `-project-id=ID`| — | Overrides the default GitHub Projects V2 ID configured in `main.yml`. |
+| `-no-color` | — | Disables ANSI color escapes (ideal for plain log aggregators). |
+| `-json` | — | Emits machine-readable JSON output for automated scripting and CI/CD pipelines. |
 | `-help` | `-h` | Displays detailed usage and help text for any command. |
 | `-version` | `-v` | Prints the installed Testform version. |
 
@@ -39,10 +39,67 @@ testform testrun apply
 testform testplan destroy
 ```
 
-## Subcommand Categories
+## Operational Directories
 
-- **[Core Workflow Commands](./cli/commands)**: `init`, `validate`, `plan`, `apply`, `destroy`.
-- **[Inspection Commands](./cli/inspection)**: `show`, `diff`, `graph`, `report`, `query`.
-- **[State Operations](./cli/state-ops)**: `state`, `refresh`, `taint`, `import`, `force-unlock`.
-- **[Workspaces & Utilities](./cli/utilities)**: `workspace`, `fmt`, `login`, `suite`, `ephemeral`.
+Testform automatically manages the local [`.testform/`](./directories) directory to store backend metadata, cached modules, and custom extensions, as well as the global [`~/.testform.d/`](./directories) directory for API access credentials. See [The .testform and ~/.testform.d Directories](./directories) for complete details.
 
+---
+
+## Complete Command Index
+
+### [Core Workflow](./workflow)
+
+Lifecycle commands for provisioning and managing test infrastructure:
+
+| Command | Description |
+| :--- | :--- |
+| [`testform init`](./workflow/init) | Prepares the working directory, downloads plugins, and configures the backend. |
+| [`testform plan`](./workflow/plan) | Shows changes required by the current configuration against the state. |
+| [`testform apply`](./workflow/apply) | Creates or updates test resources on remote providers. |
+| [`testform refresh`](./workflow/refresh) | Updates local state to match remote issue trackers. |
+| [`testform destroy`](./workflow/destroy) | Safely tears down previously-created test resources. |
+
+### [Developer Tools](./developer-tools)
+
+Inspection, diagnostics, validation, and reporting utilities:
+
+| Command | Description |
+| :--- | :--- |
+| [`testform validate`](./developer-tools/validate) | Statically checks configuration syntax and governance rules. |
+| [`testform fmt`](./developer-tools/fmt) | Rewrites Gherkin feature files and configurations to standard style. |
+| [`testform diff`](./developer-tools/diff) | Shows drift between local configuration and state ledger. |
+| [`testform show`](./developer-tools/show) | Shows the current state or a saved plan in human-readable or JSON form. |
+| [`testform query`](./developer-tools/query) | Queries and filters managed test resources in state using expressions. |
+| [`testform policy`](./developer-tools/policy) | Inspects, enables, or disables quality governance policies. |
+| [`testform modules`](./developer-tools/modules) | Shows all declared modules and resolved versions in the workspace. |
+| [`testform providers`](./developer-tools/providers) | Displays provider requirements tree and resource schemas. |
+| [`testform functions`](./developer-tools/functions) | Inspects and evaluates built-in expression functions. |
+| [`testform print`](./developer-tools/print) | Parses a `.feature` file and prints its JSON Abstract Syntax Tree (AST). |
+| [`testform graph`](./developer-tools/graph) | Generates a Graphviz (DOT), Mermaid, or tree visual dependency graph. |
+| [`testform report`](./developer-tools/report) | Generates multi-dimensional reports in Markdown, Word, Excel, or JSON. |
+| [`testform suite`](./developer-tools/suite) | Manages test suites and execution files (`init`, `-fill`, `-link`, `-mark`). |
+
+### [Storage & State](./storage)
+
+State ledger inspection and manipulation:
+
+| Command | Description |
+| :--- | :--- |
+| [`testform state`](./storage/state) | Advanced state management (`list`, `show`, `mv`, `rm`, `pull`, `push`). |
+| [`testform output`](./storage/output) | Reads and prints output values saved in the state file. |
+| [`testform import`](./storage/import) | Associates existing remote entities with Testform resources. |
+| [`testform taint`](./storage/taint) | Marks a resource instance as degraded to force replacement on next apply. |
+| [`testform untaint`](./storage/untaint) | Removes the tainted status from a resource instance in state. |
+| [`testform force-unlock`](./storage/force-unlock) | Manually releases an abandoned state lock on the current workspace. |
+
+### [Workspaces & Sessions](./workspaces)
+
+Environments, authentication, and runtime:
+
+| Command | Description |
+| :--- | :--- |
+| [`testform workspace`](./workspaces/workspace) | Manages multiple isolated workspaces (`list`, `new`, `select`, `delete`). |
+| [`testform login`](./workspaces/login) | Obtains and saves API credentials for a remote host. |
+| [`testform logout`](./workspaces/logout) | Removes locally-stored credentials for a remote host. |
+| [`testform ephemeral`](./workspaces/ephemeral) | Manages temporary CI/CD test sandboxes. |
+| [`testform version`](./workspaces/version) | Displays current Testform version and checks for upgrades. |

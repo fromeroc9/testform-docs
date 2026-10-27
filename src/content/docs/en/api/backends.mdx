@@ -9,7 +9,7 @@ You can author custom state storage connectors (Redis, DynamoDB, MongoDB, SQLite
 
 ---
 
-## 📋 The `IBackend` Interface Contract
+ The `IBackend` Interface Contract
 
 Every custom backend class must fulfill the following TypeScript interface:
 
@@ -52,7 +52,7 @@ export interface IBackend {
 
 ---
 
-## 🏛️ State Object Schema (`IState`)
+ State Object Schema (`IState`)
 
 The state object returned by `read()` and accepted by `write()` adheres to this schema:
 
@@ -83,7 +83,7 @@ export interface IState {
 
 ---
 
-## 🛠️ Authoring a Custom Backend Class
+ Authoring a Custom Backend Class
 
 Create a JavaScript or TypeScript file (e.g. `./backends/redis-backend.js`) exporting your backend class:
 
@@ -171,7 +171,7 @@ module.exports = RedisBackend;
 
 ---
 
-## ⚙️ Configuration in `main.yml`
+ Configuration in `main.yml`
 
 Reference your backend module via `backend.custom:` using dictionary mode:
 

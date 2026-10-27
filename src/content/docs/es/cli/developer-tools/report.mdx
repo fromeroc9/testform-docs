@@ -31,7 +31,7 @@ A diferencia de herramientas que requieren ensuciar `main.yml` con bloques de co
 
 ---
 
-## 📦 Catálogo de Reportes del Core
+## Catálogo de reportes del core
 
 Testform incluye 9 tipos de reportes predefinidos organizados por alcance (*scope*), más un extractor de datos puros (`raw`):
 
@@ -59,7 +59,7 @@ Testform incluye 9 tipos de reportes predefinidos organizados por alcance (*scop
 
 ---
 
-## 🔍 Filtrado y Agrupación Unificados (`StateQuery`)
+## Filtrado y agrupación unificados (`StateQuery`)
 
 El comando `report` comparte el mismo motor de consulta que `testform query`:
 
@@ -100,7 +100,7 @@ testform report coverage -groupBy label
 
 ---
 
-## 🎯 Alcance por Target (`-target`)
+## Alcance por target (`-target`)
 
 El flag `-target` permite limitar el universo de datos del reporte a una entidad específica y sus dependencias de ejecución:
 
@@ -139,7 +139,7 @@ testform report testrun-detailed -target="@tp-2" -filter "status=failed"
 
 ---
 
-## 🎨 Formatos Nativos de Salida
+## Formatos nativos de salida
 
 :::note[Paquetes Opcionales para Word y Excel]
 Para mantener la instalación de Testform ultra ligera y sin dependencias pesadas, los motores de generación de Word (`docx`) y Excel (`exceljs`) están configurados como **dependencias opcionales** (*peer dependencies*). Si deseas utilizar estos formatos binarios, solo necesitas instalar el paquete correspondiente de forma global o local:
@@ -190,16 +190,16 @@ testform report coverage -format=xlsx -out=cobertura.xlsx
 
 ---
 
-## 📑 Plantillas Dinámicas con Marcadores `${...}`
+## Plantillas dinámicas con marcadores `${...}`
 
 Para mantener total consistencia con el sistema de variables de Testform y evitar colisiones sintácticas, **todas las plantillas Word y Excel utilizan marcadores `${...}`**:
 
 | Marcador | Descripción | Ejemplo de Resolución |
 | :--- | :--- | :--- |
-| `${var.<nombre>}` | Variable de entorno o proyecto cargada desde `vars.yml` o `-var`. | `${var.company}` ➔ `ACME Corp` |
-| `${report.title}` | Título del reporte activo. | `${report.title}` ➔ `Test Run Summary` |
-| `${date}` | Fecha y hora de generación. | `${date}` ➔ `2026-10-26 14:30:00` |
-| `${<metrica>}` | Métricas del reporte (`total`, `passed`, `failed`, etc.). | `${total}` ➔ `45` |
+| `${var.<nombre>}` | Variable de entorno o proyecto cargada desde `vars.yml` o `-var`. | `${var.company}` -> `ACME Corp` |
+| `${report.title}` | Título del reporte activo. | `${report.title}` -> `Test Run Summary` |
+| `${date}` | Fecha y hora de generación. | `${date}` -> `2026-10-26 14:30:00` |
+| `${<metrica>}` | Métricas del reporte (`total`, `passed`, `failed`, etc.). | `${total}` -> `45` |
 | `${table}` o `${report.table}` | **Punto de anclaje de la tabla dinámica**. Se sustituye por la tabla completa generada. | *Tabla con cabeceras y filas* |
 
 ```bash
@@ -208,7 +208,7 @@ testform report testrun-summary -format=docx -template=templates/informe-qa.docx
 
 ---
 
-## 🔌 Extensibilidad: Autocarga desde `.testform/reports/`
+## Extensibilidad y autocarga desde `.testform/reports/`
 
 Puedes incorporar nuevos reportes, nuevos formatos o plantillas corporativas sin modificar `main.yml`:
 
@@ -224,11 +224,11 @@ mi-proyecto/
 └── tests/
 ```
 
-Consulta la [Guía de Reportes Modulares](../../docs/guides/reports) para ver ejemplos de código y contratos de desarrollo.
+Consulta la [Referencia de API de Reportes](../../../api/reports) para ver contratos de desarrollo, tipos y ejemplos de código.
 
 ---
 
-## 🤖 Integración con CI/CD (GitHub Actions)
+## Integración con CI/CD (GitHub Actions)
 
 ```yaml
 - name: Generar Reporte de Pruebas

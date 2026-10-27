@@ -1,0 +1,89 @@
+---
+title: "testform providers"
+description: "Prints a tree of modules annotated with their provider requirements and schemas."
+---
+
+```bash
+testform [global options] providers [subcommand] [options] [DIR]
+```
+
+The `testform providers` command inspects the referenced configuration and prints a tree of all provider requirements across the root module and any child modules.
+
+This provides full visibility into which provider plugins are required, their resolved versions, and why they were selected.
+
+---
+
+## Subcommands
+
+### 1. Provider Requirements Tree (default)
+
+Prints the tree of provider plugins required by the active configuration:
+
+```bash
+$ testform providers
+
+Providers required by configuration:
+.
+└── provider[registry.testform.com/fromeroc9/github] 1.0.0
+```
+
+### 2. `testform providers schema`
+
+Inspects the resource schema declarations (attributes, types, and constraints) exposed by the active provider:
+
+```bash
+$ testform providers schema
+
+Provider Schema: fromeroc9/github
+──────────────────────────────────────────────────
+Resource: github_testcase
+  - identity: string (required)
+  - title: string (optional)
+  - labels: list of string (optional)
+  - assignees: list of string (optional)
+  - custom_fields: map of string (optional)
+Resource: github_testrun
+  - identity: string (required)
+  - rules: list of rule
+Resource: github_testplan
+  - identity: string (required)
+  - runs: list of testrun
+```
+
+### 3. `testform providers lock`
+
+Verifies the integrity and version constraints of installed provider dependencies:
+
+```bash
+$ testform providers lock
+
+Success! Dependencies for provider "fromeroc9/github" verified.
+```
+
+### 4. `testform providers mirror [targetDir]`
+
+Mirrors the required provider plugins into a target local directory (defaults to `./plugins`), enabling offline or air-gapped CI/CD execution:
+
+```bash
+$ testform providers mirror ./vendor-plugins
+- Mirroring provider "fromeroc9/github" to ./vendor-plugins...
+
+Success! Provider plugins mirrored to ./vendor-plugins.
+```
+
+---
+
+## Command Options
+
+| Option | Default | Description |
+| :--- | :--- | :--- |
+| `-test-directory=DIR` | `tests` | Test directory to search for specifications. |
+| `-var 'foo=bar'` | — | Sets an input variable in the root module. Can be specified multiple times. |
+| `-var-file=filename` | — | Loads variable values from a file (`testform.vars.yml` or `*.auto.vars.yml`). |
+
+---
+
+## Exit Codes
+
+- `0`: Subcommand completed successfully.
+- `1`: Provider resolution error or invalid configuration.

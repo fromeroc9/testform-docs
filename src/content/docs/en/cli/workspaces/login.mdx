@@ -1,0 +1,64 @@
+---
+title: "testform login"
+description: "Obtains and saves credentials for a remote host."
+---
+
+```bash
+testform [global options] login [hostname]
+```
+
+The `testform login` command retrieves an API authentication token for the given hostname (defaults to `github.com`) and saves it securely in a local credentials file in your home directory:
+
+```text
+~/.testform.d/credentials.json
+```
+
+Once saved, Testform will automatically use this token for all provider API requests (such as creating, querying, or closing issues in GitHub or GitLab), without requiring manual `GITHUB_TOKEN` environment variables in your active shell.
+
+---
+
+## Arguments
+
+| Argument | Default | Description |
+| :--- | :--- | :--- |
+| `hostname` | `github.com` | Domain name of the remote provider host (e.g. `github.com`, `gitlab.com`). |
+
+---
+
+## Interactive Workflow
+
+When invoked, Testform prompts interactively for your Personal Access Token (PAT):
+
+```bash
+$ testform login github.com
+
+TestForm must now request authentication credentials for github.com.
+These credentials will be stored locally at ~/.testform.d/credentials.json.
+
+Token (PAT) for github.com: ****************************************
+
+Success! Configuration saved for github.com.
+```
+
+---
+
+## Credentials File Format
+
+Stored credentials use a standard JSON structure:
+
+```json
+{
+  "hosts": {
+    "github.com": {
+      "token": "ghp_xxxxxxxxxxxxxxxxxxxx"
+    }
+  }
+}
+```
+
+---
+
+## Exit Codes
+
+- `0`: Authentication token successfully stored.
+- `1`: Empty token provided or login aborted by user.
