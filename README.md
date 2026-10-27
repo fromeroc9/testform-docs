@@ -5,11 +5,8 @@
 <h1 align="center">Testform Documentation Portal</h1>
 
 <p align="center">
-  <strong>Declarative Test-as-Code Framework for Git & Testing Platforms</strong>
-</p>
-
-<p align="center">
-  <em>The official documentation, guides, and API specifications for Testform.</em>
+  <strong>Declare, plan, apply, and reconcile in Git.</strong><br />
+  <em>Declarative Test-as-Code Framework for Git & Testing Platforms</em>
 </p>
 
 <p align="center">
