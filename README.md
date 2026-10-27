@@ -5,7 +5,11 @@
 <h1 align="center">Testform Documentation Portal</h1>
 
 <p align="center">
-  <strong>The official documentation, guides, and API specifications for Testform</strong>
+  <strong>Declare, plan, apply, and reconcile in Git.</strong>
+</p>
+
+<p align="center">
+  <em>The official documentation, guides, and API specifications for Testform.</em>
 </p>
 
 <p align="center">
