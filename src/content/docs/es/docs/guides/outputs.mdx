@@ -1,19 +1,19 @@
-﻿---
+---
 title: "Valores de Salida"
 ---
 
-El bloque `outputs:` permite exportar valores del entorno, métricas e identificadores de recursos generados tras la ejecución de `testform apply`.
+El bloque `output:` permite exportar valores del entorno, métricas e identificadores de recursos generados tras la ejecución de `testform apply`.
 
 Es la pieza fundamental para integrar Testform con pipelines de **CI/CD** (GitHub Actions, GitLab CI, Jenkins), permitiendo pasar dinámicamente identificadores de suites o URLs de reportes hacia etapas posteriores (como notificaciones de Slack o gates de despliegue).
 
 ---
 
-## 1. Declaración de Salidas (`outputs:`)
+## 1. Declaración de Salidas (`output:`)
 
-Puedes declarar salidas en tu archivo raíz `main.yml` o en un archivo independiente `outputs.yml`:
+Puedes declarar salidas en tu archivo raíz `main.yml` o en un archivo independiente `output.yml`:
 
 ```yaml
-outputs:
+output:
   # 1. Atributo retornado por el Provider (ej. Issue en GitHub/GitLab o ID local)
   smoke_run_id:
     description: "Identificador del Test Run en el proveedor"

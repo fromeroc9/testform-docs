@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Outputs"
 ---
 
@@ -8,13 +8,13 @@ Equivalente al bloque `output` de Terraform, los outputs se persisten automátic
 
 ---
 
-## Declaración en `outputs.yml` o `main.yml`
+## Declaración en `output.yml` o `main.yml`
 
-Puedes declarar salidas en `outputs.yml` o dentro de `main.yml`:
+Puedes declarar salidas en `output.yml` o dentro de `main.yml`:
 
 ```yaml
-# outputs.yml
-outputs:
+# main.yml o output.yml
+output:
   login_case_title:
     description: "Título del caso de autenticación"
     value: "${testcase.auth/login.case.feature.@tc-1.title}"

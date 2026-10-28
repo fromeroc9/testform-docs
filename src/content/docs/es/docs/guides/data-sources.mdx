@@ -109,16 +109,16 @@ Feature: Autenticación de Usuarios
 
 ---
 
-## 4. Uso en `local:` y `outputs:`
+## 4. Uso en `locals:` y `output:`
 
 Puedes combinar fuentes de datos con variables locales y exponerlas en los outputs de tu ejecución:
 
 ```yaml
-local:
+locals:
   usuario_activo: "${data.usuarios_saucedemo.standard_user.username}"
   login_id: "${data.login_core.remoteId}"
 
-outputs:
+output:
   active_user:
     description: "Usuario utilizado en las pruebas"
     value: "${local.usuario_activo}"

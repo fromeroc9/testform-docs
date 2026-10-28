@@ -44,13 +44,14 @@ Scenario: User profile inspection
 
 ## Centralized YAML Configuration
 
-Lifecycle rules can also be declared in `main.yml`:
+Following Terraform conventions, the `lifecycle` meta-argument belongs strictly within the `resource:` block:
 
 ```yaml
-# main.yml
-lifecycle:
-  resources:
-    "auth/payment.feature.@transfer_funds":
+# main.yml or resource.yml
+resource:
+  testcase:
+    match: "features/*.case.feature"
+    lifecycle:
       prevent_destroy: true
       ignore_changes:
         - labels

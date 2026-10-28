@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Arquitectura Modular"
 ---
 
@@ -37,7 +37,7 @@ Los pasos pueden utilizar comodines de ángulo `<param>` o sintaxis de variable 
 Puedes registrar módulos reutilizables centralmente con sus variables por defecto:
 
 ```yaml
-modules:
+module:
   auth_standard:
     source: "./modules/auth/login.case.feature"
     vars:
@@ -45,7 +45,7 @@ modules:
       user: "standard_user"
       password: "${var.default_password}"
       role: "viewer"
-    outputs:
+    output:
       session_id:
         value: "${testrun.modules/auth/login.case.feature.@tr-1.issueNumber}"
 ```
@@ -55,7 +55,7 @@ modules:
 Testform soporta repositorios Git remotos para compartir módulos entre diferentes proyectos u organizaciones:
 
 ```yaml
-modules:
+module:
   auth_shared:
     source: "git::https://github.com/mi-org/qa-modules.git//auth?ref=v1.2.0"
     vars:
@@ -124,10 +124,10 @@ Si un archivo de módulo contiene múltiples escenarios, puedes seleccionar úni
 
 ### A. Declaración dentro del Módulo
 
-Dentro de `modules/auth/outputs.yml`:
+Dentro de `modules/auth/output.yml`:
 
 ```yaml
-outputs:
+output:
   session_token:
     description: "Token generado por el flujo de autenticación"
     value: "tok_secure_active_session"
@@ -141,7 +141,7 @@ El proyecto principal o cualquier escenario que consuma el módulo accede al out
 
 ```yaml
 # main.yml
-outputs:
+output:
   active_admin_token:
     description: "Token de sesión del módulo de autenticación"
     value: "${module.auth.session_token}"

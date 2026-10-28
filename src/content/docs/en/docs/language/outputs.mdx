@@ -11,11 +11,11 @@ Directly mirroring Terraform's `output` block, outputs are persisted in the stat
 
 ## Declaring Outputs
 
-Outputs can be declared in `outputs.yml` or root `main.yml`:
+Outputs can be declared in `output.yml` or root `main.yml`:
 
 ```yaml
-# outputs.yml
-outputs:
+# main.yml or output.yml
+output:
   login_case_title:
     description: "Title of the authentication scenario"
     value: "${testcase.auth/login.case.feature.@tc-1.title}"
@@ -61,7 +61,7 @@ testform output -json
 
 ## Consuming Module Outputs
 
-When consuming child modules via `@module`, their outputs are scoped under `module.<name>.<output>` and can be referenced in consumer scenarios or root outputs:
+When consuming child modules via `@module`, their outputs are scoped under `module.<name>.<output>` and can be referenced in consumer scenarios or root `output:` blocks:
 
 ```gherkin
 Scenario: Reusing session token from auth module

@@ -116,7 +116,7 @@ Organizations managing hundreds of repositories do not need to duplicate policie
 1. Centralize policies in a Git module:
    ```yaml
    # main.yml (in all repositories)
-   modules:
+   module:
      qa_standards:
        source: git::https://github.com/my-org/testform-enterprise-standards.git
    ```

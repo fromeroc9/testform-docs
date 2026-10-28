@@ -1,4 +1,4 @@
-﻿---
+---
 title: "lifecycle"
 ---
 
@@ -43,13 +43,14 @@ Scenario: Consulta de perfil de cliente
 
 ## Configuración Centralizada en YAML
 
-También puedes declarar políticas de `lifecycle` directamente en `main.yml`:
+Siguiendo la convención de Terraform, el meta-argumento `lifecycle` pertenece estrictamente dentro de la declaración de `resource:`:
 
 ```yaml
-# main.yml
-lifecycle:
-  resources:
-    "auth/payment.feature.@transfer_funds":
+# main.yml o resource.yml
+resource:
+  testcase:
+    match: "features/*.case.feature"
+    lifecycle:
       prevent_destroy: true
       ignore_changes:
         - labels

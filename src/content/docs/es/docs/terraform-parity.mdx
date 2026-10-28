@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Matriz Cuántica de Paridad: Terraform Language vs Testform"
 ---
 
@@ -72,7 +72,7 @@ Cada punto analizado evalúa cuatro dimensiones:
 - **¿Aplica a Testform?:** **Implementado al 100%**.
 
 ### 6. Outputs (`output`)
-- **Estado en Testform:** `Implementado` (vía `outputs:`, `outputs.yml`, CLI `testform output [name] [-raw] [-json]`, persistencia en `testform.state`).
+- **Estado en Testform:** `Implementado` (vía `output:`, `output.yml`, CLI `testform output [name] [-raw] [-json]`, persistencia en `testform.state`).
 - **Motivo en Terraform:** Exportar valores de un módulo a la raíz o compartir datos entre infraestructuras.
 - **Comparado / Faltante (Gap):** Terraform soporta `precondition` en outputs y marcado `sensitive = true`. En Testform falta el flag `sensitive: true` para ocultar tokens en consola.
 - **¿Aplica a Testform?:** **Parcialmente implementado**. Agregar soporte de enmascaramiento para outputs sensibles.

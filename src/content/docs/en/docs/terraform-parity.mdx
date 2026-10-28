@@ -73,7 +73,7 @@ Each evaluated item examines four dimensions:
 - **Applies to Testform?:** **Fully Implemented**.
 
 ### 6. Outputs (`output`)
-- **Testform Status:** `Implemented` (via `outputs:`, `outputs.yml`, CLI `testform output [name] [-raw] [-json]`, persisted in `testform.state`).
+- **Testform Status:** `Implemented` (via `output:`, `output.yml`, CLI `testform output [name] [-raw] [-json]`, persisted in `testform.state`).
 - **Terraform Purpose:** Export values from child modules or share data between workspaces.
 - **Comparison / Gap:** Terraform supports `precondition` in outputs and `sensitive = true` marking. Testform lacks `sensitive: true` masking in the console.
 - **Applies to Testform?:** **Partially Implemented**. Add masking support for sensitive outputs.

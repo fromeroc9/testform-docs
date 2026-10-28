@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Datos Sensibles"
 ---
 
@@ -10,11 +10,11 @@ Testform cuenta con un sistema nativo para proteger y enmascarar valores sensibl
 
 ## Declaración de Outputs Sensibles
 
-Puedes marcar cualquier valor en el bloque `outputs:` con el atributo `sensitive: true`:
+Puedes marcar cualquier valor en el bloque `output:` con el atributo `sensitive: true`:
 
 ```yaml
 # main.yml
-outputs:
+output:
   total_cases:
     value: "${testcase.*.count}"
 

@@ -11,25 +11,25 @@ Testform implementa dos controles esenciales de `lifecycle`:
 
 ---
 
-## 1. Configuración en YAML (`main.yml` o Dominio)
+## 1. Configuración en YAML (`resource.yml` o `main.yml`)
 
-Puedes definir reglas de ciclo de vida a nivel global, por scope (`testcase`, `testrun`, `testplan`) o para recursos específicos mediante su dirección canónica.
+Siguiendo la paridad con Terraform, el bloque `lifecycle` es un meta-argumento que pertenece estrictamente dentro de la declaración de `resource:`:
 
 ```yaml
-# main.yml o auth.yml
-lifecycle:
-  # 1. Reglas Globales por Defecto
-  prevent_destroy: false
-  ignore_changes:
-    - assignees   # Si alguien reasigna un issue en GitHub, ignorar el drift
-
-  # 2. Reglas Específicas por Recurso
-  resources:
-    "auth/login.case.feature.@tc-1":
-      prevent_destroy: true  # Este caso de prueba nunca puede ser destruido
+# main.yml o resource.yml
+resource:
+  testcase:
+    match: "features/*.case.feature"
+    lifecycle:
+      prevent_destroy: true  # Los casos de prueba quedan protegidos contra destrucción
       ignore_changes:
         - labels             # Ignorar etiquetas añadidas manualmente por QA
         - priority           # Ignorar cambios de prioridad en tableros Kanban
+
+  testrun:
+    match: "suites/*.run.feature"
+    lifecycle:
+      prevent_destroy: false
 ```
 
 ---

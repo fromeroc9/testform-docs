@@ -3,19 +3,19 @@ title: "Variables and Local Values"
 ---
 
 
-Testform implements a variable (`vars:`) and local values (`local:`) resolution engine inspired by Terraform, but adapted to the native readability of **YAML**.
+Testform implements a variable (`variable:`) and local values (`locals:`) resolution engine inspired by Terraform, but adapted to the native readability of **YAML**.
 
 No `.tfvars` or JSON files required: **everything is declared and resolved in YAML**.
 
 ---
 
-## 1. Declaration: `vars:` vs `local:`
+## 1. Declaration: `variable:` vs `locals:`
 
-### The `vars:` Block (Input Variables)
+### The `variable:` Block (Input Variables)
 Variables represent configurable input parameters declared with metadata:
 
 ```yaml
-vars:
+variable:
   app_url:
     type: string
     description: "Base URL for the test environment"
@@ -32,11 +32,11 @@ vars:
 Referenced in `.feature` files via:
 `${var.variable_name}`
 
-### The `local:` Block (Local and Computed Values)
+### The `locals:` Block (Local and Computed Values)
 Locals represent derived constants or computed expressions to prevent code duplication:
 
 ```yaml
-local:
+locals:
   base_url: "${var.app_url}"
   login_url: "${local.base_url}"
   api_health: "${local.base_url}/health"
@@ -59,7 +59,7 @@ When the same variable is defined across multiple files or commands, Testform ap
 â”‚  [Level 5] CLI Flags:          -var "key=value"
 â”‚  [Level 4] CLI Var Files:      -var-file="staging.yml"
 â”‚  [Level 2] Domain Folders:     auth/auth.yml, inventory/inventory.yml, etc.
-â”‚  [Level 1] Terraform Standard: vars.yml, local.yml
+│  [Level 1] Terraform Standard: variables.yml, locals.yml
 │  [Level 0] Base Manifest:      main.yml (global defaults)
 â–¼ LOWEST PRIORITY
 ```

@@ -33,14 +33,14 @@ Register reusable module instances with default input values and output bindings
 
 ```yaml
 # main.yml
-modules:
+module:
   auth_staging:
     source: "./modules/auth/login.feature"
     vars:
       base_url: "${var.app_url}"
       user: "staging_tester"
       password: "${var.test_password}"
-    outputs:
+    output:
       token:
         value: "${testcase.modules/auth/login.feature.@login.token}"
 ```
@@ -52,7 +52,7 @@ modules:
 Testform downloads and verifies modules hosted in remote Git repositories during `testform init`:
 
 ```yaml
-modules:
+module:
   shared_auth:
     source: "git::https://github.com/my-org/test-modules.git//auth?ref=v1.2.0"
     vars:
@@ -85,7 +85,7 @@ For enterprises managing hundreds of microservices, modules eliminate configurat
 
 ```yaml
 # main.yml (across all 200 projects)
-modules:
+module:
   standards:
     source: "git::https://github.com/my-org/testform-enterprise-standards.git?ref=v2.0"
 ```

@@ -11,11 +11,11 @@ Testform provides built-in mechanisms to protect and mask sensitive values acros
 
 ## Declaring Sensitive Outputs
 
-You can mark any output in the `outputs:` block with the attribute `sensitive: true`:
+You can mark any output in the `output:` block with the attribute `sensitive: true`:
 
 ```yaml
 # main.yml
-outputs:
+output:
   total_cases:
     value: "${testcase.*.count}"
 

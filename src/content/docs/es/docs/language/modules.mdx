@@ -32,14 +32,14 @@ Puedes registrar módulos con alias reutilizables y parámetros por defecto:
 
 ```yaml
 # main.yml
-modules:
+module:
   auth_staging:
     source: "./modules/auth/login.feature"
     vars:
       base_url: "${var.app_url}"
       user: "staging_tester"
       password: "${var.test_password}"
-    outputs:
+    output:
       token:
         value: "${testcase.modules/auth/login.feature.@login.token}"
 ```
@@ -51,7 +51,7 @@ modules:
 Testform soporta la descarga e inicialización automática de módulos alojados en repositorios Git remotos durante `testform init`:
 
 ```yaml
-modules:
+module:
   shared_auth:
     source: "git::https://github.com/mi-org/test-modules.git//auth?ref=v1.2.0"
     vars:
@@ -78,13 +78,13 @@ Scenario: Consumir token generado por módulo
 
 ---
 
- Compartición de Políticas y Recursos en Escala Empresarial
+## Compartición de Políticas y Recursos en Escala Empresarial
 
 En organizaciones con decenas o cientos de microservicios y proyectos, los módulos de Testform resuelven la redundancia permitiendo empaquetar y distribuir estándares corporativos comunes:
 
 ```yaml
 # main.yml (en cada uno de los proyectos de la empresa)
-modules:
+module:
   standards:
     source: "git::https://github.com/mi-empresa/testform-enterprise-standards.git?ref=v2.0"
 ```
