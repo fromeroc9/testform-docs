@@ -1,4 +1,4 @@
-﻿---
+---
 title: "testform validate"
 ---
 
@@ -14,16 +14,44 @@ La validación se realiza a nivel estrictamente local y **no** realiza peticione
 
 | Opción | Por Defecto | Descripción |
 | :--- | :--- | :--- |
+| `-target=target` | Ninguno | Valida únicamente un archivo `.feature` o recurso específico (ej. `-target=tests/smoke.run.feature` o `-target="auth/login.case.feature.@tc-1"`). |
+| `-scope=scope` | `all` | Limita el alcance de validación a un scope específico (`testcase`, `testrun`, `testplan` o `all`). |
 | `-json` | `false` | Emite diagnósticos en formato de objeto JSON, idóneo para linters de CI y Checks de GitHub. |
+| `-no-tests` | `false` | Omite la ejecución de las políticas de calidad registradas. |
+| `-test-directory=dir` | `tests` | Directorio que contiene los archivos de prueba. |
+| `-query=texto` | Ninguno | Filtra escenarios que coincidan con la búsqueda. |
 | `-no-color` | `false` | Desactiva colores en la salida de consola. |
 
 ## Ejemplos de Ejecución Real
 
-### Validación Exitosa
+### Validación Global (Todos los Scopes)
 ```bash
 $ testform validate
-
+Validating configuration...
 Success! The configuration is valid.
+
+  Scenarios: 8
+  Scope:     all (testcase: 6, testrun: 1, testplan: 1)
+```
+
+### Validación de un Scope Específico
+```bash
+$ testform validate -scope=testcase
+Validating configuration...
+Success! The configuration is valid.
+
+  Scenarios: 6
+  Scope:     testcase
+```
+
+### Validación con Destino Específico (`-target`)
+```bash
+$ testform validate -target=tests/testrun/smoke.run.feature
+Validating configuration...
+Success! The configuration is valid.
+
+  Scenarios: 1
+  Scope:     testrun
 ```
 
 ### Advertencias de Esquema (Warnings)

@@ -17,9 +17,9 @@ my-project/
 ├── main.yml
 ├── testform.state
 └── .testform/
-    ├── backend.json               # Initialized active backend configuration (testform init)
     ├── environment                # Name of the currently selected workspace
     ├── cache/                     # Engine auto-generated and temporary files
+    │   ├── backend.json           # Initialized active backend configuration (testform init)
     │   ├── lock.json              # Provider dependency lock and cryptographic checksums
     │   └── data.json              # Local mock database for provider: local
     ├── modules/                   # Remote modules downloaded from Git repositories
@@ -38,10 +38,10 @@ my-project/
 
 ## Components and Files in `.testform/`
 
-### 1. `backend.json`
+### 1. `cache/backend.json`
 - **When it is generated:** During execution of `testform init`.
-- **Purpose:** Stores the active configuration and hash of the configured state backend (storage provider, bucket, region, or connection parameters).
-- **Safety mechanism:** If you change the `backend` block in `main.yml` or supply conflicting `-backend-config` flags, Testform compares the values against `.testform/backend.json` and halts execution to protect state integrity, advising you to run `testform init -reconfigure` or `testform init -migrate-state`.
+- **Purpose:** Stores the active configuration and hash of the configured state backend (storage provider, bucket, region, or connection parameters) inside the cache directory.
+- **Safety mechanism:** If you change the `backend` block in `main.yml` or supply conflicting `-backend-config` flags, Testform compares the values against `.testform/cache/backend.json` and halts execution to protect state integrity, advising you to run `testform init -reconfigure` or `testform init -migrate-state`.
 
 ### 2. `environment`
 - **When it is generated:** When managing workspaces via `testform workspace new <name>` or `testform workspace select <name>`.
@@ -136,5 +136,5 @@ The `.testform/` directory is designed to be transient and specific to each mach
 If the `.testform/` directory is accidentally deleted or you clone the repository onto a new machine:
 
 1. Run `testform init`.
-2. Testform automatically re-creates the base directory structure, regenerates `.testform/backend.json`, and re-downloads all declared modules into `.testform/modules/`.
+2. Testform automatically re-creates the base directory structure, regenerates `.testform/cache/backend.json`, and re-downloads all declared modules into `.testform/modules/`.
 3. If your project was using a workspace other than `default`, switch to it using `testform workspace select <name>`.

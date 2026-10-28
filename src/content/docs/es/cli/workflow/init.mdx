@@ -1,4 +1,4 @@
-﻿---
+---
 title: "testform init"
 ---
 
@@ -96,7 +96,7 @@ Cuando se especifica `-backend-config`, Testform valida de forma estricta los ar
 
 ## Cambio en la Configuración del Backend
 
-Testform realiza un seguimiento continuo de la configuración activa del backend en `.testform/backend.json`. Si modificas el bloque `backend` en `main.yml` o proporcionas un valor distinto mediante `-backend-config`, Testform detecta la discrepancia antes de inicializar y solicita definir cómo proceder:
+Testform realiza un seguimiento continuo de la configuración activa del backend en `.testform/cache/backend.json`. Si modificas el bloque `backend` en `main.yml` o proporcionas un valor distinto mediante `-backend-config`, Testform detecta la discrepancia antes de inicializar y solicita definir cómo proceder:
 
 ```text
 ╷

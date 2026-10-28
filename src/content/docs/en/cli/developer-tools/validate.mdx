@@ -15,16 +15,44 @@ Validation runs locally and does **not** access remote APIs or verify credential
 
 | Option | Default | Description |
 | :--- | :--- | :--- |
+| `-target=target` | None | Targets a specific `.feature` file or resource for validation (e.g. `-target=tests/smoke.run.feature` or `-target="auth/login.case.feature.@tc-1"`). |
+| `-scope=scope` | `all` | Restricts validation to a given scope (`testcase`, `testrun`, `testplan`, or `all`). |
 | `-json` | `false` | Emits validation diagnostics as a JSON object, ideal for CI linters and GitHub Checks. |
+| `-no-tests` | `false` | Skips running registered quality policies. |
+| `-test-directory=dir` | `tests` | Directory containing test feature files. |
+| `-query=text` | None | Filters scenarios matching a text query. |
 | `-no-color` | `false` | Disables colored console output. |
 
 ## Real Execution Examples
 
-### Success Output
+### Full Workspace Validation (All Scopes)
 ```bash
 $ testform validate
-
+Validating configuration...
 Success! The configuration is valid.
+
+  Scenarios: 8
+  Scope:     all (testcase: 6, testrun: 1, testplan: 1)
+```
+
+### Scope-Restricted Validation
+```bash
+$ testform validate -scope=testcase
+Validating configuration...
+Success! The configuration is valid.
+
+  Scenarios: 6
+  Scope:     testcase
+```
+
+### Targeted File or Resource Validation (`-target`)
+```bash
+$ testform validate -target=tests/testrun/smoke.run.feature
+Validating configuration...
+Success! The configuration is valid.
+
+  Scenarios: 1
+  Scope:     testrun
 ```
 
 ### Warning Diagnostics (Schema Warnings)

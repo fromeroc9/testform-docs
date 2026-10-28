@@ -1,0 +1,363 @@
+---
+title: "Visual Studio Code Extension"
+description: "Official guide for the Testform Visual Studio Code extension: LSP intelligence, full-screen Specs Hub Webview, native Test Explorer, state management, and standard language architecture."
+---
+
+The official **Testform for Visual Studio Code** extension (`fromeroc9.testform`) transforms your editor into a high-performance Integrated Development Environment (IDE) tailored for **Test-as-Code** workflows.
+
+It provides complete Language Server Protocol (LSP) intelligence, multi-layer variable autocompletion, native integration with the VS Code Test Explorer, a full-screen **Specs & Execution Hub**, state management tools, speculative plan executions, and bilingual Gherkin formatting.
+
+---
+
+## What's New in Version 1.0.0
+
+- 📑 **Full-Screen Specs Hub (`SpecsHubPanel`):** Test specifications (Test Cases, Test Runs, and Test Plans) have been migrated from the narrow sidebar tree view into a dedicated full-width Editor Tab Webview with real-time KPI metrics, live reactive filters, and direct execution actions.
+- ⚡ **Pure Standard Language Architecture:** Deprecated proprietary language IDs (`testform-yaml` and `testform-gherkin`) in favor of industry-standard `yaml` and `gherkin`. Eliminates syntax conflicts with Red Hat YAML, Prettier, or external linters.
+- 🎨 **Visual Polish & Non-Intrusive Badges:** Official dual-folder icon for `.testform` (matching `.vscode` style), dedicated file icons for manifests, and a subtle `TF` badge without overriding the editor's file text color scheme.
+- 🔘 **Interactive Status Prompt in Test Explorer:** Gutter execution runs now display an interactive status picker (`passed`, `failed`, `blocked`, `skipped`, `pending`) before recording state changes into the ledger.
+- 🎯 **Single-Dash CLI Flag Standard:** All terminal runs triggered by the extension enforce official single-dash flags (`-target`, `-auto-approve`, `-lock`).
+
+---
+
+## Installation & Prerequisites
+
+### 1. Prerequisites
+- **Visual Studio Code:** Version `1.85.0` or higher.
+- **Node.js:** Version `18.0.0` or higher.
+- **Testform CLI:** The command-line binary must be installed globally and available in your `PATH`:
+  ```bash
+  npm install -g @fromeroc9/testform
+  ```
+  Verify the installation:
+  ```bash
+  testform --version
+  ```
+
+### 2. Installation Options
+- **From the Visual Studio Code Marketplace:**
+  Open the Extensions view (`Ctrl+Shift+X` / `Cmd+Shift+X`), search for `Testform` (published by `fromeroc9`), and click **Install**.
+- **Manual VSIX Package Installation:**
+  If you have a compiled `.vsix` file:
+  ```bash
+  code --install-extension testform-1.0.0.vsix
+  ```
+
+---
+
+## Pure Standard Language Architecture
+
+Unlike extensions that register proprietary language identifiers and break ecosystem compatibility, Testform v1.0.0 adopts a clean integration model built on open standards:
+
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│                   Visual Studio Code Extension Client                  │
+│    (Editor decorations, Test Controller, Tree Views, Specs Hub Webview)│
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ JSON-RPC (IPC)
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                       Testform Language Server                         │
+│  ├── Workspace Scanner (Autoloads main.yml, *.vars.yml, .testform/)   │
+│  ├── IntelliSense Engine (Variables, locals, data sources, functions)  │
+│  ├── Diagnostics Provider (Syntax checks, tag uniqueness, dependencies)│
+│  ├── Definition & Hover Provider (F12 / Ctrl+Click jump to definition) │
+│  └── Gherkin Formatter (Standard table and keyword indentation)        │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+- **Standard Language IDs:** Operates directly on standard `yaml` and `gherkin` file types.
+- **Compatibility with Red Hat YAML & Prettier:** Your `main.yml`, `variables.yml`, and `*.vars.yml` manifests are properly formatted and validated by Red Hat YAML or Prettier without syntax warnings.
+- **TextMate DSL Injection:** The custom Testform grammar injects semantic highlighting for `${var.*}`, `${local.*}`, `@depends_on` directives, and `* mark status` actions directly over standard Gherkin and YAML grammar.
+
+---
+
+## Language Server Protocol (LSP) Capabilities
+
+The extension runs a dedicated Language Server in the background that continuously monitors your workspace (`main.yml`, `*.vars.yml`, `*.feature`, and the `.testform/` cache directory).
+
+### 1. IntelliSense & Testform DSL Expressions
+
+When authoring `.case.feature`, `.run.feature`, `.plan.feature`, or YAML configuration manifests, the engine provides rich context-aware autocompletions:
+
+- **Input Variables (`${var.*}`):**
+  Typing `${var.` displays all variables declared across workspace manifests, showing resolved types (`string`, `number`, `bool`, etc.), default values, and declaration file paths.
+- **Computed Local Values (`${local.*}`):**
+  Autocompletes computed expressions defined within `locals:` blocks.
+- **Data Source Attributes (`${data.*}`):**
+  Attribute suggestions for active data sources (`data.http.*`, etc.).
+- **Module Outputs (`${module.<name>.<output>}`):**
+  Direct access to outputs exported by declared modules.
+- **System Environment Variables (`${env.*}`):**
+  Access to system environment variables at runtime.
+- **Built-in Transformation Functions:**
+  Full autocomplete with argument placeholders for all built-in functions:
+  - **Strings:** `lower()`, `upper()`, `trim()`, `trimprefix()`, `trimsuffix()`, `startswith()`, `endswith()`, `replace()`, `split()`, `join()`, `format()`, `substr()`.
+  - **Collections & Maps:** `contains()`, `coalesce()`, `lookup()`, `length()`, `element()`, `slice()`, `merge()`.
+  - **System & Encoding:** `env()`, `uuid()`, `timestamp()`, `jsonencode()`, `jsondecode()`, `file()`.
+
+### 2. Smart Tag Suggestions & Sequence Calculation
+
+- **Automatic Sequential ID Calculation:** Typing `@tc-`, `@tr-`, or `@tp-` prompts the server to scan the workspace and automatically calculate the next available ID (e.g., if `@tc-1` through `@tc-5` exist, it suggests `@tc-6`).
+- **Custom Field Enum Suggestions:** Auto-suggests tags declared in `main.yml` (e.g., `@priority:Critical`, `@component:Auth`, `@severity:Blocker`), validating against permitted enum lists.
+
+### 3. Go to Definition (F12) & Hover Cards
+
+- **Jump to Definition (`F12` / `Ctrl+Click`):**
+  Click on any `${var.endpoint}` or `${local.auth_token}` reference in a `.feature` file to jump directly to its YAML manifest definition line.
+- **Rich Hover Cards:**
+  Hover over any variable or local reference to inspect its documentation, data type, default value, and source file path.
+- **Dependency Navigation:**
+  Navigate cross-file `@depends_on("path/to.case.feature.@tc-1")` directives with instant jump-to-target.
+
+### 4. Real-Time Diagnostics & Quality Gates
+
+The analyzer checks syntax in real-time, underlining potential issues:
+- **Undeclared Variables:** Flags references to `${var.missing}` that are not declared in workspace manifests.
+- **Dependency Validations (`@depends_on`):**
+  - Warns on empty directives: `@depends_on("")`.
+  - Catches references to non-existent tags within the same file.
+  - Detects broken dependencies pointing to missing target files or tags.
+  - Prevents self-referential dependencies (a scenario depending on itself).
+- **Duplicate Identity Tags:** Alerts if two scenarios accidentally share the same identity tag (`@tc-1`).
+- **Enum Restriction Enforcement:** Warns when custom metadata values don't match allowed enum entries defined in `main.yml`.
+
+---
+
+## Specs & Execution Hub (Full-Screen Webview Dashboard)
+
+In version 1.0.0, test specifications have been relocated from the sidebar into a **full-screen Editor Tab Webview** optimized for spacious visualization and swift QA operations.
+
+Open the hub via **`Testform: Open Test Cases, Runs & Plans Hub`** or the document icon on editor tab titles:
+
+```text
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ TESTFORM SPECS & EXECUTION HUB                                                         │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│  [📋 12 Test Cases (48 Scenarios)]    [🚀 4 Test Runs]    [🎯 2 Test Plans]            │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│  Search & Filter: [ 🔍 filter by @smoke, auth, title...                             ]  │
+│  Tabs: [ (●) Test Cases ]   [ Test Runs ]   [ Test Plans ]                             │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│  ▼ modules/auth/login.case.feature                                                     │
+│    • @tc-1 Successful login with standard user                  [Jump to File] [Plan] │
+│    • @tc-2 Login attempt with locked out user                   [Jump to File] [Plan] │
+│    • @tc-3 Validation of empty login fields                     [Jump to File] [Plan] │
+│                                                                                        │
+│  ▼ tests/testrun/smoke.run.feature                                                     │
+│    • @tr-1 Smoke Test Suite SauceDemo                           [Jump to File] [Apply]│
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Specs Hub Highlights:
+1. **Live KPI Dashboard:** Instant metric cards showing total files and scenarios across `Test Cases`, `Test Runs`, and `Test Plans`.
+2. **Multi-Tab Architecture:** Dedicated views for base test cases (`*.case.feature`), execution suites (`*.run.feature`), and release milestones (`*.plan.feature`).
+3. **Instant Live Search & Filters:** Fast client-side filtering by keywords, feature titles, scenario names, and metadata tags (`@smoke`, `@auth`, `@critical`).
+4. **Direct Code Jump Navigation (`Jump to File`):** One click opens the target file in your editor and places your cursor on the exact scenario line.
+5. **Integrated Execution Triggers:** Speculative preview (`testform plan -target=...`) and apply reconciliation (`testform apply -target=...`) actions can be executed directly from individual rows.
+6. **Reactive Synchronization:** Watches workspace filesystem events; creating, modifying, or deleting `.feature` files immediately refreshes the dashboard without reloading.
+
+---
+
+## Native Test Explorer (VS Code Test Controller)
+
+Testform connects directly to VS Code's native Testing sidebar:
+
+1. **Automatic Discovery:**
+   Scans `.feature` files and builds a visual test hierarchy in the VS Code Testing view.
+2. **Gutter Execution Icons:**
+   Play buttons appear next to line numbers for each `Scenario` or feature definition.
+3. **Interactive Status Selection Prompt:**
+   Clicking Play triggers an interactive outcome prompt before recording execution state:
+   - `passed`
+   - `failed`
+   - `blocked`
+   - `skipped`
+   - `pending`
+4. **Real-Time State Synchronization:**
+   Watches `testform.state` and dynamically updates tree test statuses (`Passed` in green, `Failed` in red, `Skipped` in gray).
+
+---
+
+## Testform Sidebar Views (Activity Bar)
+
+Access the dedicated **Testform Activity Bar** tab for lifecycle tools:
+
+```text
+┌───────────────────────────────────────────────┐
+│ TESTFORM SIDEBAR                              │
+├───────────────────────────────────────────────┤
+│ ▼ STATE EXPLORER                              │
+│   ▶ Test Cases (6)                            │
+│   ▼ Test Runs (1)                             │
+│     ▼ suites\smoke.run.feature.@tr-1          │
+│       ✔ auth\login.case.feature.@tc-1 (passed)│
+│       ✔ inventory\catalog.case.feature.@tc-4  │
+│   ▶ Test Plans (1)                            │
+│   ▶ Outputs (2)                               │
+├───────────────────────────────────────────────┤
+│ ▼ MODULES & .TESTFORM                         │
+│   ▶ Declared Modules                          │
+│   ▶ Installed Modules (.testform/modules)     │
+│   ▶ Local Policies (.testform/policies)       │
+│   ▼ Cache & Environment                       │
+│     📄 environment (default)                  │
+│     🔒 backend.json (.testform/cache)         │
+│     🔒 lock.json (.testform/cache)            │
+├───────────────────────────────────────────────┤
+│ ▼ REPORTS & ANALYTICS                         │
+│   📊 Test Case Summary                        │
+│   📈 Detailed Test Runs                       │
+│   📋 Coverage Matrix                          │
+└───────────────────────────────────────────────┘
+```
+
+### 1. State Explorer (`testform.views.state`)
+- **Structured Resource Hierarchy:** Groups state ledger entries into `Test Cases`, `Test Runs`, `Test Plans`, and `Outputs`.
+- **Inspect Resource (JSON):** Open any resource to view its exact JSON representation from `testform.state`.
+- **Interactive Taint / Untaint:** Mark resources as `Tainted` (forcing recreation on the next plan/apply cycle) without terminal commands.
+- **State Remove (`state rm`):** Remove an item from the state ledger without deleting the specification file on disk.
+- **Force Unlock (`force-unlock`):** Release stuck remote or local locks with an interactive Lock ID prompt.
+
+### 2. Modules & .testform View (`testform.views.modules`)
+- Inspect remote Git modules declared in `main.yml` and their local copies under `.testform/modules/`.
+- Open local governance policy scripts in `.testform/policies/`.
+- Audit internal cache state (`.testform/cache/backend.json` and `.testform/cache/lock.json`).
+
+### 3. Reports & Analytics View (`testform.views.reports`)
+- One-click report generation:
+  - Test Case Summary (`testcase-summary`)
+  - Test Run Summary (`testrun-summary`)
+  - Detailed Test Runs (`testrun-detailed`)
+  - Test Plan Summary (`testplan-summary`)
+  - Coverage & Traceability Matrix (`coverage`, `matrix`)
+- Direct export format selection: **Markdown**, **Word (`.docx`)**, **Excel (`.xlsx`)**, **JSON**, or **CSV**.
+
+---
+
+## Intelligent Gherkin Formatter
+
+The extension provides a high-performance native formatter:
+
+- **Shortcut:** `Shift+Alt+F` (Windows/Linux) or `Shift+Option+F` (macOS), or via `Testform: Format Document`.
+- **Indentation Rules:**
+  - Column 0: `Feature:` / `Característica:`
+  - 2 Spaces: `Rule:`, `Background:`, `Scenario:`, `Scenario Outline:`, `Examples:`
+  - 4 Spaces: Executable steps (`Given`, `When`, `Then`, `And`, `But`, `*` and Spanish equivalents `Dado`, `Cuando`, `Entonces`, `Y`, `Pero`)
+  - 6 Spaces: Data tables (`| key | value |`) and DocString blocks (`"""` or ```` ``` ````).
+- **Full Bilingual Support:** Formats both English and Spanish Gherkin keywords seamlessly.
+
+---
+
+## Visual Polish & Custom Icons
+
+- **Double-Icon Folder for `.testform`:** Folder icon with the Testform logo overlaid on the bottom-right corner, following conventions established by `.vscode` and `.github`.
+- **Dedicated File Icons:** Visual icons for `main.yml`, `testform.yml`, `variable.yml`, `locals.yml`, `staging.yml`, `*.vars.yml`, and `testform.state`.
+- **Non-Intrusive File Decorations:** Subtle `TF` badge in the explorer tree and editor tab headers without tinting file names with blue text.
+
+---
+
+## Isolated Workspace Switcher
+
+In the lower-right corner of the VS Code Status Bar, locate the active workspace widget:
+
+`$(layers) Testform: default`
+
+- Click the status item or run `Testform: Select Workspace` to toggle the workspace switcher.
+- Seamlessly transition between isolated test environments (`default`, `staging`, `production`).
+- Create new workspaces on the fly (`testform workspace new <name>`).
+- Automatically updates and syncs with `.testform/environment`.
+
+---
+
+## Snippets Catalog
+
+Type the snippet prefix in your editor and hit `Tab`:
+
+### Gherkin Specifications (`.feature`)
+
+| Prefix | Description | Output |
+| :--- | :--- | :--- |
+| `tf-testcase` | Complete Test Case Feature template | `@testcase Feature: ... Scenario: ... Given/When/Then` |
+| `tf-scenario` | Single Test Scenario | `Scenario: ... Given/When/Then` |
+| `tf-scenario-outline` | Scenario Outline with Examples data table | `Scenario Outline: ... Examples: \| ... \|` |
+| `tf-testrun` | Executable Test Run Suite manifest | `@testrun @tr-1 Feature: ... Rule: ... * mark status = ...` |
+| `tf-run-rule` | Rule linking test case file | `Rule: path/to.case.feature Scenario: ...` |
+| `tf-testplan` | Test Plan manifest | `@testplan @tp-1 Feature: ... Rule: ...` |
+| `tf-depends-on` | Execution dependency directive | `@depends_on("module/login.case.feature.@tc-1")` |
+
+### YAML Manifests (`main.yml`, `variable.yml`)
+
+| Prefix | Description |
+| :--- | :--- |
+| `tf-main` | Starter `main.yml` with provider and scopes |
+| `tf-variable` | Variable declaration block with type, default, and description |
+| `tf-local` | Computed local value block |
+| `tf-module` | Remote Git module declaration block with outputs |
+| `tf-data` | Data source declaration block |
+| `tf-output` | Output attribute block |
+
+---
+
+## Extension Settings
+
+Customize extension behavior in `.vscode/settings.json`:
+
+```json
+{
+  // Path to the testform executable binary (default: "testform" from PATH)
+  "testform.executablePath": "testform",
+
+  // Enable the Testform Gherkin formatter as the default formatter for .feature files
+  "testform.format.enable": true,
+
+  // Enable real-time syntax, variable resolution, and dependency diagnostics
+  "testform.diagnostics.enable": true,
+
+  // Enable native VS Code Test Controller integration (Test Explorer & gutter play buttons)
+  "testform.testController.enable": true,
+
+  // Trace communication between VS Code and the Testform Language Server
+  "testform.trace.server": "off"
+}
+```
+
+### Recommended Project Settings
+
+To enforce consistent formatting across your QA team, add to `.vscode/settings.json`:
+
+```json
+{
+  "[gherkin]": {
+    "editor.defaultFormatter": "fromeroc9.testform",
+    "editor.formatOnSave": true
+  },
+  "[yaml]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2
+  }
+}
+```
+
+---
+
+## Command Palette Reference
+
+Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS) and type `Testform`:
+
+| Command | Identifier | Action |
+| :--- | :--- | :--- |
+| **Testform: Open Control Center Menu** | `testform.menu` | QuickPick menu displaying all primary workflows. |
+| **Testform: Initialize Workspace (init)** | `testform.init` | Executes `testform init` to install providers and modules. |
+| **Testform: Validate Configuration** | `testform.validate` | Validates manifests and scopes without running tests. |
+| **Testform: Speculative Plan (plan)** | `testform.plan` | Generates a speculative diff against the state ledger. |
+| **Testform: Apply Changes (apply)** | `testform.apply` | Reconciles state and triggers test executions. |
+| **Testform: Show State Drift (diff)** | `testform.diff` | Detects drift between files on disk and the state ledger. |
+| **Testform: Inspect State or Plan (show)** | `testform.show` | Human-readable inspection of resources and state attributes. |
+| **Testform: Select Workspace** | `testform.workspace.select` | Switch between isolated workspaces (`default`, `staging`, `prod`). |
+| **Testform: Force Unlock State** | `testform.state.forceUnlock` | Releases stuck state locks with interactive ID input. |
+| **Testform: Generate Report** | `testform.report` | Exports quality reports (.md, .docx, .xlsx, .json, .csv). |
+| **Testform: Open Test Cases, Runs & Plans Hub** | `testform.specs.openHub` | Opens the full-screen visual dashboard. |
+| **Testform: Show Providers Tree** | `testform.providers` | Displays configured providers and plugin trees. |
+| **Testform: List Declared Modules** | `testform.modules.list` | Lists declared and downloaded modules. |
+| **Testform: Update Modules** | `testform.modules.update` | Re-initializes and updates remote Git modules. |
+| **Testform: Refresh State Explorer** | `testform.state.refresh` | Reloads the state tree in the sidebar. |
+| **Testform: Format Document** | `testform.format` | Formats current Gherkin `.feature` file. |

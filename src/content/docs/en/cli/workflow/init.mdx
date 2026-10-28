@@ -97,7 +97,7 @@ When `-backend-config` is supplied, Testform strictly validates the arguments ag
 
 ## Backend Configuration Changed
 
-Testform continuously tracks the active backend configuration inside `.testform/backend.json`. If you alter the `backend` block in `main.yml` or provide differing overrides via `-backend-config`, Testform detects the mismatch before running and halts execution:
+Testform continuously tracks the active backend configuration inside `.testform/cache/backend.json`. If you alter the `backend` block in `main.yml` or provide differing overrides via `-backend-config`, Testform detects the mismatch before running and halts execution:
 
 ```text
 ╷
