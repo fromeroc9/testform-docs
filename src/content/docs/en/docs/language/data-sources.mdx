@@ -2,37 +2,81 @@
 title: "Data Sources"
 ---
 
-
 **Data Sources** in Testform allow your test specifications and configuration blocks to reference external, read-only data fixtures or previously managed resources, mirroring Terraform's `data` block.
 
 With `data:`, you can:
-1. **Load external datasets and fixtures (`file`)**: Inject structured data from external JSON or YAML files (`fixtures/users.json`, `data/payments.yml`) into Gherkin steps, local variables, and outputs.
-2. **Reference existing resources (`address`)**: Query remote IDs, titles, tags, or custom fields from other test cases without duplicate declarations.
+1. **Load local datasets and fixtures (`local_file`)**: Inject structured data from external JSON, YAML, or CSV files (`fixtures/users.json`, `data/payments.yml`) into Gherkin steps, local variables, and outputs.
+2. **Reference existing test resources (`testcase`, `testrun`, `testplan`)**: Query remote IDs, titles, tags, or custom fields from other test resources. When an address or tag matches multiple scenarios, it returns an **Array**.
+3. **Query external APIs and services (`http`)**: Send HTTP requests (`GET` and `POST`) to remote REST endpoints, directly injecting JSON responses with headers and request body support.
 
 ---
 
-## Declaration in `data.yml` or `main.yml`
+## Compact Inline Declaration (Zero Boilerplate)
 
-Data sources are defined under the `data:` block in `data.yml`, `main.yml`, or domain files:
+To avoid wasted lines (`filename:`, `address:`, or `url:`), Testform supports direct compact declarations with scalar strings. The engine automatically classifies them based on file extensions, URLs, and resource patterns:
 
 ```yaml
-# data.yml
+# main.yml or data.yml
 data:
-  # Mode 1: Loading external fixture files
-  users:
-    file: "fixtures/users.json"
+  # Auto-detected local fixture (.json, .yml, .yaml, .csv)
+  users: "fixtures/users.json"
+  catalog: "fixtures/products.yml"
 
-  # Mode 2: Referencing existing resource by address
-  login_core:
-    address: "auth/login.case.feature.@tc-1"
+  # Auto-detected test resource by feature address or identity (@tc, @tr, etc.)
+  login_core: "auth/login.case.feature.@tc-1"
+  smoke_suite: "suites/smoke.run.feature.@tr-smoke"
+
+  # Auto-detected HTTP endpoint (http:// or https://)
+  remote_profile: "https://api.github.com/users/octocat"
+```
+
+---
+
+## Explicit Typed Declaration
+
+For strict provider-like symmetry matching Terraform (`data "local_file" "users"`, `data "http" "session"`):
+
+```yaml
+data:
+  local_file:
+    users: "fixtures/users.json"
+    catalog: "fixtures/products.yml"
+
+  testcase:
+    login_core: "auth/login.case.feature.@tc-1"
+
+  testrun:
+    smoke_suite: "suites/smoke.run.feature.@tr-smoke"
+
+  http:
+    remote_profile: "https://api.github.com/users/octocat"
+```
+
+Dictionary syntax with explicit attributes remains supported when custom options (such as method, headers, or body) are required:
+
+```yaml
+data:
+  http:
+    auth_token:
+      url: "https://auth.company.com/oauth/token"
+      method: "POST"
+      request_headers:
+        Content-Type: "application/json"
+      request_body:
+        client_id: "qa-runner"
+        grant_type: "client_credentials"
+
+  local_file:
+    users:
+      filename: "fixtures/users.json"
 ```
 
 ---
 
 ## Data Source Modes
 
-### 1. Fixture File Mode (`file`)
-Loads structured JSON or YAML datasets:
+### 1. Local Fixture Files (`local_file`)
+Loads structured JSON, YAML, or CSV datasets:
 
 **`fixtures/users.json`**:
 ```json
@@ -52,22 +96,83 @@ Scenario: Admin authentication flow
   Then active role is displayed as "${data.users.admin.role}"
 ```
 
-### 2. Address Mode (`address`)
-Enables querying metadata of existing test resources:
+### 2. Testing Resources (`testcase`, `testrun`, `testplan`)
+Enables querying metadata of Testform's three canonical testing resources without re-executing them:
+
+- **Single Match:** When an address or tag matches a single scenario, it returns the resource object directly (`${data.login_core.title}`).
+- **Multiple Matches (Array):** When a tag or address matches multiple scenarios (e.g. `smoke_suite: "suites/smoke.run.feature.@tr-smoke"` or `@smoke`), it automatically returns an **Array** of scenario objects:
 
 ```gherkin
-Scenario: Validate authentication prerequisite
-  Given prerequisite test "${data.login_core.title}" has passed
-  Then proceed with checkout verification
+Scenario: Suite execution summary
+  Given ${data.smoke_suite.length} scenarios were evaluated in smoke suite
+  Then first scenario was "${data.smoke_suite[0].title}"
+  And second scenario was "${data.smoke_suite[1].title}"
 ```
+
+#### Accessing All Elements (Terraform Splat Expressions)
+
+To query or extract attributes across **all** matched elements returned by a data source without manual indexing, Testform supports standard **Terraform Splat Expressions (`*` or `[*]`)**:
+
+1. **Accessing the complete array of objects:**
+   - `${data.smoke_suite}` $\rightarrow$ Returns the complete array containing all test resource objects.
+
+2. **Extracting an attribute from all elements (`.*.attr` or `[*].attr`):**
+   - `${data.smoke_suite.*.title}` or `${data.smoke_suite[*].title}` $\rightarrow$ Extracts all titles into an array: `["TC 1", "TC 2", "TC 3"]`.
+   - `${data.smoke_suite.*.id}` $\rightarrow$ Extracts all remote IDs.
+
+3. **Formatting or joining results with standard functions:**
+   ```gherkin
+   Scenario: Consolidated suite report
+     Then verified test cases are: "${join(", ", data.smoke_suite.*.title)}"
+   ```
+
+### 3. Remote HTTP Queries (`http`)
+Enables querying HTTP/REST endpoints declaratively using either `GET` or `POST`:
+
+```yaml
+data:
+  http:
+    github_user:
+      url: "https://api.github.com/users/octocat"
+      headers:
+        User-Agent: "Testform-Runner"
+
+    auth_session:
+      url: "https://api.company.com/login"
+      method: "POST"
+      body:
+        username: "qa-automation"
+        password: "${var.qa_secret}"
+```
+
+In your Gherkin scenario:
+```gherkin
+Scenario: Inject data from remote API
+  Given remote username is "${data.github_user.login}"
+  And generated session token is "${data.auth_session.token}"
+  Then HTTP response status was ${data.auth_session.status_code}
+```
+
+**Attributes available on `data.http.<name>`:**
+- If the response is JSON, all keys are automatically merged into the root of the data object (`${data.github_user.login}`, `${data.auth_session.token}`).
+- `.status_code`: HTTP status code returned (e.g. `200`, `201`).
+- `.response_body`: Raw unparsed string body returned by the server.
+- `.response_headers`: Response HTTP headers dictionary.
+- `.url`: Target endpoint URL.
+- `.id`: Resource or response entity identifier.
 
 ---
 
 ## Interpolation Syntax
 
-Data source attributes are interpolated using `${data.<source>.<property>}`:
+Data source attributes are interpolated using `${data.<source>.<property>}` or `${data.<source>[index].<property>}`:
 
 - `${data.users.admin.username}` $\rightarrow$ Resolves to the `username` field inside `admin`.
 - `${data.login_core.address}` $\rightarrow$ Resolves to the canonical resource address.
-- Expressions are evaluated during compilation and previewed in `testform plan`.
+- `${data.smoke_suite.length}` $\rightarrow$ Count of matched scenarios when returning an array.
+- `${data.smoke_suite[0].title}` $\rightarrow$ Title of the first scenario in the array.
+- `${data.smoke_suite.*.title}` $\rightarrow$ Array containing titles of all matched scenarios (Splat expression).
+- `${data.github_user.login}` $\rightarrow$ JSON attribute extracted from HTTP response.
+- `${data.auth_session.status_code}` $\rightarrow$ HTTP status code of the POST request.
+- Expressions are evaluated reactively during compilation and previewed in `testform plan`.
 

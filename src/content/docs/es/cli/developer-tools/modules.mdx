@@ -1,15 +1,15 @@
 ---
 title: "testform modules"
-description: "Muestra todos los módulos declarados en el espacio de trabajo actual."
+description: "Muestra la lista de todos los módulos declarados y sus versiones resueltas en el espacio de trabajo."
 ---
 
 ```bash
 testform [opciones globales] modules [opciones]
 ```
 
-El comando `testform modules` inspecciona la configuración actual (`main.yml` y archivos de dominio) y muestra la lista o árbol de todos los módulos declarados en el espacio de trabajo, junto con sus fuentes (`source`), versiones resueltas y directorios asociados.
+El comando `testform modules` inspecciona la configuración actual (`main.yml` y archivos de dominio) y muestra la lista de todos los módulos de prueba declarados en el espacio de trabajo de Testform junto con sus versiones resueltas y fuentes (`source`).
 
-Sigue la misma filosofía y formato que `terraform modules`, permitiendo auditar la procedencia de los módulos de prueba reutilizables tanto locales como remotos (Git).
+Sigue la misma filosofía, estructura de salida y formato JSON que `terraform modules`.
 
 ---
 
@@ -17,7 +17,7 @@ Sigue la misma filosofía y formato que `terraform modules`, permitiendo auditar
 
 | Opción | Por Defecto | Descripción |
 | :--- | :--- | :--- |
-| `-json` | `false` | Emite la lista de módulos declarados y sus versiones resueltas en formato legible por máquina. |
+| `-json` | `false` | Emite la lista de módulos declarados y sus versiones resueltas en formato legible por máquina (JSON). |
 | `-var 'foo=bar'` | — | Define un valor para una variable de entrada en el módulo raíz. Puede usarse varias veces. |
 | `-var-file=filename` | — | Carga valores de variables desde el archivo indicado, además de los archivos por defecto `testform.vars.yml` y `*.auto.vars.yml`. |
 
@@ -26,60 +26,72 @@ Sigue la misma filosofía y formato que `terraform modules`, permitiendo auditar
 ## Ejemplos de Uso
 
 ### 1. Sin módulos declarados
+Si no hay módulos declarados en la configuración:
 
 ```bash
 $ testform modules
 No modules found in configuration.
 ```
 
-Y en formato JSON:
+Y en formato JSON (`-json`):
 
 ```bash
 $ testform modules -json
 {"format_version":"1.0","modules":null}
 ```
 
-### 2. Vista en árbol (con módulos declarados)
+### 2. Árbol de módulos declarados
+Cuando existen módulos declarados en `main.yml` (mediante el bloque `module:` o `modules:`):
+
+```yaml
+version: "1.0"
+module:
+  auth:
+    source: "./modules/auth"
+  checkout:
+    source: "./modules/checkout"
+    version: "1.2.0"
+  remote_qa:
+    source: "git::https://github.com/my-org/qa-modules.git//auth?ref=v2.0.0"
+```
+
+Al ejecutar `testform modules`:
 
 ```bash
 $ testform modules
-
-Modules declared in configuration:
+Modules declared by configuration:
 .
-├── module.auth_standard
-│   source: ./modules/auth/login.case.feature
-│   scenario: @tc-login
-│   vars: user="admin", timeout=5000
-└── module.auth_shared
-    source: git::https://github.com/mi-org/qa-modules.git//auth?ref=v1.2.0
-    version: v1.2.0
-    dir: .testform/modules/auth_shared
+├── "auth"[./modules/auth]
+├── "checkout"[./modules/checkout] 1.2.0
+└── "remote_qa"[git::https://github.com/my-org/qa-modules.git//auth?ref=v2.0.0] v2.0.0
 ```
 
 ### 3. Salida en formato JSON (`-json`)
 
-Ideal para scripts de automatización, linters o inspección en pipelines de CI/CD:
+Permite a pipelines de CI/CD, linters y herramientas de auditoría parsear programáticamente las dependencias:
 
 ```bash
 $ testform modules -json
+```
+
+```json
 {
   "format_version": "1.0",
   "modules": [
     {
-      "Key": "",
-      "Source": "",
-      "Dir": "."
+      "key": "auth",
+      "source": "./modules/auth",
+      "version": ""
     },
     {
-      "Key": "auth_standard",
-      "Source": "./modules/auth/login.case.feature",
-      "Dir": "modules/auth"
+      "key": "checkout",
+      "source": "./modules/checkout",
+      "version": "1.2.0"
     },
     {
-      "Key": "auth_shared",
-      "Source": "git::https://github.com/mi-org/qa-modules.git//auth?ref=v1.2.0",
-      "Version": "v1.2.0",
-      "Dir": ".testform/modules/auth_shared"
+      "key": "remote_qa",
+      "source": "git::https://github.com/my-org/qa-modules.git//auth?ref=v2.0.0",
+      "version": "v2.0.0"
     }
   ]
 }

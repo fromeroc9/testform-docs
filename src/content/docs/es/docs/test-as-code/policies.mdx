@@ -45,25 +45,25 @@ $ testform policy
 
 ### B. De forma Declarativa en `main.yml`
 
-Puedes registrar exclusiones directamente en la configuración:
+Puedes registrar inclusiones y exclusiones directamente en el bloque `policy`:
 
 ```yaml
 # main.yml
-policies:
+policy:
   disabled:
     - required-gherkin
     - undeclared-fields
+  enabled:
+    - identity-required
 ```
 
-O configurando el estado de cada política individualmente:
+O configurando el estado de cada política individualmente con booleanos (`true` o `false`):
 
 ```yaml
 # main.yml
-policies:
-  required-gherkin:
-    enabled: false
-  identity-unique:
-    enabled: true
+policy:
+  required-gherkin: false
+  identity-unique: true
 ```
 
 ---

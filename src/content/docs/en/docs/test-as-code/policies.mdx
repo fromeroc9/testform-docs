@@ -45,25 +45,25 @@ $ testform policy
 
 ### B. Declaratively in `main.yml`
 
-Configure exclusions directly in your project configuration:
+Configure inclusions and exclusions directly in the `policy` block:
 
 ```yaml
 # main.yml
-policies:
+policy:
   disabled:
     - required-gherkin
     - undeclared-fields
+  enabled:
+    - identity-required
 ```
 
-Or configure individual policy statuses:
+Or configure individual policy statuses directly using booleans (`true` or `false`):
 
 ```yaml
 # main.yml
-policies:
-  required-gherkin:
-    enabled: false
-  identity-unique:
-    enabled: true
+policy:
+  required-gherkin: false
+  identity-unique: true
 ```
 
 ---

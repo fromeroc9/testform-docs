@@ -37,35 +37,40 @@ locals:
   base_url: "${var.app_url}"
   api_health: "${local.base_url}/health"
 
-# 3. Global and Resource Scopes
-scopes:
+# 3. Test Resources Declaration (resource)
+# Strictly allows: testcase, testrun, testplan (and global)
+resource:
   global:
-    directory: "tests"
+    scaffold:
+      directory: "tests"
+    fields:
+      - name: priority
+        source: "tag"
+        enum: ["@low", "@medium", "@high", "@critical"]
+        default: "@medium"
   testcase:
-    directory: "tests/features"
-    pattern: "*.case.feature"
+    match: "*.case.feature"
+    scaffold:
+      directory: "tests/features"
+      filename: "{slug}.case.feature"
+    fields:
+      - name: module
+        source: "step"
+        required: true
   testrun:
-    directory: "tests/runs"
-    pattern: "*.run.feature"
+    match: "*.run.feature"
+    scaffold:
+      directory: "tests/runs"
+      filename: "{slug}.run.feature"
+    fields:
+      - name: environment
+        source: "step"
+        default: "qa"
   testplan:
-    directory: "tests/plans"
-    pattern: "*.plan.feature"
-
-# 4. Custom Metadata Fields and Validation Policies
-fields:
-  priority:
-    type: "enum"
-    source: "tag"
-    enum: ["Low", "Medium", "High", "Critical"]
-    default: "Medium"
-  component:
-    type: "string"
-    source: "tag"
-    required: false
-  automated:
-    type: "boolean"
-    source: "step"
-    default: false
+    match: "*.plan.feature"
+    scaffold:
+      directory: "tests/plans"
+      filename: "{slug}.plan.feature"
 ```
 
 ## Compilation and Configuration Processing Pipeline
@@ -74,7 +79,7 @@ Testform compiles and resolves all configuration layers via a sequential in-memo
 
 ```text
  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
- â”‚    main.yml    â”‚   â”‚ variables.yml  â”‚   â”‚   scopes.yml   â”‚
+ â”‚    main.yml    â”‚   â”‚ variables.yml  â”‚   â”‚   resource.yml   â”‚
  â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜
          â”‚                    â”‚                    â”‚
          â–¼                    â–¼                    â–¼
@@ -112,9 +117,11 @@ Defines where the state ledger (`testform.state`) resides and how distributed mu
 
 ---
 
-## 2. `scopes` Block: Gherkin Resource Governance
+## 2. `resource` Block: Gherkin Resource Governance
 
-To prevent `main.yml` from becoming bloated, Testform supports declaring the `scopes:` block directly in `main.yml` or inside an independent modular file **`scopes.yml`** (or `scopes.yaml`).
+In Testform, the managed testing artifacts (`testcase`, `testrun`, `testplan`) are **Resources**, following Terraform architecture. To prevent misconfigurations, Testform **strictly validates** that only authorized resource types are declared: `testcase`, `testrun`, `testplan` (and `global` for common inherited rules).
+
+To prevent `main.yml` from becoming bloated, Testform supports declaring the `resource:` block directly in `main.yml` or inside an independent modular file **`resource.yml`** (or `resource.yaml`).
 
 ### Data Flow: From Gherkin to `resource.ts` and the Remote Provider
 
@@ -134,27 +141,27 @@ The declared `fields` are not direct API attributes, but the **quality contract 
 ### Modular Structure in `scopes.yml`
 
 ```yaml
-# scopes.yml
-scope:
+# resource.yml
+resource:
   # 1. Workspace-wide rules inherited by ALL resources
   global:
-    convention:
+    scaffold:
       filename: "{YYYYMMDD}_{HHmmss}"
     fields:
       - name: project
-        type: keywords
+        source: step
         required: true
         default: "Hirent Talent 360"
       - name: assignees
-        type: keywords
+        source: step
         required: true
         default: "fromeroc9"
       - name: priority
-        type: tags
-        values: ["@low", "@medium", "@high"]
+        source: tag
+        enum: ["@low", "@medium", "@high"]
         default: "@medium"
       - name: Status
-        type: keywords
+        source: step
         required: true
         default: "Done"
 
@@ -164,10 +171,10 @@ scope:
     identity: "tc-*"
     fields:
       - name: module
-        type: keywords
+        source: step
         required: true
       - name: functional
-        type: keywords
+        source: step
         required: true
 
   # 3. testrun Resource (*.run.feature)
@@ -176,9 +183,9 @@ scope:
     identity: "tr-*"
     fields:
       - name: startDate
-        type: keywords
+        source: step
       - name: endDate
-        type: keywords
+        source: step
 
   # 4. testplan Resource (*.plan.feature)
   testplan:
@@ -187,21 +194,16 @@ scope:
     fields: []
 ```
 
-## 3. `fields` Block: Understanding `type` vs `source`
+## 3. `fields` Declaration: `source` and `enum`
 
-In the custom fields schema, `type` and `source` serve distinct, complementary purposes:
+In Testform, custom fields are declared within `scopes.<scope>.fields` or `scopes.global.fields`. They are configured using the following core properties:
 
-- **`type` (Data Validation Type):** Specifies the required data structure and validation constraints:
-  - `string`: Arbitrary text (e.g., `"billing"`).
-  - `enum`: Value constrained to an allowed list (e.g., `["Low", "Medium", "High", "Critical"]`).
-  - `boolean`: Boolean flag (`true` or `false`).
-  - `number`: Integer or floating-point number.
-- **`source` (Extraction Origin):** Instructs Testform where in the Gherkin file to look for this value:
-  - `tag`: Extracted from feature or scenario tags (e.g., `@priority-high` -> field `priority` gets `"High"`).
-  - `step`: Inferred based on step presence (e.g., matching a step mentioning `"automated"` -> field `automated: true`).
-  - `header`: Extracted from the Feature metadata header lines.
-
-Both parameters are required: `source` defines **where to read** the value, and `type` defines **how to validate** it.
+- **`source` (Extraction Origin):** Instructs Testform where to read the field value from:
+  - `tag`: Extracted from scenario or feature tags (e.g., `@high` -> field `priority` gets `"@high"`).
+  - `step`: Defined via a Gherkin step using the `* field <name> = <value>` directive (e.g., `* field module = auth`).
+- **`enum` (Allowed Values):** Closed list of valid values for the field (e.g., `["@low", "@medium", "@high"]`).
+- **`required` (Mandatory):** Boolean flag requiring the scenario to provide a value (or have a default). If missing, `testform validate` raises a policy violation.
+- **`default` (Default Value):** Value automatically assigned when not explicitly provided in the scenario.
 
 ## 4. Provider Configuration (`provider`)
 
@@ -209,7 +211,7 @@ Testform supports remote issue trackers (such as GitHub and GitLab) as well as a
 
 ### Local Provider (`provider: local`)
 
-The local provider allows managing testcases, runs, and plans without relying on any external cloud service or network credentials. All simulated issues, comments, and project fields are saved locally into `testform.data`.
+The local provider allows managing testcases, runs, and plans without relying on any external cloud service or network credentials. All simulated issues, comments, and project fields are saved locally into `.testform/cache/data.json`.
 
 This is ideal for offline development, air-gapped environments, or solo verification:
 

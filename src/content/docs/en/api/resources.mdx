@@ -1,23 +1,24 @@
 ---
 title: "Resources: registerResource"
-description: "Programmatic API reference for defining custom test resource mapping templates in Testform."
+description: "Programmatic API reference for defining and overriding test resource mapping templates in Testform."
 ---
 
 The resources module defines how Gherkin scenarios (`Scenario:`) are mapped into structured attributes recognized by test management systems (Jira, Zephyr, Azure DevOps, TestRail, or proprietary APIs).
 
 ---
 
- Function Signature
+## Function Signatures
 
 ```typescript
 import { registerResource, ResourceTemplate } from '@fromeroc9/testform@beta';
 
+// Register a new resource type or override an existing template
 function registerResource(template: ResourceTemplate): void;
 ```
 
 ---
 
- Types & Interfaces
+## Types & Interfaces
 
 ### `ResourceTemplate`
 
@@ -25,7 +26,7 @@ Defines field mappings and execution comment generators for a resource type:
 
 ```typescript
 export interface ResourceTemplate {
-  /** Unique resource type name (e.g., 'jira_testcase', 'azure_testrun') */
+  /** Unique resource type name (e.g., 'jira_testcase', 'azure_testrun', 'github_testcase') */
   type: string;
 
   /** List of fields extracted from the Gherkin scenario */
@@ -63,7 +64,9 @@ export interface ResourceField {
 
 ---
 
- Implementation Example
+## Usage Patterns
+
+### 1. Registering a New Resource Type (`registerResource`)
 
 Create `.testform/resources/azure-devops.js`:
 
@@ -111,14 +114,15 @@ module.exports = {
 
 ---
 
- Runtime Registration (`resource`)
+## Runtime Inspection (`resource`)
 
-The `resource` singleton enables runtime inspection and template registration:
+The `resource` singleton enables querying registered templates:
 
 ```typescript
 import { resource } from '@fromeroc9/testform@beta';
 
-// Register programmatically in Node.js scripts
-resource.registry(myCustomTemplate, 'user');
+// Get list of all registered resource type names
+const types = resource.getRegisteredTypes();
+// ['github_testcase', 'github_testrun', 'testcase', 'azure_testcase', ...]
 ```
 

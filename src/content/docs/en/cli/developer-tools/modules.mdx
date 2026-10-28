@@ -1,15 +1,15 @@
 ---
 title: "testform modules"
-description: "Shows all declared modules in a working directory."
+description: "Prints out a list of all declared modules and their resolved versions in a Testform working directory."
 ---
 
 ```bash
 testform [global options] modules [options]
 ```
 
-The `testform modules` command prints out a list or tree of all declared Testform modules and their resolved versions in the current working directory.
+The `testform modules` command inspects the referenced configuration (`main.yml` and domain configuration files) and prints a list of all testing modules declared in the workspace along with their sources and resolved versions.
 
-It adheres to the same philosophy and schema as `terraform modules`, allowing you to audit the origin, versions, and installation paths of reusable local and remote (Git) test modules.
+It matches the exact format and JSON schema of `terraform modules`.
 
 ---
 
@@ -17,67 +17,81 @@ It adheres to the same philosophy and schema as `terraform modules`, allowing yo
 
 | Option | Default | Description |
 | :--- | :--- | :--- |
-| `-json` | `false` | If specified, output declared Testform modules and their resolved versions in a machine-readable format. |
-| `-var 'foo=bar'` | — | Set a value for one of the input variables in the root module of the configuration. Use this option more than once to set more than one variable. |
-| `-var-file=filename` | — | Load variable values from the given file, in addition to the default files `testform.vars.yml` and `*.auto.vars.yml`. |
+| `-json` | `false` | Outputs declared modules and their resolved versions in machine-readable JSON format. |
+| `-var 'foo=bar'` | — | Sets an input variable value in the root module. Can be specified multiple times. |
+| `-var-file=filename` | — | Loads variable values from a file (`testform.vars.yml` or `*.auto.vars.yml`). |
 
 ---
 
 ## Usage Examples
 
-### 1. No Modules Declared
+### 1. No modules declared
+When no modules are present in the configuration:
 
 ```bash
 $ testform modules
 No modules found in configuration.
 ```
 
-And with JSON output:
+And in JSON mode (`-json`):
 
 ```bash
 $ testform modules -json
 {"format_version":"1.0","modules":null}
 ```
 
-### 2. Tree View (with declared modules)
+### 2. Modules tree output
+When modules are declared in `main.yml` (using `module:` or `modules:` blocks):
+
+```yaml
+version: "1.0"
+module:
+  auth:
+    source: "./modules/auth"
+  checkout:
+    source: "./modules/checkout"
+    version: "1.2.0"
+  remote_qa:
+    source: "git::https://github.com/my-org/qa-modules.git//auth?ref=v2.0.0"
+```
+
+Running `testform modules`:
 
 ```bash
 $ testform modules
-
-Modules declared in configuration:
+Modules declared by configuration:
 .
-├── module.auth_standard
-│   source: ./modules/auth/login.case.feature
-│   scenario: @tc-login
-│   vars: user="admin", timeout=5000
-└── module.auth_shared
-    source: git::https://github.com/my-org/qa-modules.git//auth?ref=v1.2.0
-    version: v1.2.0
-    dir: .testform/modules/auth_shared
+├── "auth"[./modules/auth]
+├── "checkout"[./modules/checkout] 1.2.0
+└── "remote_qa"[git::https://github.com/my-org/qa-modules.git//auth?ref=v2.0.0] v2.0.0
 ```
 
-### 3. Machine-Readable JSON Output (`-json`)
+### 3. JSON Output (`-json`)
+
+Enables CI/CD pipelines, security scanners, and auditing tools to programmatically inspect declared modules:
 
 ```bash
 $ testform modules -json
+```
+
+```json
 {
   "format_version": "1.0",
   "modules": [
     {
-      "Key": "",
-      "Source": "",
-      "Dir": "."
+      "key": "auth",
+      "source": "./modules/auth",
+      "version": ""
     },
     {
-      "Key": "auth_standard",
-      "Source": "./modules/auth/login.case.feature",
-      "Dir": "modules/auth"
+      "key": "checkout",
+      "source": "./modules/checkout",
+      "version": "1.2.0"
     },
     {
-      "Key": "auth_shared",
-      "Source": "git::https://github.com/my-org/qa-modules.git//auth?ref=v1.2.0",
-      "Version": "v1.2.0",
-      "Dir": ".testform/modules/auth_shared"
+      "key": "remote_qa",
+      "source": "git::https://github.com/my-org/qa-modules.git//auth?ref=v2.0.0",
+      "version": "v2.0.0"
     }
   ]
 }
@@ -88,4 +102,4 @@ $ testform modules -json
 ## Exit Codes
 
 - `0`: Command executed successfully.
-- `1`: Configuration read error or malformed configuration file.
+- `1`: Configuration reading or syntax error.

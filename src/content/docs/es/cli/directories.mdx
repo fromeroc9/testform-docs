@@ -19,6 +19,9 @@ mi-proyecto/
 └── .testform/
     ├── backend.json               # Configuración del backend activo inicializado (testform init)
     ├── environment                # Nombre del workspace actualmente seleccionado
+    ├── cache/                     # Archivos autogenerados y temporales del motor
+    │   ├── lock.json              # Lock file de dependencias y checksums de providers
+    │   └── data.json              # Base de datos simulada del proveedor local
     ├── modules/                   # Módulos remotos descargados desde repositorios Git
     │   └── <nombre_modulo>/
     │       ├── main.yml
@@ -58,6 +61,13 @@ mi-proyecto/
 ### 5. `resources/`
 - **Cuándo se utiliza:** Creado para extender conectores o mapeos de recursos hacia sistemas externos (Jira, Azure DevOps, TestRail, APIs internas).
 - **Propósito:** Contiene definiciones de recursos (`registerResource()`) que Testform compila y carga dinámicamente en tiempo de ejecución.
+
+### 6. `cache/`
+- **Cuándo se genera:** De manera automática en tiempo de inicialización (`testform init`) o ejecución con el proveedor local.
+- **Propósito:** Almacena todos los artefactos autogenerados y temporales del motor de Testform:
+  - `lock.json`: Archivo de bloqueo de dependencias de proveedores con sus checksums criptográficos calculados (reemplazando cualquier archivo en la raíz del proyecto).
+  - `data.json`: Persistencia de incidencias, comentarios y campos simulados del proveedor local (`provider: local`).
+- **Aislamiento de seguridad:** Al concentrar los archivos generados dentro de `cache/`, se evita cualquier riesgo de sobreescribir o borrar accidentalmente el código personalizado que el usuario escribe en `.testform/policies/`, `.testform/resources/` o `.testform/reports/`.
 
 ### 6. `reports/`
 - **Cuándo se utiliza:** Creado para extender el motor analítico de `testform report`.
@@ -104,15 +114,12 @@ A nivel de máquina de desarrollo o agente de ejecución de CI/CD, Testform mant
 El directorio `.testform/` está diseñado para ser transitorio y específico de cada máquina o entorno de ejecución. Debe agregarse al archivo `.gitignore` del proyecto:
 
 ```text
-# Directorio de trabajo local de Testform
+# Directorio de trabajo local y cachés de Testform (incluye .testform/cache/)
 .testform/
 
 # Archivos de plan binarios y copias de seguridad de estado
 *.tfplan
 *.backup
-
-# Base de datos simulada del proveedor local (si se usa provider: local)
-testform.data
 
 # Archivo de estado si se utiliza un backend remoto (S3, GCS, Azure Blob)
 # Nota: Si se utiliza backend local y se requiere control de versiones en equipo,

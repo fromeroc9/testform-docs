@@ -1,21 +1,33 @@
 ---
 title: "testform providers"
-description: "Prints a tree of modules annotated with their provider requirements and schemas."
+description: "Prints provider requirements tree, manages lock files (.testform/cache/lock.json), creates plugin mirrors, and outputs resource schemas."
 ---
 
 ```bash
 testform [global options] providers [subcommand] [options] [DIR]
 ```
 
-The `testform providers` command inspects the referenced configuration and prints a tree of all provider requirements across the root module and any child modules.
+The `testform providers` command inspects the referenced configuration and outputs a tree of all provider requirements across the root module and any child modules. It also provides subcommands to lock dependency checksums (`lock`), mirror plugins for air-gapped environments (`mirror`), and export machine-readable JSON schemas (`schema`).
 
-This provides full visibility into which provider plugins are required, their resolved versions, and why they were selected.
+If executed in a directory without configuration files (`main.yml`, etc.), it outputs a diagnostic message matching Terraform parity and exits with code 1:
+
+```text
+╷
+│ Error: No configuration files
+│
+│ The directory C:\Users\flavi\Desktop\auth contains no Testform configuration files.
+╵
+```
 
 ---
 
 ## Subcommands
 
 ### 1. Provider Requirements Tree (default)
+
+```bash
+testform providers [DIR]
+```
 
 Prints the tree of provider plugins required by the active configuration:
 
@@ -24,13 +36,62 @@ $ testform providers
 
 Providers required by configuration:
 .
-└── provider[registry.testform.com/fromeroc9/github] 1.0.0
+└── provider[registry.testform.io/fromeroc9/local] 1.0.0
 ```
 
-### 2. `testform providers schema`
+### 2. `testform providers lock`
 
-Inspects the resource schema declarations (attributes, types, and constraints) exposed by the active provider:
+```bash
+testform providers lock [options] [providers...]
+```
 
+Normally the dependency lock file (`.testform/cache/lock.json`) is updated automatically by `testform init`. The `lock` subcommand allows explicitly updating and verifying cryptographic checksums across target platforms against origin registries, ensuring reproducible and immutable CI/CD builds:
+
+```bash
+$ testform providers lock
+
+Success! Dependencies for provider "fromeroc9/github" verified and written to .testform/cache/lock.json.
+```
+
+#### `lock` Options:
+
+| Option | Description |
+| :--- | :--- |
+| `-platform=os_arch` | Request package checksums for a specific platform (e.g. `linux_amd64`, `windows_amd64`, `darwin_arm64`). Can be specified multiple times. |
+| `-fs-mirror=dir` | Consult a filesystem mirror directory instead of the origin registry. |
+| `-net-mirror=url` | Consult a network mirror base URL instead of the origin registry. |
+| `-enable-plugin-cache` | Enable global plugin cache to speed up locking. |
+| `-test-directory=path` | Set the Testform test directory (defaults to `tests`). |
+| `-var 'foo=bar'` | Set an input variable in the root module. |
+| `-var-file=filename` | Load variable values from a file (`testform.vars.yml` or `*.auto.vars.yml`). |
+
+### 3. `testform providers mirror`
+
+```bash
+testform providers mirror [options] <target-dir>
+```
+
+Populates a local directory with copies of provider plugins needed for the configuration. This directory can be used directly as a filesystem mirror or as the basis for a static HTTP server (network mirror), allowing Testform execution in isolated or **air-gapped** environments without internet access:
+
+```bash
+$ testform providers mirror ./vendor-plugins
+- Mirroring provider "fromeroc9/github" to ./vendor-plugins...
+
+Success! Provider plugins mirrored to ./vendor-plugins.
+```
+
+> [!NOTE]
+> The `<target-dir>` argument is mandatory. If omitted, Testform raises an error indicating `Missing target directory argument`.
+
+### 4. `testform providers schema`
+
+```bash
+testform providers schema [options]
+```
+
+Inspects the resource schema declarations (attributes, data types, and required constraints for `testcase`, `testrun`, and `testplan`) exposed by the active provider.
+
+#### Human-Readable Mode:
 ```bash
 $ testform providers schema
 
@@ -50,30 +111,32 @@ Resource: github_testplan
   - runs: list of testrun
 ```
 
-### 3. `testform providers lock`
-
-Verifies the integrity and version constraints of installed provider dependencies:
+#### JSON Mode (`-json`):
+Allows IDE extensions (VS Code, IntelliJ), linters, and external tooling to discover resource definitions and attributes:
 
 ```bash
-$ testform providers lock
-
-Success! Dependencies for provider "fromeroc9/github" verified.
+$ testform providers schema -json
 ```
 
-### 4. `testform providers mirror [targetDir]`
-
-Mirrors the required provider plugins into a target local directory (defaults to `./plugins`), enabling offline or air-gapped CI/CD execution:
-
-```bash
-$ testform providers mirror ./vendor-plugins
-- Mirroring provider "fromeroc9/github" to ./vendor-plugins...
-
-Success! Provider plugins mirrored to ./vendor-plugins.
+```json
+{
+  "format_version": "1.0",
+  "provider_schemas": {
+    "registry.testform.io/fromeroc9/github": {
+      "provider": { ... },
+      "resource_schemas": {
+        "github_testcase": { ... },
+        "github_testrun": { ... },
+        "github_testplan": { ... }
+      }
+    }
+  }
+}
 ```
 
 ---
 
-## Command Options
+## General Command Options
 
 | Option | Default | Description |
 | :--- | :--- | :--- |
@@ -86,4 +149,4 @@ Success! Provider plugins mirrored to ./vendor-plugins.
 ## Exit Codes
 
 - `0`: Subcommand completed successfully.
-- `1`: Provider resolution error or invalid configuration.
+- `1`: Provider resolution error, missing configuration files, or invalid arguments.

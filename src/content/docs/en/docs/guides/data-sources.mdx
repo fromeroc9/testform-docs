@@ -11,13 +11,15 @@ Data sources allow Testform to query read-only information from external fixture
 
 ```yaml
 data:
-  # 1. External fixture file (JSON or YAML)
-  qa_users:
-    file: "fixtures/users.json"
+  # 1. Compact inline syntax with auto-detection (no wasted lines)
+  qa_users: "fixtures/users.json"
+  existing_login: "auth/login.case.feature.@tc-1"
 
-  # 2. Existing resource address query
-  existing_login:
-    address: "auth/login.case.feature.@tc-1"
+  # 2. Or explicit typed blocks matching Terraform style
+  local_file:
+    qa_catalog: "fixtures/catalog.yml"
+  testcase:
+    existing_checkout: "checkout/pay.case.feature.@tc-pay"
 ```
 
 ---

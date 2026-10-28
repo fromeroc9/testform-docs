@@ -1,4 +1,4 @@
----
+﻿---
 title: "Especificación de main.yml"
 ---
 
@@ -36,35 +36,40 @@ locals:
   base_url: "${var.app_url}"
   api_health: "${local.base_url}/health"
 
-# 3. Alcance Global y por Recurso (scopes)
-scopes:
+# 3. Declaración de Recursos de Prueba (resource)
+# Permite estrictamente: testcase, testrun, testplan (y global)
+resource:
   global:
-    directory: "tests"
+    scaffold:
+      directory: "tests"
+    fields:
+      - name: priority
+        source: "tag"
+        enum: ["@low", "@medium", "@high", "@critical"]
+        default: "@medium"
   testcase:
-    directory: "tests/features"
-    pattern: "*.case.feature"
+    match: "*.case.feature"
+    scaffold:
+      directory: "tests/features"
+      filename: "{slug}.case.feature"
+    fields:
+      - name: module
+        source: "step"
+        required: true
   testrun:
-    directory: "tests/runs"
-    pattern: "*.run.feature"
+    match: "*.run.feature"
+    scaffold:
+      directory: "tests/runs"
+      filename: "{slug}.run.feature"
+    fields:
+      - name: environment
+        source: "step"
+        default: "qa"
   testplan:
-    directory: "tests/plans"
-    pattern: "*.plan.feature"
-
-# 4. Esquema de Campos Personalizados y Politicas
-fields:
-  priority:
-    type: "enum"
-    source: "tag"
-    enum: ["Low", "Medium", "High", "Critical"]
-    default: "Medium"
-  component:
-    type: "string"
-    source: "tag"
-    required: false
-  automated:
-    type: "boolean"
-    source: "step"
-    default: false
+    match: "*.plan.feature"
+    scaffold:
+      directory: "tests/plans"
+      filename: "{slug}.plan.feature"
 ```
 
 ## Pipeline de Compilación y Procesamiento de Configuración
@@ -111,18 +116,20 @@ Determina donde se almacena el ledger de estado (`testform.state`) y como se ges
 
 ---
 
-## 2. Bloque `scopes`: Gobierno de Recursos Gherkin
+## 2. Bloque `resource`: Gobierno de Recursos Gherkin
 
-Para evitar que `main.yml` sea excesivamente largo, Testform soporta definir el bloque `scopes:` directamente en `main.yml` o en un archivo modular independiente **`scopes.yml`** (o `scopes.yaml`).
+En Testform, los componentes que se gestionan (`testcase`, `testrun`, `testplan`) son **Recursos**, siguiendo el mismo principio de Terraform. Para evitar que alguien configure tipos no permitidos, Testform **valida estrictamente** que solo se declaren los recursos oficiales: `testcase`, `testrun`, `testplan` (y `global` para reglas compartidas).
+
+Para evitar que `main.yml` sea excesivamente largo, Testform soporta definir el bloque `resource:` directamente en `main.yml` o en un archivo modular independiente **`resource.yml`** (o `resource.yaml`).
 
 ### Flujo de Datos: De Gherkin a `resource.ts` y al Provider
 
 Los `fields` no son campos directos de la API remota, sino el **contrato de calidad para el autor de Gherkin**. El componente `resource.ts` es el adaptador que extrae esos datos y los entrega al Provider:
 
 ```text
-  Gherkin (.feature)            scopes.yml                     resource.ts                   Provider (GitHub/Jira)
+  Gherkin (.feature)            resource.yml                   resource.ts                   Provider (GitHub/Jira)
  ┌──────────────────────┐      ┌────────────────────────┐     ┌───────────────────────┐     ┌──────────────────────┐
- │ @high @tc-login-001  │      │ scope:                 │     │ resource.registry({   │     │ GitHub Project V2    │
+ │ @high @tc-login-001  │      │ resource:              │     │ resource.registry({   │     │ GitHub Project V2    │
  │ Scenario: Login      │ ──►  │   global:              │ ──► │   fields: [           │ ──► │   Status: "Done"     │
  │   * field module =   │      │     fields: [module,   │     │     custom_fields:    │     │   Project: "HT 360"  │
  │     "auth"           │      │       priority, Status]│     │       s.custom.fields │     │   Module: "auth"     │
@@ -130,30 +137,30 @@ Los `fields` no son campos directos de la API remota, sino el **contrato de cali
                                                                                             └──────────────────────┘
 ```
 
-### Estructura en `scopes.yml`
+### Estructura en `resource.yml`
 
 ```yaml
-# scopes.yml
-scope:
+# resource.yml
+resource:
   # 1. Reglas comunes heredadas por TODOS los recursos
   global:
-    convention:
+    scaffold:
       filename: "{YYYYMMDD}_{HHmmss}"
     fields:
       - name: project
-        type: keywords
+        source: step
         required: true
         default: "Hirent Talent 360"
       - name: assignees
-        type: keywords
+        source: step
         required: true
         default: "fromeroc9"
       - name: priority
-        type: tags
-        values: ["@low", "@medium", "@high"]
+        source: tag
+        enum: ["@low", "@medium", "@high"]
         default: "@medium"
       - name: Status
-        type: keywords
+        source: step
         required: true
         default: "Done"
 
@@ -163,10 +170,10 @@ scope:
     identity: "tc-*"
     fields:
       - name: module
-        type: keywords
+        source: step
         required: true
       - name: functional
-        type: keywords
+        source: step
         required: true
 
   # 3. Recurso testrun (*.run.feature)
@@ -175,9 +182,9 @@ scope:
     identity: "tr-*"
     fields:
       - name: startDate
-        type: keywords
+        source: step
       - name: endDate
-        type: keywords
+        source: step
 
   # 4. Recurso testplan (*.plan.feature)
   testplan:
@@ -186,21 +193,16 @@ scope:
     fields: []
 ```
 
-## 3. Bloque `fields`: Entendiendo `type` vs `source`
+## 3. Declaración de `fields`: `source` y `enum`
 
-En el esquema de campos personalizados, es fundamental distinguir la diferencia entre `type` y `source`:
+En Testform, los campos personalizados se declaran dentro de `scopes.<scope>.fields` o `scopes.global.fields`. Se configuran utilizando las siguientes propiedades esenciales:
 
-- **`type` (Tipo de Dato):** Define la regla de validacion y el tipo de dato que el valor debe contener:
-  - `string`: Texto libre (ejemplo: `"billing"`).
-  - `enum`: Valor restringido a una lista cerrada (ejemplo: `["Low", "Medium", "High", "Critical"]`).
-  - `boolean`: Valor booleano verdadero o falso (`true`, `false`).
-  - `number`: Valor numerico entero o flotante.
-- **`source` (Origen de Extraccion):** Define de que lugar del archivo Gherkin debe Testform extraer el valor:
-  - `tag`: El valor se extrae de un tag en la cabecera (ejemplo: `@priority-high` -> campo `priority` con valor `"High"`).
-  - `step`: El valor se detecta mediante la presencia de un paso en el escenario (ejemplo: un paso que contiene `"automatizado"` -> campo `automated: true`).
-  - `header`: El valor se extrae de las propiedades del encabezado del Feature.
-
-Ambos son necesarios: `source` indica **de donde** leer la informacion, y `type` indica **como validarla**.
+- **`source` (Origen de Extracción):** Especifica de dónde extrae Testform el valor del campo:
+  - `tag`: El valor se extrae de las etiquetas del escenario o feature (ejemplo: `@high` -> campo `priority` con valor `"@high"`).
+  - `step`: El valor se define mediante un paso Gherkin con la directiva `* field <nombre> = <valor>` (ejemplo: `* field module = auth`).
+- **`enum` (Valores Permitidos):** Lista cerrada de valores permitidos para el campo (ejemplo: `["@low", "@medium", "@high"]`).
+- **`required` (Obligatoriedad):** Booleano que exige que el escenario declare el campo (o tenga un valor por defecto). Si falta, `testform validate` reporta una infracción.
+- **`default` (Valor Predeterminado):** Valor que se asigna automáticamente cuando el escenario no lo declara explícitamente.
 
 ## 4. Configuracion de Proveedores (`provider`)
 
@@ -208,7 +210,7 @@ Testform soporta proveedores remotos (como GitHub y GitLab) asi como un proveedo
 
 ### Proveedor Local (`provider: local`)
 
-El proveedor local permite gestionar casos, ejecuciones y planes sin depender de ningun servicio en la nube ni requerir credenciales de red. Todas las incidencias, comentarios y campos simulados se registran en el archivo local `testform.data`.
+El proveedor local permite gestionar casos, ejecuciones y planes sin depender de ningun servicio en la nube ni requerir credenciales de red. Todas las incidencias, comentarios y campos simulados se registran en el archivo local `.testform/cache/data.json`.
 
 Es ideal para desarrollo individual, pipelines aislados sin acceso a internet o pruebas conceptuales:
 

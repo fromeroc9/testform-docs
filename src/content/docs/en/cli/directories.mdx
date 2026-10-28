@@ -19,6 +19,9 @@ my-project/
 └── .testform/
     ├── backend.json               # Initialized active backend configuration (testform init)
     ├── environment                # Name of the currently selected workspace
+    ├── cache/                     # Engine auto-generated and temporary files
+    │   ├── lock.json              # Provider dependency lock and cryptographic checksums
+    │   └── data.json              # Local mock database for provider: local
     ├── modules/                   # Remote modules downloaded from Git repositories
     │   └── <module_name>/
     │       ├── main.yml
@@ -58,6 +61,13 @@ my-project/
 ### 5. `resources/`
 - **When it is used:** Created to define resource connectors or mappings to external systems (Jira, Azure DevOps, TestRail, internal APIs).
 - **Purpose:** Contains resource definitions (`registerResource()`) that Testform dynamically compiles and loads at runtime without pre-compilation steps.
+
+### 6. `cache/`
+- **When it is generated:** Automatically during `testform init` or when running with the local provider.
+- **Purpose:** Segregates all engine-generated and temporary files:
+  - `lock.json`: Provider dependency lock file holding calculated cryptographic checksums (replaces lock files in the project root).
+  - `data.json`: Local simulated database for `provider: local` storing issues, comments, and project fields.
+- **Safety guarantee:** Grouping generated files into `cache/` ensures user-authored code in `.testform/policies/`, `.testform/resources/`, and `.testform/reports/` is never accidentally overwritten or lost.
 
 ### 6. `reports/`
 - **When it is used:** Created to extend the analytical reporting capabilities of `testform report`.
@@ -104,15 +114,12 @@ At the developer machine or CI/CD worker level, Testform maintains a global conf
 The `.testform/` directory is designed to be transient and specific to each machine or execution environment. It should always be included in your project's `.gitignore`:
 
 ```text
-# Testform local working directory
+# Testform local working directory and cache (includes .testform/cache/)
 .testform/
 
 # Binary plan files and state backups
 *.tfplan
 *.backup
-
-# Local provider simulated database (when using provider: local)
-testform.data
 
 # State file if using a remote backend (S3, GCS, Azure Blob)
 # Note: If using local backend and versioning state in Git,

@@ -21,22 +21,22 @@ Al igual que las variables y outputs, las fuentes de datos pueden definirse en:
 Por defecto, Testform adopta un diseño **scopeless** (sin forzar anidación en `testcase:`, `testrun:`, etc.) porque la dirección de un recurso (`address`) ya identifica unívocamente el tipo y la ruta del archivo.
 
 ```yaml
-# data.yml
+# data.yml o main.yml
 data:
-  # Modo 1: Archivo de fixture JSON / YAML
-  usuarios:
-    file: "fixtures/users.json"
+  # Declaración compacta directa (auto-detección sin líneas gastadas)
+  usuarios: "fixtures/users.json"
+  login_core: "auth/login.case.feature.@tc-1"
+  smoke_suite: "suites/smoke.run.feature.@tr-1"
 
-  # Modo 2: Referencia a recurso existente por dirección
-  login_core:
-    address: "auth/login.case.feature.@tc-1"
-
-  smoke_suite:
-    address: "suites/smoke.run.feature.@tr-1"
+  # O mediante bloques tipados explícitos:
+  local_file:
+    catalogo: "fixtures/catalogo.yml"
+  testcase:
+    login_admin: "auth/admin.case.feature.@tc-admin"
 ```
 
 > [!NOTE]
-> Para compatibilidad con estructuras organizadas por scope, también puedes agrupar bajo claves como `testcase:` o `testrun:`. Testform registrará tanto la clave anidada (`data.testcase.login_core`) como el alias directo (`data.login_core`).
+> Gracias a la detección de extensiones (`.json`, `.yml`, `.yaml`, `.csv`) y patrones de recursos (`.case.feature`, `.run.feature`, `@tags`), no requieres gastar líneas adicionales en propiedades intermedias como `filename:` o `address:` a menos que desees personalizar opciones avanzadas.
 
 ---
 
@@ -63,8 +63,7 @@ Carga un archivo JSON o YAML estructurado para inyectar credenciales, parámetro
 **`main.yml`**:
 ```yaml
 data:
-  usuarios_saucedemo:
-    file: "fixtures/users.json"
+  usuarios_saucedemo: "fixtures/users.json"
 ```
 
 Acceso:

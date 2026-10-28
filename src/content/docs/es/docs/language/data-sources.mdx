@@ -5,32 +5,77 @@ title: "Data Sources"
 Las fuentes de datos (**Data Sources**) en Testform permiten que los recursos y configuraciones hagan referencia a información de solo lectura externa o previamente gestionada, de forma idéntica a cómo funciona el bloque `data` en **Terraform**.
 
 Con `data:`, puedes:
-1. **Cargar datasets y fixtures externos (`file`)**: Inyectar datos estructurados desde archivos JSON o YAML (`fixtures/users.json`, `data/pagos.yml`) hacia tus pasos Gherkin, variables locales y outputs.
-2. **Referenciar recursos existentes (`address`)**: Consultar IDs remotos, títulos, etiquetas o campos personalizados de otros casos de prueba sin duplicar definiciones.
+1. **Cargar datasets y fixtures locales (`local_file`)**: Inyectar datos estructurados desde archivos JSON, YAML o CSV (`fixtures/users.json`, `data/pagos.yml`) hacia tus pasos Gherkin, variables locales y outputs.
+2. **Referenciar recursos de prueba (`testcase`, `testrun`, `testplan`)**: Consultar IDs remotos, títulos, etiquetas o campos de otros recursos. Si un tag o dirección encuentra múltiples escenarios, devuelve automáticamente un **arreglo**.
+3. **Consultar APIs y servicios externos (`http`)**: Realizar peticiones HTTP (`GET` y `POST`) a endpoints REST remotos, inyectando respuestas JSON directamente en tus pruebas con soporte de headers y body.
 
 ---
 
-## Declaración en `data.yml` o `main.yml`
+## Declaración Compacta en Línea Única (Zero Boilerplate)
 
-Las fuentes de datos se definen bajo el bloque `data:` en `data.yml`, `main.yml` o archivos modulares por dominio:
+Para evitar líneas innecesarias (`filename:`, `address:` o `url:`), Testform soporta la declaración directa y compacta con asignación escalar. El motor auto-detecta inteligentemente el tipo de fuente:
 
 ```yaml
-# data.yml
+# main.yml o data.yml
 data:
-  # Modo 1: Carga de fixture externo
-  usuarios:
-    file: "fixtures/users.json"
+  # Auto-detecta fixture local por extensión (.json, .yml, .yaml, .csv)
+  usuarios: "fixtures/users.json"
+  catalogo: "fixtures/productos.yml"
 
-  # Modo 2: Referencia a recurso existente por dirección
-  login_core:
-    address: "auth/login.case.feature.@tc-1"
+  # Auto-detecta recurso por dirección de feature o identidad (@tc, @tr, etc.)
+  login_core: "auth/login.case.feature.@tc-1"
+  smoke_suite: "suites/smoke.run.feature.@tr-smoke"
+
+  # Auto-detecta consulta HTTP por protocolo (http:// o https://)
+  perfil_remoto: "https://api.github.com/users/octocat"
+```
+
+---
+
+## Declaración Tipada Explícita
+
+Si prefieres la convención explícita tipo proveedor de Terraform (`data "local_file" "usuarios"`, `data "http" "sesion"`):
+
+```yaml
+data:
+  local_file:
+    usuarios: "fixtures/users.json"
+    catalogo: "fixtures/productos.yml"
+
+  testcase:
+    login_core: "auth/login.case.feature.@tc-1"
+
+  testrun:
+    smoke_suite: "suites/smoke.run.feature.@tr-smoke"
+
+  http:
+    perfil_remoto: "https://api.github.com/users/octocat"
+```
+
+También es compatible la forma de diccionario cuando se requiere configurar opciones adicionales (como método, headers o body):
+
+```yaml
+data:
+  http:
+    token_auth:
+      url: "https://auth.empresa.com/oauth/token"
+      method: "POST"
+      request_headers:
+        Content-Type: "application/json"
+      request_body:
+        client_id: "qa-runner"
+        grant_type: "client_credentials"
+
+  local_file:
+    usuarios:
+      filename: "fixtures/users.json"
 ```
 
 ---
 
 ## Modos de Data Sources
 
-### 1. Modo Archivo (`file`)
+### 1. Fixtures Locales (`local_file`)
 Carga un archivo JSON o YAML estructurado para inyectar credenciales o catálogos:
 
 **`fixtures/users.json`**:
@@ -51,22 +96,83 @@ Scenario: Ingreso como administrador
   Then el rol activo es "${data.usuarios.admin.role}"
 ```
 
-### 2. Modo Dirección (`address`)
-Permite consultar metadatos de un recurso existente sin ejecutarlo nuevamente:
+### 2. Recursos de Prueba (`testcase`, `testrun`, `testplan`)
+Permite consultar metadatos de los tres recursos canónicos de Testform sin ejecutarlos nuevamente.
+
+- **Coincidencia Única:** Si la dirección o tag apunta a un único escenario, devuelve el objeto del recurso directamente (`${data.login_core.title}`).
+- **Coincidencia Múltiple (Arreglo):** Si el tag o archivo coincide con múltiples escenarios (por ejemplo, `smoke_suite: "suites/smoke.run.feature.@tr-smoke"` o `@smoke`), devuelve automáticamente un **arreglo** de escenarios:
 
 ```gherkin
-Scenario: Validar dependencia de login
-  Given el prerrequisito del test "${data.login_core.title}" fue completado
-  Then continuo con el flujo de compra
+Scenario: Notificar resultados de suite
+  Given se evaluaron ${data.smoke_suite.length} casos de la suite de humo
+  Then el primer caso verificado fue "${data.smoke_suite[0].title}"
+  And el segundo caso verificado fue "${data.smoke_suite[1].title}"
 ```
+
+#### Acceder a Todos los Elementos (Terraform Splat Expressions)
+
+Para consultar o extraer atributos de **todos** los elementos devueltos por un data source sin iterar uno por uno con índices fijos, Testform soporta el **operador Splat (`*` o `[*]`)** idéntico a Terraform:
+
+1. **Obtener la lista completa de todos los objetos:**
+   - `${data.smoke_suite}` $\rightarrow$ Retorna el arreglo completo con todos los objetos de prueba.
+
+2. **Extraer un atributo específico de todos los elementos (`.*.campo` o `[*].campo`):**
+   - `${data.smoke_suite.*.title}` o `${data.smoke_suite[*].title}` $\rightarrow$ Extrae todos los títulos como arreglo: `["TC 1", "TC 2", "TC 3"]`.
+   - `${data.smoke_suite.*.id}` $\rightarrow$ Extrae todos los IDs remotos.
+
+3. **Concatenar o formatear todos los resultados con funciones:**
+   ```gherkin
+   Scenario: Resumen consolidado de la suite
+     Then los casos ejecutados fueron: "${join(", ", data.smoke_suite.*.title)}"
+   ```
+
+### 3. Peticiones HTTP Remotas (`http`)
+Permite consultar endpoints HTTP/REST de manera declarativa tanto con peticiones `GET` como `POST`:
+
+```yaml
+data:
+  http:
+    github_user:
+      url: "https://api.github.com/users/octocat"
+      headers:
+        User-Agent: "Testform-Runner"
+
+    auth_session:
+      url: "https://api.empresa.com/login"
+      method: "POST"
+      body:
+        username: "qa-automation"
+        password: "${var.qa_secret}"
+```
+
+En tu escenario Gherkin:
+```gherkin
+Scenario: Inyectar datos desde API remota
+  Given el usuario remoto es "${data.github_user.login}"
+  And el token de sesion generado es "${data.auth_session.token}"
+  Then el codigo de respuesta HTTP fue ${data.auth_session.status_code}
+```
+
+**Propiedades disponibles en `data.http.<nombre>`:**
+- Si la respuesta es JSON, todas las claves del cuerpo se mapean automáticamente a la raíz del objeto (`${data.github_user.login}`, `${data.auth_session.token}`).
+- `.status_code`: Código numérico HTTP devuelto (ej. `200`, `201`).
+- `.response_body`: Cuerpo textual completo sin procesar devuelto por el servidor.
+- `.response_headers`: Encabezados HTTP de respuesta.
+- `.url`: URL del endpoint consultado.
+- `.id`: Identificador de la entidad o URL de la consulta.
 
 ---
 
 ## Sintaxis de Interpolación
 
-Las referencias a fuentes de datos se interpolan usando la notación `${data.<fuente>.<propiedad>}`:
+Las referencias a fuentes de datos se interpolan usando la notación `${data.<fuente>.<propiedad>}` o `${data.<fuente>[indice].<propiedad>}`:
 
-- `${data.usuarios.admin.username}` $\rightarrow$ Extrae la propiedad `username` del nodo `admin`.
-- `${data.login_core.address}` $\rightarrow$ Extrae la dirección física del recurso.
-- Las expresiones se resuelven en tiempo de compilación y planificación en `testform plan` y `testform apply`.
+- `${data.usuarios.admin.username}` $\rightarrow$ Extrae la propiedad `username` del fixture local.
+- `${data.login_core.address}` $\rightarrow$ Extrae la dirección canónica del recurso.
+- `${data.smoke_suite.length}` $\rightarrow$ Cantidad de escenarios coincidentes cuando devuelve un arreglo.
+- `${data.smoke_suite[0].title}` $\rightarrow$ Título del primer escenario del arreglo.
+- `${data.smoke_suite.*.title}` $\rightarrow$ Arreglo con los títulos de todos los escenarios coincidentes (Splat expression).
+- `${data.github_user.login}` $\rightarrow$ Atributo JSON obtenido del endpoint HTTP.
+- `${data.auth_session.status_code}` $\rightarrow$ Código de estado HTTP de la petición POST.
+- Las expresiones se resuelven de forma reactiva y estática en `testform plan` y `testform apply`.
 

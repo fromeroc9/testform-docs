@@ -27,7 +27,25 @@ Testform includes built-in declarative templates for quality management entities
 
 ---
 
-## 1. Modifying Declared Resources
+## 1. Field Extension via YAML (Declarative Configuration)
+
+When you want to add calculated fields or extra metadata to standard canonical resources (`testcase`, `testrun`, `testplan`), you can extend them directly in your YAML configuration file under the `resource` block without writing TypeScript or rewriting step generators:
+
+```yaml
+# main.yml
+resource:
+  testcase:
+    fields:
+      severity: "${custom.fields.severity || 'Normal'}"
+      jira_component: "${custom.fields.component || 'Core'}"
+      team_owner: "QA-Core"
+```
+
+Declared fields automatically merge with the resource's native fields at runtime.
+
+---
+
+## 2. Modifying Declared Resources (`registerResource`)
 
 Built-in resources (`github_testcase`, `github_testrun`, etc.) **are not closed black boxes**. Any team can modify or override fields, markdown body formatting, or labels using `registerResource()`.
 
@@ -81,7 +99,7 @@ registerResource({
 
 ---
 
-## 2. Registering Custom Providers
+## 3. Registering Custom Providers
 
 To connect Testform to external platforms (Jira, TestRail, Zephyr, or proprietary tools), simply register new resources:
 
@@ -106,7 +124,7 @@ registerResource({
 
 ---
 
-## 3. Canonical Resource Addresses
+## 4. Canonical Resource Addresses
 
 Just as Terraform uniquely identifies resources (e.g., `aws_instance.web`), Testform addresses resources using **pure dot notation**:
 
@@ -120,7 +138,7 @@ Examples:
 
 ---
 
-## 4. Resource Reconciliation
+## 5. Resource Reconciliation
 
 During `testform plan`, Testform compares declared BDD scenarios against the records in `testform.state`:
 

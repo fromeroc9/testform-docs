@@ -27,7 +27,25 @@ Testform define internamente plantillas declarativas para los recursos de gesti�
 
 ---
 
-## 1. Modificación de Recursos ya Declarados por el Usuario
+## 1. Extensión de Campos en YAML (Configuración Declarativa)
+
+Cuando deseas agregar campos calculados o metadatos adicionales a los recursos canónicos (`testcase`, `testrun`, `testplan`), puedes extenderlos directamente en el bloque `resource` de tu archivo de configuración YAML, sin necesidad de redefinir generadores de pasos ni código TypeScript:
+
+```yaml
+# main.yml
+resource:
+  testcase:
+    fields:
+      severity: "${custom.fields.severity || 'Normal'}"
+      jira_component: "${custom.fields.component || 'Core'}"
+      team_owner: "QA-Core"
+```
+
+Los campos declarados se fusionan automáticamente con los campos nativos del recurso en tiempo de ejecución.
+
+---
+
+## 2. Modificación de Recursos ya Declarados por el Usuario (`registerResource`)
 
 Los recursos predefinidos en `resource.ts` (`github_testcase`, `github_testrun`, etc.) **no son cajas negras cerradas**. Cualquier equipo puede modificar o sobreescribir los campos, el formato del body o las etiquetas generadas utilizando `registerResource()`.
 
@@ -81,7 +99,7 @@ registerResource({
 
 ---
 
-## 2. Registro de Nuevos Proveedores (Custom Providers)
+## 3. Registro de Nuevos Proveedores (Custom Providers)
 
 Para conectar Testform con plataformas externas (Jira, TestRail, Zephyr o herramientas propietarias), se registran recursos adicionales mediante la misma API pública:
 
@@ -106,7 +124,7 @@ registerResource({
 
 ---
 
-## 3. Direcciones Canónicas de Recursos (Resource Addresses)
+## 4. Direcciones Canónicas de Recursos (Resource Addresses)
 
 Al igual que en Terraform cada recurso posee un identificador universal único (ej. `aws_instance.web`), en Testform cada recurso se direcciona mediante **notación por puntos pura**:
 
@@ -125,7 +143,7 @@ Estas direcciones son utilizadas por:
 
 ---
 
-## 4. Estado y Conciliación
+## 5. Estado y Conciliación
 
 Durante `testform plan`, el motor compara los recursos declarados en el código BDD con el estado actual registrado en `testform.state`:
 
