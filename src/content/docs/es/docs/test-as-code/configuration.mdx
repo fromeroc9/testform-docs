@@ -78,7 +78,7 @@ Testform procesa las diferentes capas de configuración mediante un motor secuen
 
 ```text
  ┌────────────────┐   ┌────────────────┐   ┌────────────────┐
- │    main.yml    │   │ variables.yml  │   │   scopes.yml   │
+ │    main.yml    │   │ variables.yml  │   │  resource.yml  │
  └───────┬────────┘   └───────┬────────┘   └───────┬────────┘
          │                    │                    │
          ▼                    ▼                    ▼
@@ -130,11 +130,11 @@ Los `fields` no son campos directos de la API remota, sino el **contrato de cali
   Gherkin (.feature)            resource.yml                   resource.ts                   Provider (GitHub/Jira)
  ┌──────────────────────┐      ┌────────────────────────┐     ┌───────────────────────┐     ┌──────────────────────┐
  │ @high @tc-login-001  │      │ resource:              │     │ resource.registry({   │     │ GitHub Project V2    │
- │ Scenario: Login      │ ──►  │   global:              │ ──► │   fields: [           │ ──► │   Status: "Done"     │
- │   * field module =   │      │     fields: [module,   │     │     custom_fields:    │     │   Project: "HT 360"  │
- │     "auth"           │      │       priority, Status]│     │       s.custom.fields │     │   Module: "auth"     │
- └──────────────────────┘      └────────────────────────┘     └───────────────────────┘     │   Priority: "high"   │
-                                                                                            └──────────────────────┘
+ │ Scenario: Login      │      │   global:              │     │   fields: [           │     │   Status: "Done"     │
+ │   * field module =   │ ──►  │     fields: [module,   │ ──► │     custom_fields:    │ ──► │   Project: "HT 360"  │
+ │     "auth"           │      │       priority,        │     │       s.custom.fields │     │   Module: "auth"     │
+ │                      │      │       Status]          │     │   ]                   │     │   Priority: "high"   │
+ └──────────────────────┘      └────────────────────────┘     └───────────────────────┘     └──────────────────────┘
 ```
 
 ### Estructura en `resource.yml`

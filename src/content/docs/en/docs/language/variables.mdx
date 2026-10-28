@@ -165,10 +165,11 @@ Testform resolves variable values according to strict precedence:
 
 ```text
 ▲ HIGHEST PRECEDENCE
-│  [Priority 1] Direct CLI Flags:          testform plan -var "timeout_ms=15000"
-│  [Priority 2] Explicit Var Files:        testform plan -var-file=prod.vars.yml
-│  [Priority 3] Workspace Auto-load:       *.vars.yml (e.g., testform.vars.yml)
-│  [Priority 4] Declared Defaults:         variables.yml (default:)
+│  [Level 5] CLI Flags:            -var "key=value"
+│  [Level 4] CLI Var Files:        -var-file="staging.yml"
+│  [Level 2] Domain Folders:       auth/auth.yml, inventory/inventory.yml, etc.
+│  [Level 1] Terraform Standard:   variables.yml, locals.yml
+│  [Level 0] Base Manifest:        main.yml (global defaults)
 ▼ LOWEST PRECEDENCE
 ```
 

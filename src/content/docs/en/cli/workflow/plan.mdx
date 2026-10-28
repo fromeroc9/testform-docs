@@ -15,10 +15,10 @@ It is a **speculative, read-only operation** that does not make any mutations to
 
 | Option | Default | Description |
 | :--- | :--- | :--- |
-| `-out=path` | â€” | Writes the generated execution plan to a file. This plan can be passed to `apply` to guarantee identical execution. |
+| `-out=path` | — | Writes the generated execution plan to a file. This plan can be passed to `apply` to guarantee identical execution. |
 | `-destroy` | `false` | Generates a plan to destroy all managed resources rather than applying updates. |
 | `-refresh=false` | `true` | Skips checking the remote API for out-of-band drift prior to planning. |
-| `-target=address` | â€” | Limits planning to a single resource identity (e.g. `login.case.feature.@tc-1`). May be specified multiple times. |
+| `-target=address` | — | Limits planning to a single resource identity (e.g. `login.case.feature.@tc-1`). May be specified multiple times. |
 | `-json` | `false` | Emits the plan in JSON format. |
 | `-detailed-exitcode` | `false` | Returns detailed exit codes (`0` = empty plan, `2` = changes present). |
 

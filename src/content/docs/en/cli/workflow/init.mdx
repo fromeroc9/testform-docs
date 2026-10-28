@@ -18,7 +18,7 @@ It is always safe to run `testform init` multiple times to re-synchronize backen
 | `-provider=<type>` | `github` | Provider type to scaffold (`github`, `local`, `gitlab`). |
 | `-backend-type=<type>` | `local` | Backend type to scaffold when creating a new configuration (`local`, `github`, `s3`, `azurerm`, `gcs`, `oci`). |
 | `-backend=false` | `true` | Disables backend initialization for this run and uses the previously initialized configuration. |
-| `-backend-config=path` | â€” | Configuration to merge with or override the `backend` block in `main.yml`. Can be a `key=value` string or a file path. May be specified multiple times. |
+| `-backend-config=path` | — | Configuration to merge with or override the `backend` block in `main.yml`. Can be a `key=value` string or a file path. May be specified multiple times. |
 | `-reconfigure` | `false` | Reconfigures a backend from scratch, ignoring any cached configuration. |
 | `-migrate-state` | `false` | Reconfigures a backend and automatically migrates any existing state to the new location. |
 | `-lock=false` | `true` | Disables holding a state lock during migration (use with caution). |
@@ -86,12 +86,12 @@ When `-backend-config` is supplied, Testform strictly validates the arguments ag
 
 - **Invalid argument:** If an unexpected argument is passed for the configured backend type (for example `-backend-config="bucket=..."` when backend is `local`), Testform aborts initialization with a formatted error:
   ```text
-  â•·
-  â”‚ Error: Invalid backend configuration argument
-  â”‚
-  â”‚ The backend configuration argument "bucket" given on the command line is not
-  â”‚ expected for the selected backend type.
-  â•µ
+  ╷
+  │ Error: Invalid backend configuration argument
+  │
+  │ The backend configuration argument "bucket" given on the command line is not
+  │ expected for the selected backend type.
+  ╵
   ```
 - **Missing backend block:** If `-backend-config` is used without a declared `backend` block in `main.yml`, Testform outputs `Warning: Missing backend configuration` to remind you to declare the backend block or clear the warning.
 
@@ -100,16 +100,16 @@ When `-backend-config` is supplied, Testform strictly validates the arguments ag
 Testform continuously tracks the active backend configuration inside `.testform/backend.json`. If you alter the `backend` block in `main.yml` or provide differing overrides via `-backend-config`, Testform detects the mismatch before running and halts execution:
 
 ```text
-â•·
-â”‚ Error: Backend configuration changed
-â”‚ 
-â”‚ A change in the backend configuration has been detected, which may require migrating existing
-â”‚ state.
-â”‚ 
-â”‚ If you wish to attempt automatic migration of the state, run "testform init -migrate-state".
-â”‚ If you wish to store the current configuration with no changes to the state, run "testform
-â”‚ init -reconfigure".
-â•µ
+╷
+│ Error: Backend configuration changed
+│ 
+│ A change in the backend configuration has been detected, which may require migrating existing
+│ state.
+│ 
+│ If you wish to attempt automatic migration of the state, run "testform init -migrate-state".
+│ If you wish to store the current configuration with no changes to the state, run "testform
+│ init -reconfigure".
+╵
 ```
 
 - `-migrate-state`: Reads the existing state from the old backend and transfers it to the new remote backend.
@@ -128,20 +128,20 @@ If the backend configuration lacks mandatory parameters, Testform enforces provi
   ```
 - **Missing region:** If `region` is omitted and neither `AWS_REGION` nor `AWS_DEFAULT_REGION` is set:
   ```text
-  â•·
-  â”‚ Error: Missing region value
-  â”‚ 
-  â”‚ The "region" attribute or the "AWS_REGION" or "AWS_DEFAULT_REGION" environment variables must
-  â”‚ be set.
-  â•µ
+  ╷
+  │ Error: Missing region value
+  │ 
+  │ The "region" attribute or the "AWS_REGION" or "AWS_DEFAULT_REGION" environment variables must
+  │ be set.
+  ╵
   ```
 - **Missing bucket:** If the destination bucket name is omitted:
   ```text
-  â•·
-  â”‚ Error: Missing bucket value
-  â”‚ 
-  â”‚ The "bucket" attribute must be set for the s3 backend.
-  â•µ
+  ╷
+  │ Error: Missing bucket value
+  │ 
+  │ The "bucket" attribute must be set for the s3 backend.
+  ╵
   ```
 
 

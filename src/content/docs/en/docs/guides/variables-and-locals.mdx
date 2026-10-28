@@ -55,13 +55,13 @@ Testform resolves transitive dependencies (locals referencing other locals or va
 When the same variable is defined across multiple files or commands, Testform applies strict precedence (from lowest to highest):
 
 ```text
-â–² HIGHEST PRIORITY
-â”‚  [Level 5] CLI Flags:          -var "key=value"
-â”‚  [Level 4] CLI Var Files:      -var-file="staging.yml"
-â”‚  [Level 2] Domain Folders:     auth/auth.yml, inventory/inventory.yml, etc.
+▲ HIGHEST PRIORITY
+│  [Level 5] CLI Flags:          -var "key=value"
+│  [Level 4] CLI Var Files:      -var-file="staging.yml"
+│  [Level 2] Domain Folders:     auth/auth.yml, inventory/inventory.yml, etc.
 │  [Level 1] Terraform Standard: variables.yml, locals.yml
 │  [Level 0] Base Manifest:      main.yml (global defaults)
-â–¼ LOWEST PRIORITY
+▼ LOWEST PRIORITY
 ```
 
 ---

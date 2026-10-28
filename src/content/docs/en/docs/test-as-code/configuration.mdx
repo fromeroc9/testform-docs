@@ -76,28 +76,27 @@ resource:
 ## Compilation and Configuration Processing Pipeline
 
 Testform compiles and resolves all configuration layers via a sequential in-memory pipeline:
-
 ```text
- â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
- â”‚    main.yml    â”‚   â”‚ variables.yml  â”‚   â”‚   resource.yml   â”‚
- â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-         â”‚                    â”‚                    â”‚
-         â–¼                    â–¼                    â–¼
+ ┌────────────────┐   ┌────────────────┐   ┌────────────────┐
+ │    main.yml    │   │ variables.yml  │   │  resource.yml  │
+ └───────┬────────┘   └───────┬────────┘   └───────┬────────┘
+         │                    │                    │
+         ▼                    ▼                    ▼
    [PHASE 1: IN-MEMORY DISCOVERY & SYMBOL SCHEMA MERGE]
-         â”‚
-         â–¼
+         │
+         ▼
    [PHASE 2: VALUE INGESTION & PRECEDENCE (*.vars.yml, CLI)]
-         â”‚
-         â–¼
+         │
+         ▼
    [PHASE 3: STATIC TYPE & AST VALIDATION (enum, condition)]
-         â”‚
-         â–¼
+         │
+         ▼
    [PHASE 4: LOCALS & HCL FUNCTION EVALUATION]
-         â”‚
-         â–¼
+         │
+         ▼
    [PHASE 5: INJECTION INTO GHERKIN RESOURCES (*.case.feature) + DAG]
-         â”‚
-         â–¼
+         │
+         ▼
    [PHASE 6: RECONCILIATION DIFF AGAINST testform.state (plan / apply)]
 ```
 
@@ -128,17 +127,17 @@ To prevent `main.yml` from becoming bloated, Testform supports declaring the `re
 The declared `fields` are not direct API attributes, but the **quality contract for the Gherkin author**. The `resource.ts` adapter maps and extracts those fields to feed the remote Provider:
 
 ```text
-  Gherkin (.feature)            scopes.yml                     resource.ts                   Provider (GitHub/Jira)
- â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”      â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
- â”‚ @high @tc-login-001  â”‚      â”‚ scope:                 â”‚     â”‚ resource.registry({   â”‚     â”‚ GitHub Project V2    â”‚
- â”‚ Scenario: Login      â”‚ â”€â”€â–º  â”‚   global:              â”‚ â”€â”€â–º â”‚   fields: [           â”‚ â”€â”€â–º â”‚   Status: "Done"     â”‚
- â”‚   * field module =   â”‚      â”‚     fields: [module,   â”‚     â”‚     custom_fields:    â”‚     â”‚   Project: "HT 360"  â”‚
- â”‚     "auth"           â”‚      â”‚       priority, Status]â”‚     â”‚       s.custom.fields â”‚     â”‚   Module: "auth"     â”‚
- â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜      â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜     â”‚   Priority: "high"   â”‚
-                                                                                            â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+  Gherkin (.feature)            resource.yml                   resource.ts                   Provider (GitHub/Jira)
+ ┌──────────────────────┐      ┌────────────────────────┐     ┌───────────────────────┐     ┌──────────────────────┐
+ │ @high @tc-login-001  │      │ resource:              │     │ resource.registry({   │     │ GitHub Project V2    │
+ │ Scenario: Login      │      │   global:              │     │   fields: [           │     │   Status: "Done"     │
+ │   * field module =   │ ──►  │     fields: [module,   │ ──► │     custom_fields:    │ ──► │   Project: "HT 360"  │
+ │     "auth"           │      │       priority,        │     │       s.custom.fields │     │   Module: "auth"     │
+ │                      │      │       Status]          │     │   ]                   │     │   Priority: "high"   │
+ └──────────────────────┘      └────────────────────────┘     └───────────────────────┘     └──────────────────────┘
 ```
 
-### Modular Structure in `scopes.yml`
+### Modular Structure in `resource.yml`
 
 ```yaml
 # resource.yml

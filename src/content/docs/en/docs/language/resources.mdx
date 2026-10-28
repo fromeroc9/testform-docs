@@ -66,7 +66,7 @@ registerResource({
         // Custom Markdown body format
         { 
             name: 'body', 
-            value: (s) => `## ðŸ“‹ Test Case: ${s.name}\n\n### Steps:\n` + 
+            value: (s) => `## 📋 Test Case: ${s.name}\n\n### Steps:\n` + 
                           s.steps.map(step => `- **${step.keyword}** ${step.text}`).join('\n') 
         },
 

@@ -30,24 +30,24 @@ Success! The configuration is valid.
 ### Warning Diagnostics (Schema Warnings)
 ```bash
 $ testform validate
-â•·
-â”‚ Warning: Undeclared field 'type_of_test'
-â”‚ 
-â”‚   in tests/cart.case.feature:
-â”‚ The field 'type_of_test' is used but not declared in main.yml schema.
-â•µ
+╷
+│ Warning: Undeclared field 'type_of_test'
+│ 
+│   in tests/cart.case.feature:
+│ The field 'type_of_test' is used but not declared in main.yml schema.
+╵
 Success! The configuration is valid, but there were some warnings.
 ```
 
 ### Error Output (Syntax or Required Policy Failure)
 ```bash
 $ testform validate
-â•·
-â”‚ Error: Every scenario must have an identity tag matching the configured identity pattern.
-â”‚ 
-â”‚   in tests/login.case.feature:14
-â”‚ Add the identity tag (e.g. @tc-1) to each scenario.
-â•µ
+╷
+│ Error: Every scenario must have an identity tag matching the configured identity pattern.
+│ 
+│   in tests/login.case.feature:14
+│ Add the identity tag (e.g. @tc-1) to each scenario.
+╵
 Error: The configuration contains errors.
 ```
 
