@@ -9,16 +9,18 @@ The `depends_on` meta-argument allows you to explicitly define execution depende
 
 ## Gherkin Declaration (`@depends_on`)
 
-Dependencies are declared as tags directly above a `Scenario:`:
+Dependencies are declared as tags directly above a `Scenario:`, supporting canonical array brackets (matching Terraform lists) as well as comma-separated targets:
 
 ```gherkin
 @checkout @e2e
-@depends_on("auth/login.feature.@login_success", "inventory/cart.feature.@add_item")
+@depends_on(["auth/login.feature.@login_success", "inventory/cart.feature.@add_item"])
 Scenario: User completes checkout successfully
   Given shopping cart contains selected products
   When user confirms shipping and billing details
   Then order confirmation receipt is issued
 ```
+
+You can also write `@depends_on("target1", "target2")` or use multiple separate `@depends_on(...)` tags.
 
 ---
 

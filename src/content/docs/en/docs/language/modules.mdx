@@ -19,7 +19,7 @@ Invoke a module directly over a `Background:` step or a `Scenario:` using the `@
 Feature: Inventory Management
 
   Background:
-    @module(source="./modules/auth/login.feature", scenario="Admin Login", vars={user: "admin", role: "SuperAdmin"})
+    @module(source="./modules/auth/login.feature", scenario="Admin Login", variable={user: "admin", role: "SuperAdmin"})
     Given admin session is active
 
   Scenario: Create new product in catalog
@@ -29,17 +29,16 @@ Feature: Inventory Management
 
 ### 2. Centralized Declaration in `main.yml`
 
-Register reusable module instances with default input values and output bindings:
+Register reusable module instances with native input arguments or explicit `variable:` blocks:
 
 ```yaml
 # main.yml
 module:
   auth_staging:
     source: "./modules/auth/login.feature"
-    vars:
-      base_url: "${var.app_url}"
-      user: "staging_tester"
-      password: "${var.test_password}"
+    base_url: "${var.app_url}"
+    user: "staging_tester"
+    password: "${var.test_password}"
     output:
       token:
         value: "${testcase.modules/auth/login.feature.@login.token}"
@@ -55,8 +54,7 @@ Testform downloads and verifies modules hosted in remote Git repositories during
 module:
   shared_auth:
     source: "git::https://github.com/my-org/test-modules.git//auth?ref=v1.2.0"
-    vars:
-      base_url: "https://qa.company.com"
+    base_url: "https://qa.company.com"
 ```
 
 The URL adheres to standard Terraform module syntax:

@@ -23,8 +23,9 @@ Scenario: Finalización exitosa de orden de compra
 ```
 
 ### Sintaxis soportada:
-- `@depends_on("direccion")`
-- `@depends_on("direccion1", "direccion2")`
+- **Notación canónica de Array (Paridad Terraform):** `@depends_on(["direccion1", "direccion2"])`
+- **Argumentos separados por coma:** `@depends_on("direccion1", "direccion2")` o `@depends_on("direccion")`
+- **Múltiples tags:** `@depends_on("direccion1") @depends_on("direccion2")`
 - Referencias relativas o completas con o sin `@`:
   - `"auth/login.case.feature.@tc-1"`
   - `"auth/login.case.feature.tc-1"`

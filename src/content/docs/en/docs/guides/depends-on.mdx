@@ -9,15 +9,20 @@ The `depends_on` meta-argument allows you to define explicit execution dependenc
 
 ## 1. Gherkin Tag Syntax (`@depends_on`)
 
-Define dependencies directly in your feature files:
+Define dependencies directly in your feature files using either canonical array brackets (matching Terraform lists) or comma-separated parameters:
 
 ```gherkin
 @tc-checkout
-@depends_on("auth/login.case.feature.tc-1", "inventory/catalog.case.feature.tc-4")
+@depends_on(["auth/login.case.feature.tc-1", "inventory/catalog.case.feature.tc-4"])
 Scenario: Finalize checkout order
   When the user submits checkout
   Then order is created
 ```
+
+### Supported Syntax:
+- **Array notation (Terraform Parity):** `@depends_on(["target1", "target2"])`
+- **Comma-separated arguments:** `@depends_on("target1", "target2")` or `@depends_on("target1")`
+- **Multiple tags:** `@depends_on("target1") @depends_on("target2")`
 
 ---
 

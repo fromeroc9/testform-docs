@@ -75,13 +75,13 @@ Invoke the module while supplying specific input parameters:
 
 ```gherkin
 @tc-checkout-admin
-@module(source="./modules/auth/login.case.feature", vars={user: "admin", role: "superuser"})
+@module(source="./modules/auth/login.case.feature", variable={user: "admin", role: "superuser"})
 Scenario: Checkout executed with administrative credentials
   When the user clicks "Confirm Payment"
   Then the transaction is approved
 ```
 
-The parameters declared in `vars={...}` replace `<user>` and `<role>` in the inherited steps before scenario execution.
+The parameters declared in `variable={...}` replace `<user>` and `<role>` in the inherited steps before scenario execution.
 
 ### B. Invocation by Module Name
 
@@ -99,7 +99,7 @@ Or with variable overrides:
 
 ```gherkin
 @tc-checkout-custom
-@module(name="auth_standard", vars={user: "custom_qa_user"})
+@module(name="auth_standard", variable={user: "custom_qa_user"})
 Scenario: Checkout with custom QA user
   When the user clicks "Confirm Payment"
   Then the transaction is approved
@@ -111,10 +111,10 @@ If a module feature file contains multiple scenarios, select only the one you ne
 
 ```gherkin
 # Option 1: scenario argument
-@module(source="./modules/auth/login.case.feature", scenario="@tc-login", vars={user: "demo"})
+@module(source="./modules/auth/login.case.feature", scenario="@tc-login", variable={user: "demo"})
 
 # Option 2: Canonical dot notation
-@module(source="./modules/auth/login.case.feature.tc-login", vars={user: "demo"})
+@module(source="./modules/auth/login.case.feature.tc-login", variable={user: "demo"})
 ```
 
 ---

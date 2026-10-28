@@ -18,7 +18,7 @@ Puedes invocar un módulo directamente sobre un paso de fondo (`Background:`) o 
 Feature: Gestión de Inventario
 
   Background:
-    @module(source="./modules/auth/login.feature", scenario="Login de Administrador", vars={user: "admin", role: "SuperAdmin"})
+    @module(source="./modules/auth/login.feature", scenario="Login de Administrador", variable={user: "admin", role: "SuperAdmin"})
     Given que la sesión de administrador está iniciada
 
   Scenario: Crear nuevo producto en catálogo
@@ -28,17 +28,16 @@ Feature: Gestión de Inventario
 
 ### 2. Registro Central en `main.yml`
 
-Puedes registrar módulos con alias reutilizables y parámetros por defecto:
+Puedes registrar módulos con alias reutilizables y parámetros por defecto (pasando variables de entrada de forma directa y nativa, o mediante el bloque `variable:`):
 
 ```yaml
 # main.yml
 module:
   auth_staging:
     source: "./modules/auth/login.feature"
-    vars:
-      base_url: "${var.app_url}"
-      user: "staging_tester"
-      password: "${var.test_password}"
+    base_url: "${var.app_url}"
+    user: "staging_tester"
+    password: "${var.test_password}"
     output:
       token:
         value: "${testcase.modules/auth/login.feature.@login.token}"
@@ -54,8 +53,7 @@ Testform soporta la descarga e inicialización automática de módulos alojados 
 module:
   shared_auth:
     source: "git::https://github.com/mi-org/test-modules.git//auth?ref=v1.2.0"
-    vars:
-      base_url: "https://qa.empresa.com"
+    base_url: "https://qa.empresa.com"
 ```
 
 El formato de URL sigue la convención estándar de Terraform:
