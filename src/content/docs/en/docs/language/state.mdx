@@ -11,23 +11,53 @@ Just as Terraform's state file tracks IDs of created cloud instances, Testform's
 
 ## State Ledger File (`testform.state`)
 
-The state is a structured JSON ledger maintained after every `testform apply`:
+The state is a structured JSON ledger maintained after every `testform apply`. It records canonical reconciliation across `testcase`, `testrun`, and `testplan` resources:
 
 ```json
 {
   "version": "1.0.0",
-  "testform_version": "1.0.17",
+  "testform_version": "1.1.0",
   "serial": 12,
+  "lineage": "c8f2b1a9-45e1-...",
   "resources": [
     {
-      "address": "auth/login.feature.@login_success",
-      "type": "testcase",
-      "name": "login_success",
+      "address": "tests/features/cart.case.feature.@tc-01",
+      "type": "github_testcase",
+      "name": "tc-01",
       "status": "passed",
       "hash": "a1b2c3d4...",
       "attributes": {
-        "title": "Successful user login",
-        "duration_ms": 1420
+        "title": "Add item to cart",
+        "issueNumber": 401
+      }
+    },
+    {
+      "address": "tests/runs/checkout.run.feature.@tr-01",
+      "type": "github_testrun",
+      "name": "tr-01",
+      "status": "failed",
+      "attributes": {
+        "title": "Checkout Regression Run",
+        "status": "failed",
+        "testcases": {
+          "tests/features/cart.case.feature.@tc-01": "passed",
+          "tests/features/cart.case.feature.@tc-02": "failed"
+        },
+        "metadata": {}
+      }
+    },
+    {
+      "address": "tests/plans/sprint42.plan.feature.@tp-01",
+      "type": "github_testplan",
+      "name": "tp-01",
+      "status": "failed",
+      "attributes": {
+        "title": "Sprint 42 Certification Plan",
+        "status": "failed",
+        "testruns": {
+          "tests/runs/checkout.run.feature.@tr-01": "failed"
+        },
+        "metadata": {}
       }
     }
   ],
@@ -39,6 +69,15 @@ The state is a structured JSON ledger maintained after every `testform apply`:
   }
 }
 ```
+
+### Key Resource Attributes in State
+
+| Field | Resource(s) | Description |
+| :--- | :--- | :--- |
+| `status` | `testcase`, `testrun`, `testplan` | Execution outcome or consolidated Rollup Verdict. |
+| `testcases` | `testrun` | Key-value dictionary `{ [case_identity]: status }` of all executed test cases. |
+| `testruns` | `testplan` | Key-value dictionary `{ [run_identity]: status }` of all test runs included in the plan. |
+| `metadata` | `testrun`, `testplan` | Extensible object for provider-specific attributes (build numbers, CI links, remote IDs). |
 
 ---
 

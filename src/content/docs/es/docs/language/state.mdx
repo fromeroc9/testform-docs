@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Gestión y Ledger de Estado"
 ---
 
@@ -10,23 +10,53 @@ Al igual que en Terraform el archivo de estado registra los IDs de las instancia
 
 ## Archivo de Estado (`testform.state`)
 
-El estado es un archivo estructurado en JSON que se genera y actualiza tras cada `testform apply`:
+El estado es un archivo estructurado en JSON que se genera y actualiza tras cada `testform apply`. Almacena la reconciliación canónica de `testcase`, `testrun` y `testplan`:
 
 ```json
 {
   "version": "1.0.0",
-  "testform_version": "1.0.17",
+  "testform_version": "1.1.0",
   "serial": 12,
+  "lineage": "c8f2b1a9-45e1-...",
   "resources": [
     {
-      "address": "auth/login.feature.@login_success",
-      "type": "testcase",
-      "name": "login_success",
+      "address": "tests/features/cart.case.feature.@tc-01",
+      "type": "github_testcase",
+      "name": "tc-01",
       "status": "passed",
       "hash": "a1b2c3d4...",
       "attributes": {
-        "title": "Inicio de sesión exitoso",
-        "duration_ms": 1420
+        "title": "Agregar producto al carrito",
+        "issueNumber": 401
+      }
+    },
+    {
+      "address": "tests/runs/checkout.run.feature.@tr-01",
+      "type": "github_testrun",
+      "name": "tr-01",
+      "status": "failed",
+      "attributes": {
+        "title": "Ejecución Regresión Checkout",
+        "status": "failed",
+        "testcases": {
+          "tests/features/cart.case.feature.@tc-01": "passed",
+          "tests/features/cart.case.feature.@tc-02": "failed"
+        },
+        "metadata": {}
+      }
+    },
+    {
+      "address": "tests/plans/sprint42.plan.feature.@tp-01",
+      "type": "github_testplan",
+      "name": "tp-01",
+      "status": "failed",
+      "attributes": {
+        "title": "Plan de Certificación Sprint 42",
+        "status": "failed",
+        "testruns": {
+          "tests/runs/checkout.run.feature.@tr-01": "failed"
+        },
+        "metadata": {}
       }
     }
   ],
@@ -38,6 +68,15 @@ El estado es un archivo estructurado en JSON que se genera y actualiza tras cada
   }
 }
 ```
+
+### Atributos Clave de Recursos en el Estado
+
+| Campo | Recurso(s) | Descripción |
+| :--- | :--- | :--- |
+| `status` | `testcase`, `testrun`, `testplan` | Resultado de ejecución o veredicto consolidado (*Rollup Verdict*). |
+| `testcases` | `testrun` | Mapa clave-valor `{ [identidad_caso]: estado }` de todos los casos ejecutados. |
+| `testruns` | `testplan` | Mapa clave-valor `{ [identidad_run]: estado }` de las suites agrupadas en el plan. |
+| `metadata` | `testrun`, `testplan` | Objeto extensible para atributos arbitrarios del proveedor (builds, CI/CD, tags remotos). |
 
 ---
 

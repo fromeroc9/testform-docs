@@ -63,11 +63,46 @@ Feature: Registro de Ejecucion de Regresion Build 412
   Rule: orders.case.feature
 
   Scenario: @tc-cancel-001
+    * mark status = passed
 
   Rule: auth.case.feature
 
   Scenario: @tc-login-001
+    * mark status = failed
 ```
+
+### Motor de Veredicto Acumulado (*Rollup Verdict*)
+
+Testform calcula de forma totalmente automática el estado consolidado (`status`) de cada `testrun` evaluando los estados individuales de todos los escenarios contenidos (`testcases`). Este cálculo sigue estrictas reglas de precedencia QA:
+
+1. **`failed` (Prioridad Alta):** Si al menos un caso de prueba tiene resultado `failed`, el `testrun` se califica automáticamente como `failed`.
+2. **`pending` (Prioridad Media):** Si ningún caso ha fallado, pero al menos uno permanece en `pending`, `blocked` o `skipped` (o si la suite no tiene casos registrados), el estado resultante es `pending`.
+3. **`passed` (Consenso Total):** Se otorga únicamente si el **100% de los casos de prueba** han concluido satisfactoriamente con estado `passed`.
+
+### Persistencia Compacta en el Ledger (`testform.state`)
+
+Para garantizar un tamaño mínimo del archivo de estado y compatibilidad universal entre proveedores (Local, GitHub, Jira, GitLab), el `testrun` persiste sus ejecuciones como un mapa clave-valor ligero:
+
+```json
+{
+  "address": "tests/runs/regression.run.feature.@tr-regression-build-412",
+  "type": "github_testrun",
+  "status": "failed",
+  "attributes": {
+    "title": "Registro de Ejecucion de Regresion Build 412",
+    "status": "failed",
+    "testcases": {
+      "tests/features/orders.case.feature.@tc-cancel-001": "passed",
+      "tests/features/auth.case.feature.@tc-login-001": "failed"
+    },
+    "metadata": {}
+  }
+}
+```
+
+- **`testcases`**: Diccionario normalizado `{ [identificador_caso]: estado }`. Elimina estructuras anidadas pesadas.
+- **`metadata`**: Objeto extensible reservado para que cualquier proveedor registre atributos auxiliares específicos sin contaminar la estructura base.
+- **Sin comentarios invasivos:** Se sustituyó la creación recursiva de comentarios en issues de GitHub por una lista de verificación interactiva directamente en la descripción del Issue, eliminando ruidos en notificaciones y acelerando el rendimiento del CLI.
 
 ## 3. El Recurso `testplan`
 
@@ -91,6 +126,33 @@ Feature: Plan de Certificacion Release v2.5.0
   Rule: smoke.run.feature
 
   Rule: regression.run.feature
+```
+
+### Veredicto Jerárquico de Certificación
+
+Al igual que el `testrun` evalúa sus casos, el `testplan` calcula su estado acumulando jerárquicamente los estados de todos los `testrun` vinculados:
+
+- Si cualquiera de los `testrun` asociados está en estado `failed`, el veredicto del `testplan` será **`failed`**.
+- Si ningún `testrun` está fallido pero alguno continúa en `pending`, el plan permanece en **`pending`**.
+- Solo cuando la totalidad de las suites `testrun` vinculadas culminan en `passed`, el `testplan` adquiere el estado **`passed`**.
+
+### Estructura en el Estado (`testform.state`)
+
+```json
+{
+  "address": "tests/plans/release.plan.feature.@tp-release-v250",
+  "type": "github_testplan",
+  "status": "failed",
+  "attributes": {
+    "title": "Plan de Certificacion Release v2.5.0",
+    "status": "failed",
+    "testruns": {
+      "tests/runs/smoke.run.feature.@tr-smoke-412": "passed",
+      "tests/runs/regression.run.feature.@tr-regression-build-412": "failed"
+    },
+    "metadata": {}
+  }
+}
 ```
 
 ## 4. El Recurso `testsuite`

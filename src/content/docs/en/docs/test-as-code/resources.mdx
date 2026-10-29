@@ -63,11 +63,46 @@ Feature: Regression Test Run Build 412
   Rule: orders.case.feature
 
   Scenario: @tc-cancel-001
+    * mark status = passed
 
   Rule: auth.case.feature
 
   Scenario: @tc-login-001
+    * mark status = failed
 ```
+
+### Rollup Verdict Engine
+
+Testform automatically determines the overall execution outcome (`status`) of each `testrun` by evaluating all individual child test cases (`testcases`). This calculation adheres to strict QA precedence rules:
+
+1. **`failed` (High Precedence):** If at least one testcase has failed, the entire `testrun` is deemed `failed`.
+2. **`pending` (Medium Precedence):** If no testcase failed, but at least one testcase remains `pending`, `blocked`, or `skipped` (or if the suite contains zero cases), the status is `pending`.
+3. **`passed` (Complete Consensus):** Conferred only when **100% of child test cases** have succeeded with status `passed`.
+
+### Compact Ledger Representation (`testform.state`)
+
+To minimize state file footprint and ensure universal compatibility across providers (Local, GitHub, Jira, GitLab), `testrun` resources persist their executions as a clean, lightweight key-value dictionary:
+
+```json
+{
+  "address": "tests/runs/regression.run.feature.@tr-regression-build-412",
+  "type": "github_testrun",
+  "status": "failed",
+  "attributes": {
+    "title": "Regression Test Run Build 412",
+    "status": "failed",
+    "testcases": {
+      "tests/features/orders.case.feature.@tc-cancel-001": "passed",
+      "tests/features/auth.case.feature.@tc-login-001": "failed"
+    },
+    "metadata": {}
+  }
+}
+```
+
+- **`testcases`**: Compact key-value mapping of `{ [case_canonical_address]: status }`.
+- **`metadata`**: Extensible object reserved for providers to record auxiliary execution metadata (build IDs, CI links) without polluting core state.
+- **Zero Comment Spam:** Legacy per-testcase issue comments have been replaced by a dynamic, interactive checklist inside the main Issue body, eliminating notification noise and boosting CLI performance.
 
 ## 3. The `testplan` Resource
 
@@ -91,6 +126,33 @@ Feature: Release v2.5.0 Certification Matrix
   Rule: smoke.run.feature
 
   Rule: regression.run.feature
+```
+
+### Hierarchical Certification Verdict
+
+Just as a `testrun` evaluates its test cases, a `testplan` calculates its overall status by hierarchically aggregating the rollup statuses of all linked `testrun` suites:
+
+- If any referenced `testrun` is `failed`, the `testplan` verdict is **`failed`**.
+- If no run is failed but any run is still `pending`, the plan remains **`pending`**.
+- Only when all referenced `testrun` suites reach `passed`, the `testplan` transitions to **`passed`**.
+
+### State Ledger Representation (`testform.state`)
+
+```json
+{
+  "address": "tests/plans/release.plan.feature.@tp-release-v250",
+  "type": "github_testplan",
+  "status": "failed",
+  "attributes": {
+    "title": "Release v2.5.0 Certification Matrix",
+    "status": "failed",
+    "testruns": {
+      "tests/runs/smoke.run.feature.@tr-smoke-412": "passed",
+      "tests/runs/regression.run.feature.@tr-regression-build-412": "failed"
+    },
+    "metadata": {}
+  }
+}
 ```
 
 ## 4. The `testsuite` Resource

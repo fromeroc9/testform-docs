@@ -84,7 +84,7 @@ Feature: Q3 Release Plan
 > Test plans (`testplan`) only link entire execution suites (`testrun`). By Testform specification and policy, `.plan.feature` files **must not contain explicit Scenario blocks**.
 
 ### 4. `testform suite mark`
-Records or updates the execution status (`passed`, `failed`, `pending`, `skipped`) of an existing testcase in a test run (`testrun`), synchronizing both the local Gherkin file (`* mark status = <status>`) and the remote issue comment:
+Records or updates the execution status (`passed`, `failed`, `pending`, `skipped`) of an existing testcase in a test run (`testrun`), synchronizing the local Gherkin file (`* mark status = <status>`) and re-evaluating the consolidated Rollup Verdict directly in the state ledger `testform.state`:
 ```bash
 testform suite mark "@tc-1=passed" -target="@tr-42"
 testform suite mark "checkout.case.feature.@tc-1=failed" -target="@tr-42"

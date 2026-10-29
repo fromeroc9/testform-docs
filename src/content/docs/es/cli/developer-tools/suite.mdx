@@ -1,4 +1,4 @@
-﻿---
+---
 title: "testform suite"
 ---
 
@@ -97,7 +97,7 @@ testform suite -link="@tr-42" -target="@tp-1"
 ---
 
 ### 3. `-mark="<identificador>=<estado>"` (Registrar Estado de Ejecución)
-Actualiza el resultado de ejecución (`passed`, `failed`, `pending`, `skipped`) de un caso en un `.run.feature`, sincronizando tanto el archivo local como los comentarios del proveedor remoto:
+Actualiza el resultado de ejecución (`passed`, `failed`, `pending`, `skipped`) de un caso en un `.run.feature`, sincronizando el archivo local y recalculando automáticamente el veredicto consolidado (*Rollup Verdict*) en el ledger de estado `testform.state`:
 
 ```bash
 testform suite -mark="@tc-1=passed" -target="@tr-42"
