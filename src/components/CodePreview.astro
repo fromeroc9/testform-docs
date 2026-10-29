@@ -77,9 +77,8 @@
       <pre><code><span class="tok-cmd">$ testform plan</span>
 <span class="tok-muted">testform used the selected providers to generate the execution plan:</span>
 
-<span class="tok-add"># [Gestión de Tareas en TodoMVC].testcase.@tc-e2e-001 will be created</span>
-<span class="tok-add">+ resource "testcase" "@tc-e2e-001"</span> {
-    <span class="tok-prop">+ feature</span> = <span class="tok-str">"Gestión de Tareas en TodoMVC"</span>
+<span class="tok-add"># github.testcase.todo.case.feature.@tc-e2e-001 will be created</span>
+<span class="tok-add">+ resource "github_testcase" "todo.case.feature.@tc-e2e-001"</span> {
     <span class="tok-prop">+ uri</span>     = <span class="tok-str">"features/todo.case.feature"</span>
     <span class="tok-prop">+ labels</span>  = [<span class="tok-str">"@testcase"</span>, <span class="tok-str">"@e2e"</span>, <span class="tok-str">"@smoke"</span>]
     <span class="tok-prop">+ title</span>   = <span class="tok-str">"Creación de una nueva tarea"</span>
@@ -94,8 +93,8 @@
       <pre><code><span class="tok-cmd">$ testform apply -auto-approve</span>
 <span class="tok-muted">Acquiring state lock on local:testform.state... [OK]</span>
 
-<span class="tok-muted">testcase.features/todo.case.feature.@tc-e2e-001: Creating...</span>
-<span class="tok-ok">testcase.features/todo.case.feature.@tc-e2e-001: Creation complete after 0.6s [id=PVTI_42]</span>
+<span class="tok-muted">github.testcase.todo.case.feature.@tc-e2e-001: Creating...</span>
+<span class="tok-ok">github.testcase.todo.case.feature.@tc-e2e-001: Creation complete after 0.6s [id=PVTI_42]</span>
 
 <span class="tok-ok">Apply complete! Resources: 1 added, 0 changed, 0 destroyed.</span>
 <span class="tok-hl">State lock released. Zero drift maintained.</span></code></pre>

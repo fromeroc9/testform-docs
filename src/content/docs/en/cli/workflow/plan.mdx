@@ -43,15 +43,15 @@ Resource actions are indicated with the following symbols:
 
 Testform will perform the following actions:
 
-  # login.case.feature.@tc-1 will be updated in-place
-  ~ resource "testcase" "login_valid" {
+  # github.testcase.login.case.feature.@tc-1 will be updated in-place
+  ~ resource "github_testcase" "login.case.feature.@tc-1" {
         id        = 104
       ~ labels    = ["login", "smoke"] -> ["login", "smoke", "high"]
       ~ milestone = "Sprint 41" -> "Sprint 42"
     }
 
-  # checkout.case.feature.@tc-3 will be created
-  + resource "testcase" "checkout_coupon" {
+  # github.testcase.checkout.case.feature.@tc-3 will be created
+  + resource "github_testcase" "checkout.case.feature.@tc-3" {
       + title     = "Apply valid promotional coupon"
       + labels    = ["checkout", "promotions"]
       + state     = "open"

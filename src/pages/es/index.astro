@@ -1239,9 +1239,8 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       plan: [
         '<span class="text-blue-400">$ testform plan</span>',
         '<span class="text-slate-400">testform used selected providers to generate the execution plan:</span>',
-        '<span class="text-blue-400 font-bold">  # [Gestión de Tareas en TodoMVC].testcase.@tc-001 will be created</span>',
-        '<span class="text-cyan-300">  + resource "testcase" "@tc-001" {</span>',
-        '<span class="text-cyan-300">      + feature = "Gestión de Tareas en TodoMVC"</span>',
+        '<span class="text-blue-400 font-bold">  # github.testcase.todo.case.feature.@tc-001 will be created</span>',
+        '<span class="text-cyan-300">  + resource "github_testcase" "todo.case.feature.@tc-001" {</span>',
         '<span class="text-cyan-300">      + uri     = "features/todo.case.feature"</span>',
         '<span class="text-cyan-300">      + labels  = ["@testcase", "@tc-001"]</span>',
         '<span class="text-cyan-300">      + title   = "Creación de una nueva tarea en TodoMVC"</span>',
@@ -1252,8 +1251,8 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       apply: [
         '<span class="text-blue-400">$ testform apply -auto-approve</span>',
         '<span class="text-slate-400">Acquiring state lock on local:testform.state... [OK]</span>',
-        '<span class="text-cyan-300">testcase.features/todo.case.feature.@tc-001: Creating...</span>',
-        '<span class="text-emerald-400">testcase.features/todo.case.feature.@tc-001: Creation complete after 0.6s [id=PVTI_lADO #14]</span>',
+        '<span class="text-cyan-300">github.testcase.todo.case.feature.@tc-001: Creating...</span>',
+        '<span class="text-emerald-400">github.testcase.todo.case.feature.@tc-001: Creation complete after 0.6s [id=PVTI_lADO #14]</span>',
         '<span class="text-slate-500">--------------------------------------------------</span>',
         '<span class="text-blue-400 font-bold">Apply complete! Resources: 1 added, 0 changed, 0 destroyed.</span>',
         '<span class="text-slate-400">State lock released. Zero drift maintained.</span>'
