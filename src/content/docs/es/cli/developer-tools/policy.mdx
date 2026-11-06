@@ -19,15 +19,16 @@ Ejecuta el comando sin opciones para ver la tabla completa:
 ```bash
 $ testform policy
 
-ID                              SCOPE                        TYPE      STATUS      DESCRIPTION
-──────────────────────────────  ───────────────────────────  ────────  ──────────  ──────────────────────────────
-duplicate-testruns-in-testplan  testplan                     system    enabled     Prevents duplicate testruns inside the same or across testplans
-identity-required               testcase, testrun, testplan  system    enabled     Enforces identity tags (@tc-X, @tr-X, @tp-X)
-identity-unique                 testcase, testrun, testplan  system    enabled     Verifies identity tag uniqueness within scope
-no-feature-tags                 testcase, testrun, testplan  system    enabled     Restricts non-standard tags at the Feature level
-required-fields                 testcase, testrun, testplan  system    enabled     Ensures required fields defined in configuration are present
-required-gherkin                testcase                     system    enabled     Validates required Gherkin structure and keywords (Given, When, Then)
-undeclared-fields               testcase                     system    enabled     Warns about scenario fields not declared in configuration
+ID                              SCOPE                             TYPE      STATUS      DESCRIPTION
+──────────────────────────────  ────────────────────────────────  ────────  ──────────  ──────────────────────────────
+bug-target-integrity            bug                               system    enabled     Ensures bug scenarios declare a target scenario, run, or failure trace
+duplicate-testruns-in-testplan  testplan                          system    enabled     Prevents duplicate testruns inside the same or across testplans
+identity-required               testcase, testrun, testplan, bug  system    enabled     Enforces identity tags (@tc-X, @tr-X, @tp-X, @bg-X)
+identity-unique                 testcase, testrun, testplan, bug  system    enabled     Verifies identity tag uniqueness within scope
+no-feature-tags                 testcase, testrun, testplan, bug  system    enabled     Restricts non-standard tags at the Feature level
+required-fields                 testcase, testrun, testplan, bug  system    enabled     Ensures required fields defined in configuration are present
+required-gherkin                testcase                          system    enabled     Validates required Gherkin structure and keywords (Given, When, Then)
+undeclared-fields               testcase, bug                     system    enabled     Warns about scenario fields not declared in configuration
 ```
 
 ## Opciones Disponibles
@@ -37,7 +38,8 @@ undeclared-fields               testcase                     system    enabled  
 | `--enable <id>` | Activa la política especificada y persiste el cambio en `main.yml`. |
 | `--disable <id>` | Desactiva la política especificada y persiste la exclusión en `main.yml`. |
 | `--show <id>` | Muestra la información detallada y reglas de una política específica. |
-| `-s, --scope <scope>` | Filtra las políticas por ámbito (`testcase`, `testrun`, `testplan`). |
+| `--scaffold <nombre>` | Genera una plantilla de política personalizada en `.testform/policies/<nombre>.ts`. |
+| `-s, --scope <scope>` | Filtra las políticas por ámbito (`testcase`, `testrun`, `testplan`, `bug`). |
 | `--json` | Emite la lista o detalle de políticas en formato JSON legible por máquinas. |
 | `-C, --chdir <dir>` | Cambia el directorio de trabajo antes de ejecutar el comando. |
 
@@ -77,6 +79,21 @@ $ testform policy --enable required-gherkin
 Success! Policy "required-gherkin" has been enabled.
 Updated configuration in main.yml
 ```
+
+---
+
+## Crear una Nueva Política (`--scaffold`)
+
+Genera automáticamente el archivo de política listo para editar en `.testform/policies/<nombre>.ts`:
+
+```bash
+$ testform policy --scaffold enforce-timeout
+
+Success! Created custom policy scaffold at:
+  .testform/policies/enforce-timeout.ts
+```
+
+El archivo generado contiene la estructura tipada lista con `PolicyDefinition`, `action` y contexto de evaluación.
 
 ---
 

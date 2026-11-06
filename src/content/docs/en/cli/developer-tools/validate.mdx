@@ -16,7 +16,12 @@ Validation runs locally and does **not** access remote APIs or verify credential
 | Option | Default | Description |
 | :--- | :--- | :--- |
 | `-target=target` | None | Targets a specific `.feature` file or resource for validation (e.g. `-target=tests/smoke.run.feature` or `-target="auth/login.case.feature.@tc-1"`). |
-| `-scope=scope` | `all` | Restricts validation to a given scope (`testcase`, `testrun`, `testplan`, or `all`). |
+| `-scope=scope` | `all` | Restricts validation to a given scope (`testcase`, `testrun`, `testplan`, `bug`, or `all`). |
+| `-include=pattern` | None | Includes only features or scenarios matching a glob or tag pattern (e.g. `-include="tests/checkout/**"`, `-include=smoke`). |
+| `-exclude=pattern` | None | Excludes features or scenarios matching a glob or tag pattern (e.g. `-exclude="tests/legacy/**"`, `-exclude=wip`). |
+| `-severity=level` | `error` | Minimum policy severity threshold (`error`, `warning`, `advisory`). |
+| `-strict` | `false` | Treats policy warnings as blocking errors. |
+| `-compact-warnings` | `false` | Shows a warning count summary instead of individual diagnostic details. |
 | `-json` | `false` | Emits validation diagnostics as a JSON object, ideal for CI linters and GitHub Checks. |
 | `-no-tests` | `false` | Skips running registered quality policies. |
 | `-test-directory=dir` | `tests` | Directory containing test feature files. |

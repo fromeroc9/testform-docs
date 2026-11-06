@@ -15,7 +15,12 @@ La validación se realiza a nivel estrictamente local y **no** realiza peticione
 | Opción | Por Defecto | Descripción |
 | :--- | :--- | :--- |
 | `-target=target` | Ninguno | Valida únicamente un archivo `.feature` o recurso específico (ej. `-target=tests/smoke.run.feature` o `-target="auth/login.case.feature.@tc-1"`). |
-| `-scope=scope` | `all` | Limita el alcance de validación a un scope específico (`testcase`, `testrun`, `testplan` o `all`). |
+| `-scope=scope` | `all` | Limita el alcance de validación a un scope específico (`testcase`, `testrun`, `testplan`, `bug` o `all`). |
+| `-include=pattern` | Ninguno | Incluye únicamente features o escenarios que coincidan con el glob o tag (ej. `-include="tests/checkout/**"`, `-include=smoke`). |
+| `-exclude=pattern` | Ninguno | Excluye features o escenarios que coincidan con el glob o tag (ej. `-exclude="tests/legacy/**"`, `-exclude=wip`). |
+| `-severity=level` | `error` | Nivel mínimo de severidad para evaluar (`error`, `warning`, `advisory`). |
+| `-strict` | `false` | Trata las advertencias (`warning`) de políticas como errores bloqueantes. |
+| `-compact-warnings` | `false` | Muestra el recuento de advertencias de forma compacta sin el detalle individual. |
 | `-json` | `false` | Emite diagnósticos en formato de objeto JSON, idóneo para linters de CI y Checks de GitHub. |
 | `-no-tests` | `false` | Omite la ejecución de las políticas de calidad registradas. |
 | `-test-directory=dir` | `tests` | Directorio que contiene los archivos de prueba. |
