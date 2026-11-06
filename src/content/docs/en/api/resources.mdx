@@ -24,14 +24,14 @@ A resource definition is cleanly separated into 3 decoupled areas:
 
 ```typescript
 export interface ResourceTemplate {
-  /** Unique resource type name (e.g., 'github_testcase', 'metergol', 'jira_issue') */
+  /** Unique resource type name (e.g., 'register-pokemon', 'github_testcase', 'jira_issue') */
   type: string;
 
   /**
    * Canonical attributes extracted from the Gherkin scenario.
-   * Dispatched directly to the provider's REST resource handler (post, patch, etc.).
+   * Dispatched directly to the provider's CRUD resource handler (create, update, etc.).
    */
-  attributes?: 
+  attributes: 
     | ((scenario: ParserScenario, context?: any) => Record<string, any>)
     | Record<string, ((scenario: ParserScenario, context?: any) => any) | any>;
 
@@ -45,10 +45,7 @@ export interface ResourceTemplate {
    */
   state?: Record<string, ((scenario: ParserScenario, context?: any) => any) | any>;
 
-  /** @deprecated Legacy dictionary mapping to provider.apis. Prefer attributes. */
-  api?: ResourceApiDefinition;
-
-  /** @deprecated Legacy list of flat fields. */
+  /** Optional list of flat fields or overrides. */
   fields?: ResourceField[];
 }
 ```
@@ -57,7 +54,7 @@ export interface ResourceTemplate {
 
 ## Lifecycle Hooks: `ResourceLifecycleHooks`
 
-Lifecycle hooks enable pre-validation, token acquisition, and seamless orchestration of arbitrary custom provider methods:
+Lifecycle hooks enable pre-validation, token acquisition, and seamless orchestration of arbitrary custom provider methods with access to the live `provider` instance:
 
 ```typescript
 export interface ResourceLifecycleHooks {
@@ -66,7 +63,7 @@ export interface ResourceLifecycleHooks {
 
   /**
    * Runs immediately after the resource is created by the provider.
-   * Injects the assigned remote ID and the live provider instance to call custom methods.
+   * Injects the assigned remote ID and the live provider instance to call custom methods (e.g., photo upload).
    */
   afterCreate?(args: { id: string | number; attributes: any; provider: any; scenario: ParserScenario; context: any }): Promise<void> | void;
 
@@ -86,43 +83,43 @@ export interface ResourceLifecycleHooks {
 
 ---
 
-## Full Example: Custom Resource (`metergol`)
+## Full Example: Custom Resource (`register-pokemon`)
 
-Consider a domain resource decoupled from issues or tickets, such as `metergol` (recording sports goals into a database and triggering video uploads via provider methods):
+Consider registering Pokémon into a **Pokédex**, including uploading the official photo via a custom method exposed on the provider:
 
 ```typescript
-// .testform/resources/metergol.ts
+// .testform/resources/pokemon.ts
 import { registerResource } from '@fromeroc9/testform@beta';
 
 export default {
-  type: 'metergol',
+  type: 'register-pokemon',
 
-  // 1. Attributes extracted from Gherkin scenario
+  // 1. Canonical attributes extracted from the Gherkin scenario
   attributes: (scenario, context) => ({
-    jugador: scenario.name,
-    minuto: scenario.custom?.fields?.minuto ?? 45,
-    equipo: scenario.custom?.fields?.equipo ?? 'Real Madrid',
-    esPenal: scenario.custom?.fields?.esPenal ?? false,
+    nombre: scenario.name,
+    tipo: scenario.custom?.fields?.tipo ?? 'Eléctrico',
+    nivel: scenario.custom?.fields?.nivel ?? 25,
+    foto: scenario.custom?.fields?.foto ?? 'https://img.pokemondb.net/sprites/home/normal/pikachu.png',
   }),
 
   // 2. Lifecycle orchestration & custom provider function execution
   lifecycle: {
     beforeCreate: async ({ attributes }) => {
-      if (attributes.minuto < 0 || attributes.minuto > 120) {
-        throw new Error(`Invalid minute: ${attributes.minuto}`);
+      if (attributes.nivel < 1 || attributes.nivel > 100) {
+        throw new Error(`Invalid Pokémon level: ${attributes.nivel}. Must be between 1 and 100.`);
       }
     },
     afterCreate: async ({ id, attributes, provider }) => {
       // Injects the live provider instance to call custom actions directly
-      if (provider.subirVideoGol) {
-        await provider.subirVideoGol(id, attributes.jugador);
+      if (provider.subirFotoPokemon) {
+        await provider.subirFotoPokemon(id, attributes.foto);
       }
     }
   },
 
   // 3. Internal state persisted in the cryptographic state ledger
   state: {
-    partidoId: () => 'final-champions-2026',
+    region: () => 'Kanto',
     registeredAt: () => new Date().toISOString()
   }
 };
@@ -147,7 +144,7 @@ registerResource({
   }),
   lifecycle: {
     afterCreate: async ({ id, provider }) => {
-      console.log(`Testcase #${id} successfully synchronized with provider`);
+      console.log(`Testcase #${id} successfully synchronized with ${provider.name}`);
     }
   }
 });
@@ -164,11 +161,11 @@ import { resource } from '@fromeroc9/testform@beta';
 
 // Inspect all registered types
 const types = resource.getRegisteredTypes();
-// ['github_testcase', 'github_testrun', 'testcase', 'metergol', ...]
+// ['github_testcase', 'github_testrun', 'testcase', 'register-pokemon', ...]
 
 // Evaluate canonical attributes
-const attrs = resource.evaluateAttributes('metergol', scenario);
+const attrs = resource.evaluateAttributes('register-pokemon', scenario);
 
 // Retrieve lifecycle hooks
-const lifecycle = resource.getLifecycle('metergol');
+const lifecycle = resource.getLifecycle('register-pokemon');
 ```

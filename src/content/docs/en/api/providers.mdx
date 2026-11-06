@@ -3,7 +3,7 @@ title: "Providers: IProvider Interface"
 description: "Programmatic API reference for authoring custom provider adapters in Testform."
 ---
 
-Providers in Testform are adapters that translate declarative test synchronization intentions into remote platforms (GitHub, GitLab, Jira, Zephyr, TestRail, REST microservices, or proprietary APIs).
+Providers in Testform are adapters that translate declarative test synchronization intentions into remote platforms (GitHub, GitLab, Jira, Zephyr, TestRail, REST microservices, or custom APIs like a Pokédex).
 
 Any custom provider must satisfy the `IProvider` interface contract.
 
@@ -11,61 +11,33 @@ Any custom provider must satisfy the `IProvider` interface contract.
 
 ## 1. The `IProvider` Interface Contract
 
-The `IProvider` interface supports two operational modes: **Agnostic Resource Mode** (`resources` with standard REST verbs and custom actions) and **Issue-Based Mode** (ticket-oriented).
+The `IProvider` interface is **100% pure and agnostic**: it does not enforce ticket or issue concepts or hardcoded platform methods. All transport and persistence behavior is delegated to its resource bus (`resources`):
 
 ```typescript
 export interface IProvider {
   name?: string;
 
   /**
-   * Map of resources managed by this provider (e.g., { metergol, testcase, project, defect }).
-   * Each handler exposes REST verbs (post, get, patch, put, delete), aliases, and custom RPC actions.
+   * Formats the human-readable remote identifier shown in terminal output and state ledger (.testform/state.json).
+   * Examples: '#105' (GitHub), 'GL#105' (GitLab), 'QA-402' (Jira), 'PK#25' (Pokedex), 'local:1'.
    */
-  resources?: Record<string, IProviderResourceHandler>;
+  formatRemoteId(id: number | string): string;
 
-  /** Backward-compatibility alias for `resources`. */
+  /**
+   * Map of resources managed by this provider (e.g., { 'register-pokemon', issue, testrun, defect }).
+   * Each handler exposes standard CRUD lifecycle methods (create, read, update, delete), REST aliases, and custom functions.
+   */
+  resources: Record<string, IProviderResourceHandler>;
+
+  /**
+   * Optional alias for `resources`.
+   */
   apis?: Record<string, IProviderResourceHandler>;
 
-  /** Formats the human-readable remote identifier shown in terminal output and state ledger (e.g., '#101', 'QA-402', 'gol-99') */
-  formatRemoteId(issueId: number | string): string;
-
-  /** Create an issue or test item in the remote platform (Issue-based mode) */
-  createIssue(payload: IProviderIssuePayload): Promise<IProviderIssueResult>;
-
-  /** Update an existing issue with modified attributes (Issue-based mode) */
-  updateIssue(
-    issueId: number | string,
-    payload: Partial<IProviderIssuePayload>
-  ): Promise<IProviderIssueResult>;
-
-  /** Close or archive an issue */
-  closeIssue(issueId: number | string): Promise<void>;
-
-  /** Get an issue by its ID or issue number */
-  getIssue(issueId: number | string): Promise<IProviderIssueResult | null>;
-
-  /** List issues filtered by label */
-  listIssuesByLabel(label: string): Promise<IProviderIssueResult[]>;
-
-  /** Lookup milestone ID by title */
-  getMilestoneByTitle(title: string): Promise<number | string | undefined>;
-
-  /** Link a child issue or sub-issue to a parent issue (optional) */
-  addSubIssue?(parentIssueId: number | string, subIssueId: number | string): Promise<void>;
-
-  /** Add issue to a Project / Board (optional) */
-  addToProject?(issueId: string | number): Promise<string | undefined>;
-
-  /** Update custom fields on a Project Item (optional) */
-  updateProjectItemFields?(
-    itemId: string,
-    customFields: Record<string, string>
-  ): Promise<void>;
-
-  /** Get custom fields of a Project Item (optional) */
-  getProjectItemFields?(
-    issueId: string | number
-  ): Promise<Record<string, string>>;
+  /**
+   * Arbitrary custom provider functions, SDK clients, and helper methods (e.g., subirFotoPokemon()).
+   */
+  [customProperty: string]: any;
 }
 ```
 
@@ -73,20 +45,21 @@ export interface IProvider {
 
 ## 2. Resource Handler: `IProviderResourceHandler`
 
-To handle any arbitrary domain entity or API (without being forced into issue semantics), the provider defines resource handlers exposing standard HTTP verbs, semantic aliases, and custom RPC methods:
+To handle any arbitrary domain entity or API (without being forced into issue semantics), the provider defines resource handlers exposing standard CRUD lifecycle methods (matching Terraform parity), REST aliases, and custom RPC methods:
 
 ```typescript
 export interface IProviderResourceHandler<TAttrs = any, TResult = any> {
-  // ─── Standard HTTP Lifecycle Verbs ───
+  // ─── Standard CRUD Lifecycle Methods (Primary Standard / Terraform Parity) ───
+  create?(attributes: TAttrs, context?: any): Promise<TResult>;
+  read?(id: string | number, context?: any): Promise<TResult | null>;
+  update?(id: string | number, attributes: Partial<TAttrs>, context?: any): Promise<TResult>;
+  delete?(id: string | number, context?: any): Promise<void>;
+
+  // ─── Optional REST Aliases ───
   post?(attributes: TAttrs, context?: any): Promise<TResult>;
   get?(id: string | number, context?: any): Promise<TResult | null>;
   patch?(id: string | number, attributes: Partial<TAttrs>, context?: any): Promise<TResult>;
   put?(id: string | number, attributes: TAttrs, context?: any): Promise<TResult>;
-  delete?(id: string | number, context?: any): Promise<void>;
-
-  // ─── Semantic Aliases ───
-  create?(data: TAttrs, context?: any): Promise<TResult>;
-  update?(id: string | number, data: TAttrs, context?: any): Promise<TResult>;
 
   // ─── Arbitrary Custom Actions & RPC Methods ───
   [customAction: string]: ((...args: any[]) => Promise<any>) | undefined;
@@ -95,22 +68,22 @@ export interface IProviderResourceHandler<TAttrs = any, TResult = any> {
 
 ---
 
-## 3. Full Example: Sports Tracker Provider (`metergol`)
+## 3. Full Example: Pokédex Provider (`register-pokemon` with Photo)
 
-Below is an agnostic provider that implements the `metergol` resource with REST verbs and a custom `subirVideoGol` method:
+Below is an agnostic provider that implements the `register-pokemon` resource with standard CRUD methods and a custom `subirFotoPokemon` method:
 
 ```typescript
-// ./custom-providers/sports-provider.ts
+// ./custom-providers/pokedex-provider.ts
 import { IProvider, IProviderResourceHandler } from '@fromeroc9/testform@beta';
 
-export default class SportsProvider implements IProvider {
-  public name = 'sports';
+export default class PokedexProvider implements IProvider {
+  public name = 'pokedex';
 
-  // 1. Agnostic resource handler for 'metergol'
+  // 1. Agnostic resource handler for 'register-pokemon'
   public resources: Record<string, IProviderResourceHandler> = {
-    metergol: {
-      post: async (attrs: any, context?: any) => {
-        const res = await fetch('https://api.sports.com/v1/goals', {
+    'register-pokemon': {
+      create: async (attrs: any, context?: any) => {
+        const res = await fetch('https://pokeapi.co/api/v2/pokemon', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(attrs)
@@ -118,87 +91,99 @@ export default class SportsProvider implements IProvider {
         const data = await res.json();
         return { id: data.id, number: data.id };
       },
-      get: async (id: number | string) => {
-        const res = await fetch(`https://api.sports.com/v1/goals/${id}`);
+      read: async (id: number | string) => {
+        const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
         return res.ok ? await res.json() : null;
       },
+      update: async (id: number | string, attrs: any) => {
+        const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(attrs)
+        });
+        return await res.json();
+      },
       delete: async (id: number | string) => {
-        await fetch(`https://api.sports.com/v1/goals/${id}`, { method: 'DELETE' });
+        await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`, { method: 'DELETE' });
       }
     }
   };
 
-  /** Backward compatibility getter */
-  public get apis() {
-    return this.resources;
-  }
-
   // 2. Custom method called directly from Resource.lifecycle.afterCreate
-  public async subirVideoGol(golId: string | number, jugador: string): Promise<void> {
-    console.log(`Uploading video for goal ${golId} scored by ${jugador}...`);
-    // S3 upload or video encoding service call
+  public async subirFotoPokemon(pokemonId: string | number, fotoUrl: string): Promise<void> {
+    console.log(`Uploading photo for Pokémon #${pokemonId} from ${fotoUrl}...`);
+    // S3 upload or asset storage call
   }
 
   formatRemoteId(id: number | string): string {
-    return `GOL#${id}`;
+    return `PK#${id}`;
   }
-
-  // Issue fallback stubs if tickets are not used
-  async createIssue(payload: any) { return { id: 1, number: 1, title: payload.title, state: 'open' }; }
-  async updateIssue(id: any, payload: any) { return { id, number: Number(id), title: payload.title || '', state: 'open' }; }
-  async closeIssue(id: any) {}
-  async getIssue(id: any) { return null; }
-  async listIssuesByLabel(label: string) { return []; }
-  async getMilestoneByTitle(title: string) { return undefined; }
 }
 ```
 
 ---
 
-## 4. Issue-Based Mode
+## 4. Multi-Resource Providers
 
-For issue trackers (GitLab Issues, Jira, Azure DevOps Boards):
+When a provider manages different types of entities (e.g., test cases `issue`, test runs `testrun`, or defects `defect`), each resource is declared as an independent handler inside the `resources` object:
 
 ```typescript
 // ./custom-providers/jira.ts
-import { IProvider, IProviderIssuePayload, IProviderIssueResult, IProviderResourceHandler } from '@fromeroc9/testform@beta';
+import { IProvider, IProviderResourceHandler } from '@fromeroc9/testform@beta';
 
 export default class JiraProvider implements IProvider {
   public name = 'jira';
 
   public resources: Record<string, IProviderResourceHandler> = {
+    // 1. Handler for test cases / issues
     issue: {
-      post: async (payload: IProviderIssuePayload) => this.createIssue(payload),
-      get: async (id: number | string) => this.getIssue(id),
-      patch: async (id: number | string, data: any) => this.updateIssue(id, data),
-      delete: async (id: number | string) => this.closeIssue(id)
+      create: async (attrs: any) => {
+        const res = await fetch(`https://company.atlassian.net/rest/api/3/issue`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${process.env.JIRA_TOKEN}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fields: { summary: attrs.title, description: attrs.body } })
+        });
+        const data = await res.json();
+        return { id: data.id, number: parseInt(data.key.split('-')[1], 10), title: attrs.title, state: 'open' };
+      },
+      read: async (id: number | string) => {
+        const res = await fetch(`https://company.atlassian.net/rest/api/3/issue/${id}`);
+        return res.ok ? await res.json() : null;
+      },
+      update: async (id: number | string, attrs: any) => {
+        const res = await fetch(`https://company.atlassian.net/rest/api/3/issue/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(attrs)
+        });
+        return await res.json();
+      },
+      delete: async (id: number | string) => {
+        await fetch(`https://company.atlassian.net/rest/api/3/issue/${id}`, { method: 'DELETE' });
+      }
+    },
+
+    // 2. Handler for test executions (Test Runs)
+    testrun: {
+      create: async (attrs: any) => {
+        // Persistence logic in Jira / Xray / Zephyr
+        return { id: `TR-${Date.now()}`, number: 1 };
+      },
+      read: async (id: number | string) => {
+        return null;
+      },
+      update: async (id: number | string, attrs: any) => {
+        return { id, number: Number(id) };
+      },
+      delete: async (id: number | string) => {
+        // Deletion in Jira / Xray
+      }
     }
   };
-
-  public get apis() { return this.resources; }
 
   formatRemoteId(id: number | string): string {
     return `JIRA-${id}`;
   }
-
-  async createIssue(payload: IProviderIssuePayload): Promise<IProviderIssueResult> {
-    const res = await fetch(`https://company.atlassian.net/rest/api/3/issue`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${process.env.JIRA_TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fields: { summary: payload.title, description: payload.body } })
-    });
-    const data = await res.json();
-    return { id: data.id, number: parseInt(data.key.split('-')[1], 10), title: payload.title, state: 'open' };
-  }
-
-  async updateIssue(id: number | string, payload: Partial<IProviderIssuePayload>): Promise<IProviderIssueResult> {
-    return { id, number: Number(id), title: payload.title || '', state: 'open' };
-  }
-
-  async closeIssue(id: number | string): Promise<void> {}
-  async getIssue(id: number | string): Promise<IProviderIssueResult | null> { return null; }
-  async listIssuesByLabel(label: string): Promise<IProviderIssueResult[]> { return []; }
-  async getMilestoneByTitle(title: string): Promise<number | string | undefined> { return undefined; }
 }
 ```
 
@@ -212,24 +197,24 @@ With strict Terraform parity, providers must be declared in `testform.required_p
 testform:
   required_version: ">= 1.0.0"
   required_providers:
-    sports: "./custom-providers/sports-provider.ts"
+    pokedex: "./custom-providers/pokedex-provider.ts"
     jira: "git::https://gitlab.company.com/qa/providers.git//jira.ts?ref=v1.2.0"
 
 provider:
-  sports:
-    api_url: "https://api.sports.com"
+  pokedex:
+    api_url: "https://pokeapi.co/api/v2"
 ```
 
 ---
 
 ## 6. Scaffolding with the CLI (`testform providers scaffold`)
 
-To generate a new provider template preconfigured with REST verbs:
+To generate a new provider template preconfigured with CRUD methods:
 
 ```bash
 # 1. Single TypeScript file:
-testform providers scaffold sports
+testform providers scaffold pokedex
 
 # 2. Complete Git/npm project with Vitest and TypeScript:
-testform providers scaffold sports --project
+testform providers scaffold pokedex --project
 ```

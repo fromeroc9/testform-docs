@@ -423,14 +423,14 @@ El motor de `testform apply` detecta si el provider implementa `resources[resour
 A diferencia de Terraform (donde el Provider y los Recursos vienen rígidamente acoplados en el mismo paquete binario), **Testform utiliza una Arquitectura Desacoplada (Decoupled Architecture)**:
 
 1. **El Recurso (`Resource` / `Custom Resource`)**: Modela el dominio BDD / Gherkin (escenarios, tags, pasos) y define:
-   - **`attributes`**: Los datos canónicos extraídos del escenario que se enviarán a `provider.resources[type].post(attributes)`.
-   - **`lifecycle`**: Hooks (`beforeCreate`, `afterCreate`, `beforeUpdate`, `afterUpdate`, `beforeDelete`, `afterDelete`) que reciben la instancia viva de `provider` para invocar métodos personalizados arbitrarios (ej. subir videos, sincronizar con el VAR, notificar a Slack).
+   - **`attributes`**: Los datos canónicos extraídos del escenario que se enviarán a `provider.resources[type].create(attributes)`.
+   - **`lifecycle`**: Hooks (`beforeCreate`, `afterCreate`, `beforeUpdate`, `afterUpdate`, `beforeDelete`, `afterDelete`) que reciben la instancia viva de `provider` para invocar métodos personalizados arbitrarios (ej. subir fotos oficiales, registrar en bases de datos o notificar).
 2. **El Proveedor (`Provider`)**: Modela el canal de transporte y protocolo (HTTP REST, GraphQL, DB, Kafka) y define:
-   - **`resources`**: Manejadores con verbos REST (`post`, `get`, `patch`, `put`, `delete`).
+   - **`resources`**: Manejadores con operaciones CRUD estándar (`create`, `read`, `update`, `delete`).
    - Métodos o funciones personalizadas adicionales expuestas en la clase del proveedor.
 3. **El Motor (`Engine Dispatcher`)**: Hace de puente automático:
    - Ejecuta `lifecycle.beforeCreate`.
-   - Envía los `attributes` a `resources[tipo].post(attributes)`.
+   - Envía los `attributes` a `resources[tipo].create(attributes)`.
    - Ejecuta `lifecycle.afterCreate({ id, attributes, provider })`.
 
 #### Diagrama de Conexión
@@ -443,29 +443,30 @@ A diferencia de Terraform (donde el Provider y los Recursos vienen rígidamente 
 │           │                                                    │
 │           ▼                                                    │
 │  2. Resource Template (Built-in o Custom)                     │
-│     attributes: (scenario, ctx) => ({ jugador, minuto, ... })  │
+│     attributes: (scenario, ctx) => ({ nombre, tipo, foto })    │
 │     lifecycle: {                                               │
 │        beforeCreate: async ({ attributes }) => { ... },        │
 │        afterCreate: async ({ id, attributes, provider }) => {   │
-│           await provider.subirVideoGol(id, attributes.jugador);│
+│           await provider.subirFotoPokemon(id, attributes.foto);│
 │        }                                                       │
 │     }                                                          │
 │           │                                                    │
 │           │ evaluateAttributes() -> atributos canónicos        │
 │           ▼                                                    │
 │  3. Engine Dispatcher (apply / destroy)                        │
-│     Despacha a provider.resources[tipo].post(attributes)       │
+│     Despacha a provider.resources[tipo].create(attributes)     │
 │           │                                                    │
 │           ▼                                                    │
-│  4. Agnostic Provider                                          │
+│  4. Agnostic Provider (PokedexProvider)                        │
 │     resources: {                                               │
-│        metergol: {                                             │
-│           post: async (attrs, ctx) => result,                  │
-│           patch: async (id, attrs, ctx) => result,             │
+│        'register-pokemon': {                                   │
+│           create: async (attrs, ctx) => result,                │
+│           read:   async (id, ctx) => result,                   │
+│           update: async (id, attrs, ctx) => result,            │
 │           delete: async (id, ctx) => void                      │
 │        }                                                       │
 │     }                                                          │
-│     subirVideoGol(golId, jugador): async () => { ... }         │
+│     subirFotoPokemon(id, fotoUrl): async () => { ... }         │
 │           │                                                    │
 │           ▼                                                    │
 │  5. State Ledger (.testform/state.json)                       │
@@ -473,75 +474,82 @@ A diferencia de Terraform (donde el Provider y los Recursos vienen rígidamente 
 └────────────────────────────────────────────────────────────────┘
 ```
 
-#### Ejemplo Práctico: Conexión Paso a Paso (`metergol`)
+#### Ejemplo Práctico: Conexión Paso a Paso (`register-pokemon`)
 
-**Paso 1: Tu Recurso emite los atributos y define el ciclo de vida (`.testform/resources/metergol.ts`)**
+**Paso 1: Tu Recurso emite los atributos y define el ciclo de vida (`.testform/resources/pokemon.ts`)**
 ```typescript
 import { registerResource } from '@fromeroc9/testform@beta';
 
 export default function() {
   registerResource({
-    type: 'metergol',
+    type: 'register-pokemon',
     attributes: (scenario) => ({
-      jugador: scenario.name,
-      minuto: scenario.custom?.fields?.minuto ?? 90,
-      equipo: scenario.custom?.fields?.equipo ?? 'Local',
-      esPenal: scenario.custom?.fields?.esPenal ?? false
+      nombre: scenario.name,
+      tipo: scenario.custom?.fields?.tipo ?? 'Eléctrico',
+      nivel: scenario.custom?.fields?.nivel ?? 25,
+      foto: scenario.custom?.fields?.foto ?? 'https://img.pokemondb.net/sprites/home/normal/pikachu.png'
     }),
     lifecycle: {
       afterCreate: async ({ id, attributes, provider }) => {
         // Llama a la función personalizada del provider directamente
-        if (provider.subirVideoGol) {
-          await provider.subirVideoGol(id, attributes.jugador);
+        if (provider.subirFotoPokemon) {
+          await provider.subirFotoPokemon(id, attributes.foto);
         }
       }
     },
     state: {
-      torneo: () => 'Champions League 2026'
+      region: () => 'Kanto'
     }
   });
 }
 ```
 
-**Paso 2: Tu Provider implementa el manejador del recurso y sus funciones personalizadas (`custom-providers/sports.ts`)**
+**Paso 2: Tu Provider implementa el manejador del recurso y sus funciones personalizadas (`custom-providers/pokedex.ts`)**
 ```typescript
-export default class SportsProvider {
-  public name = 'sports';
+export default class PokedexProvider {
+  public name = 'pokedex';
 
   public resources = {
-    metergol: {
-      post: async (attrs: any) => {
-        const res = await fetch('https://api.deportes.com/v1/goles', {
+    'register-pokemon': {
+      create: async (attrs: any) => {
+        const res = await fetch('https://pokeapi.co/api/v2/pokemon', {
           method: 'POST',
           body: JSON.stringify(attrs)
         });
         const json = await res.json();
-        return { id: json.gol_id, number: json.gol_id };
+        return { id: json.id, number: json.id };
+      },
+      read: async (id: any) => {
+        return await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`).then(r => r.json());
+      },
+      update: async (id: any, attrs: any) => {
+        return await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(attrs)
+        }).then(r => r.json());
       },
       delete: async (id: any) => {
-        await fetch(`https://api.deportes.com/v1/goles/${id}`, { method: 'DELETE' });
+        await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`, { method: 'DELETE' });
       }
     }
   };
 
-  public get apis() { return this.resources; }
-
-  // Función custom consumida por el recurso en afterCreate
-  public async subirVideoGol(golId: string | number, jugador: string) {
-    console.log(`Subiendo video del gol #${golId} de ${jugador}...`);
+  // Función custom consumida por el recurso en afterCreate para subir la foto
+  public async subirFotoPokemon(pokemonId: string | number, fotoUrl: string) {
+    console.log(`Subiendo foto del Pokémon #${pokemonId} desde ${fotoUrl}...`);
   }
 
   formatRemoteId(id: string | number) {
-    return `GOL-${id}`;
+    return `PK#${id}`;
   }
 }
 ```
 
 **Paso 3: El Engine ejecuta el ciclo de vida sin fricción intermedia**
-- En `testform apply (add)`: El engine ejecuta `beforeCreate`, luego `resources.metergol.post(attributes)`, y finalmente `afterCreate` que invoca `provider.subirVideoGol()`.
-- En `testform apply (change)`: Llama a `beforeUpdate`, `resources.metergol.patch(remoteId, attributes)` y `afterUpdate`.
-- En `testform destroy`: Llama a `beforeDelete`, `resources.metergol.delete(remoteId)` y `afterDelete`.
-- En el `state.json`: Queda registrado como `[id=GOL-99]` gracias a `formatRemoteId`.
+- En `testform apply (add)`: El engine ejecuta `beforeCreate`, luego `resources['register-pokemon'].create(attributes)`, y finalmente `afterCreate` que invoca `provider.subirFotoPokemon()`.
+- En `testform apply (change)`: Llama a `beforeUpdate`, `resources['register-pokemon'].update(remoteId, attributes)` y `afterUpdate`.
+- En `testform destroy`: Llama a `beforeDelete`, `resources['register-pokemon'].delete(remoteId)` y `afterDelete`.
+- En el `state.json`: Queda registrado como `[id=PK#25]` gracias a `formatRemoteId`.
 
 ---
 

@@ -3,7 +3,7 @@ title: "Recursos: registerResource"
 description: "Referencia de la API programática para definir atributos, hooks de ciclo de vida y estado de recursos en Testform."
 ---
 
-El módulo de recursos define cómo se traducen los escenarios Gherkin (`Scenario:`) en atributos canónicos (`attributes`), hooks de ciclo de vida (`lifecycle`) y estado interno (`state`) para proveedores de pruebas y plataformas remotas (GitHub, GitLab, Jira, TestRail, bases de datos o APIs personalizadas).
+El módulo de recursos define cómo se traducen los escenarios Gherkin (`Scenario:`) en atributos canónicos (`attributes`), hooks de ciclo de vida (`lifecycle`) y estado interno (`state`) para proveedores y plataformas externas (GitHub, GitLab, Jira, TestRail, bases de datos o servicios propietarios).
 
 ---
 
@@ -20,18 +20,18 @@ function registerResource(template: ResourceTemplate): void;
 
 ## Estructura de `ResourceTemplate`
 
-Un recurso se compone de 3 secciones limpias y desacopladas:
+Un recurso se compone de 3 áreas limpias y desacopladas:
 
 ```typescript
 export interface ResourceTemplate {
-  /** Tipo único del recurso (ej. 'github_testcase', 'metergol', 'jira_issue') */
+  /** Tipo único del recurso (ej. 'register-pokemon', 'github_testcase', 'jira_issue') */
   type: string;
 
   /**
    * Atributos canónicos extraídos del escenario Gherkin.
-   * Se envían directamente al manejador REST del provider (post, patch, etc.).
+   * Se envían directamente al manejador CRUD del provider (create, update, etc.).
    */
-  attributes?: 
+  attributes: 
     | ((scenario: ParserScenario, context?: any) => Record<string, any>)
     | Record<string, ((scenario: ParserScenario, context?: any) => any) | any>;
 
@@ -46,10 +46,7 @@ export interface ResourceTemplate {
    */
   state?: Record<string, ((scenario: ParserScenario, context?: any) => any) | any>;
 
-  /** @deprecated Diccionario heredado de mapeo hacia provider.apis. Prefiera attributes. */
-  api?: ResourceApiDefinition;
-
-  /** @deprecated Lista heredada de campos planos. */
+  /** Lista opcional de campos planos o sobreescrituras. */
   fields?: ResourceField[];
 }
 ```
@@ -58,7 +55,7 @@ export interface ResourceTemplate {
 
 ## Hooks de Ciclo de Vida: `ResourceLifecycleHooks`
 
-Los hooks de ciclo de vida permiten ejecutar validaciones y coordinar llamadas a funciones personalizadas del proveedor:
+Los hooks de ciclo de vida permiten ejecutar pre-validaciones, tokens y coordinar llamadas a funciones personalizadas del proveedor con acceso a la instancia viva de `provider`:
 
 ```typescript
 export interface ResourceLifecycleHooks {
@@ -67,7 +64,7 @@ export interface ResourceLifecycleHooks {
 
   /**
    * Se ejecuta inmediatamente tras crear el recurso en el proveedor.
-   * Recibe el ID remoto y la instancia viva del provider para ejecutar métodos custom.
+   * Recibe el ID remoto generado y la instancia viva del provider para ejecutar métodos personalizados (ej. subir fotos).
    */
   afterCreate?(args: { id: string | number; attributes: any; provider: any; scenario: ParserScenario; context: any }): Promise<void> | void;
 
@@ -87,44 +84,44 @@ export interface ResourceLifecycleHooks {
 
 ---
 
-## Ejemplo Completo: Recurso Personalizado (`metergol`)
+## Ejemplo Completo: Recurso Personalizado (`register-pokemon`)
 
-Imaginemos un recurso completamente agnóstico a tickets, como `metergol`, que registra goles en un sistema deportivo y sube videos mediante una función personalizada del proveedor:
+Imaginemos un recurso para registrar criaturas en una **Pokédex**, incluyendo la subida de la fotografía oficial del Pokémon mediante un método personalizado del proveedor:
 
 ```typescript
-// .testform/resources/metergol.ts
+// .testform/resources/pokemon.ts
 import { registerResource } from '@fromeroc9/testform@beta';
 
 export default {
-  type: 'metergol',
+  type: 'register-pokemon',
 
-  // 1. Atributos extraídos del escenario Gherkin
+  // 1. Atributos canónicos extraídos del escenario Gherkin
   attributes: (scenario, context) => ({
-    jugador: scenario.name,
-    minuto: scenario.custom?.fields?.minuto ?? 45,
-    equipo: scenario.custom?.fields?.equipo ?? 'Real Madrid',
-    esPenal: scenario.custom?.fields?.esPenal ?? false,
+    nombre: scenario.name,
+    tipo: scenario.custom?.fields?.tipo ?? 'Eléctrico',
+    nivel: scenario.custom?.fields?.nivel ?? 25,
+    foto: scenario.custom?.fields?.foto ?? 'https://img.pokemondb.net/sprites/home/normal/pikachu.png',
   }),
 
-  // 2. Orquestación del ciclo de vida y llamadas personalizadas
+  // 2. Orquestación del ciclo de vida y llamada a función personalizada
   lifecycle: {
     beforeCreate: async ({ attributes }) => {
-      if (attributes.minuto < 0 || attributes.minuto > 120) {
-        throw new Error(`Minuto inválido: ${attributes.minuto}`);
+      if (attributes.nivel < 1 || attributes.nivel > 100) {
+        throw new Error(`Nivel de Pokémon inválido: ${attributes.nivel}. Debe estar entre 1 y 100.`);
       }
     },
     afterCreate: async ({ id, attributes, provider }) => {
-      // Invocación directa de métodos custom expuestos en el proveedor
-      if (provider.subirVideoGol) {
-        await provider.subirVideoGol(id, attributes.jugador);
+      // Invocación directa del método custom expuesto en el proveedor Pokedex
+      if (provider.subirFotoPokemon) {
+        await provider.subirFotoPokemon(id, attributes.foto);
       }
     }
   },
 
-  // 3. Datos persistidos en el ledger de estado local
+  // 3. Atributos internos guardados en el estado local (.testform/state.json)
   state: {
-    partidoId: () => 'final-champions-2026',
-    registradoEn: () => new Date().toISOString()
+    region: () => 'Kanto',
+    capturadoEn: () => new Date().toISOString()
   }
 };
 ```
@@ -133,7 +130,7 @@ export default {
 
 ## Sobreescribir Recursos Existentes
 
-Puede sobreescribir cualquier recurso existente (como `github_testcase`) para personalizar atributos o agregar hooks:
+Puede sobreescribir cualquier recurso existente (como `github_testcase`) para personalizar atributos o añadir hooks:
 
 ```typescript
 // .testform/resources/custom-testcase.ts
@@ -148,7 +145,7 @@ registerResource({
   }),
   lifecycle: {
     afterCreate: async ({ id, provider }) => {
-      console.log(`Testcase #${id} sincronizado exitosamente con el proveedor`);
+      console.log(`Testcase #${id} sincronizado exitosamente con ${provider.name}`);
     }
   }
 });
@@ -165,11 +162,11 @@ import { resource } from '@fromeroc9/testform@beta';
 
 // Consultar todos los tipos registrados
 const types = resource.getRegisteredTypes();
-// ['github_testcase', 'github_testrun', 'testcase', 'metergol', ...]
+// ['github_testcase', 'github_testrun', 'testcase', 'register-pokemon', ...]
 
 // Evaluar atributos de un recurso
-const attrs = resource.evaluateAttributes('metergol', scenario);
+const attrs = resource.evaluateAttributes('register-pokemon', scenario);
 
 // Obtener hooks de ciclo de vida
-const lifecycle = resource.getLifecycle('metergol');
+const lifecycle = resource.getLifecycle('register-pokemon');
 ```

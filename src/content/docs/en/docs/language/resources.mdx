@@ -97,32 +97,34 @@ registerResource({
 
 ## 3. Registering Custom Resources & Providers
 
-To connect Testform to external platforms (Jira, TestRail, Zephyr, databases, or proprietary domain resources such as `metergol`), register new resources mapping their canonical attributes to the provider's resource handlers:
+To connect Testform to external platforms (Jira, TestRail, Zephyr, databases, or proprietary domain resources such as a `pokedex`), register new resources mapping their canonical attributes to the provider's resource handlers:
 
 ```typescript
 import { registerResource } from '@fromeroc9/testform@beta';
 
 registerResource({
-    type: 'metergol',
+    type: 'register-pokemon',
     attributes: (s) => ({
-        jugador: s.name,
-        minuto: s.custom?.fields?.minuto ?? 90,
-        equipo: s.custom?.fields?.equipo ?? 'Local',
-        esPenal: s.custom?.fields?.esPenal ?? false
+        nombre: s.name,
+        tipo: s.custom?.fields?.tipo ?? 'Eléctrico',
+        nivel: s.custom?.fields?.nivel ?? 25,
+        foto: s.custom?.fields?.foto ?? 'https://img.pokemondb.net/sprites/home/normal/pikachu.png'
     }),
     lifecycle: {
         beforeCreate: async ({ attributes }) => {
-            if (attributes.minuto < 0) throw new Error('Invalid minute');
+            if (attributes.nivel < 1 || attributes.nivel > 100) {
+                throw new Error('Pokémon level must be between 1 and 100');
+            }
         },
         afterCreate: async ({ id, attributes, provider }) => {
             // Direct invocation of custom actions exposed on the live provider instance
-            if (provider.subirVideoGol) {
-                await provider.subirVideoGol(id, attributes.jugador);
+            if (provider.subirFotoPokemon) {
+                await provider.subirFotoPokemon(id, attributes.foto);
             }
         }
     },
     state: {
-        tournament: () => 'Champions League 2026'
+        region: () => 'Kanto'
     }
 });
 ```
