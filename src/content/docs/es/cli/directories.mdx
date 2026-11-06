@@ -16,23 +16,36 @@ Al igual que HashiCorp Terraform utiliza `.terraform` y `~/.terraform.d`, **Test
 mi-proyecto/
 ├── main.yml
 ├── testform.state
+├── .testform.lock.hcl         # Lockfile criptográfico de proveedores (hashes h1: y versiones fijadas)
 └── .testform/
-    ├── environment                # Nombre del workspace actualmente seleccionado
-    ├── cache/                     # Archivos autogenerados y temporales del motor
-    │   ├── backend.json           # Configuración del backend activo inicializado (testform init)
-    │   ├── lock.json              # Lock file de dependencias y checksums de providers
-    │   └── data.json              # Base de datos simulada del proveedor local
-    ├── modules/                   # Módulos remotos descargados desde repositorios Git
+    ├── environment            # Nombre del workspace actualmente seleccionado
+    ├── cache/                 # Archivos autogenerados y temporales del motor
+    │   ├── backend.json       # Configuración del backend activo inicializado (testform init)
+    │   ├── lock.json          # Lock file de dependencias y checksums de providers
+    │   └── data.json          # Base de datos simulada del proveedor local
+    ├── providers/             # Plugins de proveedores descargados e instalados (testform init)
+    │   └── <nombre_proveedor>/
+    │       ├── index.js / provider.ts
+    │       └── package.json
+    ├── modules/               # Módulos remotos descargados desde repositorios Git
     │   └── <nombre_modulo>/
     │       ├── main.yml
-    │       ├── policies/          # Políticas heredadas del módulo compartido
-    │       └── resources/         # Plantillas de recursos del módulo compartido
-    ├── policies/                  # Políticas de validación personalizadas locales (.ts, .js)
-    ├── resources/                 # Plantillas de recursos personalizadas locales (.ts, .js)
-    ├── reports/                   # Extensiones de reportes (.ts), formatos (.format.ts) y plantillas (.docx, .xlsx)
-    ├── backends/                  # Drivers de backends personalizados locales
-    └── ephemeral/                 # Metadatos de sandboxes efímeros activos (testform ephemeral)
+    │       ├── policies/      # Políticas heredadas del módulo compartido
+    │       └── resources/     # Plantillas de recursos del módulo compartido
+    ├── policies/              # Políticas de validación personalizadas locales (.ts, .js)
+    ├── resources/             # Plantillas de recursos personalizadas locales (.ts, .js)
+    ├── reports/               # Extensiones de reportes (.ts), formatos (.format.ts) y plantillas (.docx, .xlsx)
+    ├── backends/              # Drivers de backends personalizados locales
+    └── ephemeral/             # Metadatos de sandboxes efímeros activos (testform ephemeral)
 ```
+
+---
+
+## Componentes y Archivos en la Raíz del Proyecto
+
+### `.testform.lock.hcl`
+- **Cuándo se genera:** Durante `testform init` al resolver `testform.required_providers`.
+- **Propósito:** Registra las versiones exactas y los hashes criptográficos SHA-256 (`h1:<base64>`) de cada proveedor descargado. Garantiza compilaciones deterministas e idénticas en todas las máquinas del equipo y en pipelines de CI/CD.
 
 ---
 
@@ -47,7 +60,11 @@ mi-proyecto/
 - **Cuándo se genera:** Al gestionar espacios de trabajo mediante `testform workspace new <nombre>` o `testform workspace select <nombre>`.
 - **Propósito:** Archivo de texto plano de una sola línea que indica cuál es el workspace activo del directorio actual (por ejemplo: `staging` o `production`). Si no existe, Testform opera en el workspace por defecto (`default`).
 
-### 3. `modules/`
+### 3. `providers/`
+- **Cuándo se genera:** Durante `testform init` cuando `main.yml` declara fuentes en `testform.required_providers`.
+- **Propósito:** Directorio exclusivo donde Testform descarga y aloja los plugins ejecutables de cada proveedor (desde Git subpaths, repositorios completos o paquetes npm). El cargador dinámico de Testform (`src/providers/loader.ts`) ejecuta el código desde aquí.
+
+### 4. `modules/`
 - **Cuándo se genera:** Durante `testform init`, cuando `main.yml` declara módulos con fuentes remotas (`git::https://...`).
 - **Propósito:** Almacena copias locales congeladas de los módulos de prueba. Permite que las ejecuciones posteriores de `testform plan` y `testform apply` funcionen de forma determinista y sin depender de conexión constante a la red o a servidores de control de versiones.
 

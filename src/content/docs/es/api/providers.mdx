@@ -3,20 +3,36 @@ title: "Proveedores: Interfaz IProvider"
 description: "Referencia de la API programática para desarrollar adaptadores de integración de proveedores en Testform."
 ---
 
-Los proveedores (*Providers*) en Testform son adaptadores que traducen las intenciones de sincronización de pruebas hacia plataformas remotas (GitHub, GitLab, Jira, TestRail o APIs internas).
+Los proveedores (*Providers*) en Testform son adaptadores que traducen las intenciones de sincronización de pruebas declarativas hacia plataformas remotas (GitHub, GitLab, Jira, Zephyr, TestRail, microservicios REST o APIs propietarias).
 
 Cualquier proveedor personalizado debe satisfacer el contrato de interfaz `IProvider`.
 
 ---
 
- Contrato de la Interfaz `IProvider`
+## 1. Contrato de la Interfaz `IProvider`
+
+La interfaz `IProvider` expone dos modalidades operativas: **Modo Agnostico de Recursos** (`resources` con verbos REST y funciones custom) y **Modo Basado en Incidencias** (orientado a tickets/issues).
 
 ```typescript
 export interface IProvider {
-  /** Crea un elemento o caso de prueba remoto */
+  name?: string;
+
+  /**
+   * Mapa de recursos gestionados por este proveedor (ej. { metergol, testcase, project, defect }).
+   * Cada manejador expone verbos REST (post, get, patch, put, delete), alias y funciones personalizadas.
+   */
+  resources?: Record<string, IProviderResourceHandler>;
+
+  /** Alias de retrocompatibilidad para `resources`. */
+  apis?: Record<string, IProviderResourceHandler>;
+
+  /** Formatea el identificador remoto mostrado en consola y ledger de estado (ej. '#101', 'QA-402', 'gol-99') */
+  formatRemoteId(issueId: number | string): string;
+
+  /** Crea un elemento o caso de prueba remoto (Modo Issue-based) */
   createIssue(payload: IProviderIssuePayload): Promise<IProviderIssueResult>;
 
-  /** Actualiza campos o títulos de un elemento existente */
+  /** Actualiza campos o títulos de un elemento existente (Modo Issue-based) */
   updateIssue(
     issueId: number | string,
     payload: Partial<IProviderIssuePayload>
@@ -34,19 +50,8 @@ export interface IProvider {
   /** Resuelve el ID o clave de un hito o ciclo por su título */
   getMilestoneByTitle(title: string): Promise<number | string | undefined>;
 
-  /** Publica un comentario o traza de ejecución sobre el elemento */
-  createIssueComment(
-    issueId: number | string,
-    body: string
-  ): Promise<{ id: number | string }>;
-
-  /** Actualiza un comentario existente */
-  updateIssueComment(commentId: number | string, body: string): Promise<void>;
-
-  /** Lista el historial de comentarios y evidencias de un elemento */
-  listIssueComments(
-    issueId: number | string
-  ): Promise<{ id: number | string; body: string }[]>;
+  /** Asocia una sub-tarea o relación padre-hijo (opcional) */
+  addSubIssue?(parentIssueId: number | string, subIssueId: number | string): Promise<void>;
 
   /** Asocia el elemento a un tablero o proyecto corporativo (opcional) */
   addToProject?(issueId: string | number): Promise<string | undefined>;
@@ -66,151 +71,165 @@ export interface IProvider {
 
 ---
 
- Payloads y Resultados
+## 2. Manejador de Recursos: `IProviderResourceHandler`
+
+Para soportar cualquier tipo de entidad o API agnóstica (sin forzar conceptos de issues), el proveedor define manejadores con verbos HTTP estándar, alias y métodos RPC custom:
 
 ```typescript
-export interface IProviderIssuePayload {
-  title: string;
-  body: string;
-  labels: string[];
-  assignees?: string[];
-  milestone?: number | string;
-  state?: string;
-}
+export interface IProviderResourceHandler<TAttrs = any, TResult = any> {
+  // ─── Verbos HTTP Estándar del Ciclo de Vida ───
+  post?(attributes: TAttrs, context?: any): Promise<TResult>;
+  get?(id: string | number, context?: any): Promise<TResult | null>;
+  patch?(id: string | number, attributes: Partial<TAttrs>, context?: any): Promise<TResult>;
+  put?(id: string | number, attributes: TAttrs, context?: any): Promise<TResult>;
+  delete?(id: string | number, context?: any): Promise<void>;
 
-export interface IProviderIssueResult {
-  id: number | string;
-  number: number;
-  title: string;
-  body?: string;
-  state: string;
-  node_id?: string;
-  labels?: string[];
-  assignees?: string[];
-  milestone?: string;
-  created_at?: string;
-  updated_at?: string;
+  // ─── Alias Semánticos ───
+  create?(data: TAttrs, context?: any): Promise<TResult>;
+  update?(id: string | number, data: TAttrs, context?: any): Promise<TResult>;
+
+  // ─── Acciones y Funciones Personalizadas Arbitrarias ───
+  [customAction: string]: ((...args: any[]) => Promise<any>) | undefined;
 }
 ```
 
 ---
 
- Creación de un Proveedor Personalizado
+## 3. Ejemplo Completo: Proveedor Deportivo (`metergol`)
 
-Crea `./providers/jira-provider.js`:
+A continuación se muestra un proveedor agnóstico que implementa el recurso `metergol` con verbos REST y una función custom `subirVideoGol`:
 
-```javascript
-// ./providers/jira-provider.js
-class JiraProvider {
-  /**
-   * @param {Record<string, any>} options Opciones configuradas en main.yml
-   */
-  constructor(options) {
-    this.baseUrl = options.host || 'https://mycompany.atlassian.net';
-    this.projectKey = options.project_key || 'QA';
-    this.apiToken = process.env[options.token_env || 'JIRA_API_TOKEN'];
-  }
+```typescript
+// ./custom-providers/sports-provider.ts
+import { IProvider, IProviderResourceHandler } from '@fromeroc9/testform@beta';
 
-  async createIssue({ title, body, labels }) {
-    // Llamada HTTP POST a la API REST de Jira
-    const res = await fetch(`${this.baseUrl}/rest/api/3/issue`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.apiToken}`,
-        'Content-Type': 'application/json'
+export default class SportsProvider implements IProvider {
+  public name = 'sports';
+
+  // 1. Manejador del recurso agnóstico 'metergol'
+  public resources: Record<string, IProviderResourceHandler> = {
+    metergol: {
+      post: async (attrs: any, context?: any) => {
+        const res = await fetch('https://api.deportes.com/v1/goles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(attrs)
+        });
+        const data = await res.json();
+        return { id: data.id, number: data.id };
       },
-      body: JSON.stringify({
-        fields: {
-          project: { key: this.projectKey },
-          summary: title,
-          description: body,
-          labels,
-          issuetype: { name: 'Test' }
-        }
-      })
-    });
-    const data = await res.json();
-    return {
-      id: data.id,
-      number: parseInt(data.key.split('-')[1], 10),
-      title,
-      state: 'open',
-      labels
-    };
-  }
-
-  async getIssue(issueId) {
-    const res = await fetch(`${this.baseUrl}/rest/api/3/issue/${issueId}`, {
-      headers: { 'Authorization': `Bearer ${this.apiToken}` }
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return {
-      id: data.id,
-      number: parseInt(data.key.split('-')[1], 10),
-      title: data.fields.summary,
-      body: data.fields.description,
-      state: data.fields.status?.name || 'open',
-      labels: data.fields.labels || []
-    };
-  }
-
-  async updateIssue(issueId, payload) {
-    // Lógica de actualización
-    return this.getIssue(issueId);
-  }
-
-  async closeIssue(issueId) {
-    // Transición de estado a Done/Closed
-  }
-
-  async listIssuesByLabel(label) {
-    // JQL query: project = QA AND labels = ...
-    return [];
-  }
-
-  async getMilestoneByTitle(title) {
-    return undefined;
-  }
-
-  async createIssueComment(issueId, body) {
-    const res = await fetch(`${this.baseUrl}/rest/api/3/issue/${issueId}/comment`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.apiToken}`,
-        'Content-Type': 'application/json'
+      get: async (id: number | string) => {
+        const res = await fetch(`https://api.deportes.com/v1/goles/${id}`);
+        return res.ok ? await res.json() : null;
       },
-      body: JSON.stringify({ body })
-    });
-    const data = await res.json();
-    return { id: data.id };
+      delete: async (id: number | string) => {
+        await fetch(`https://api.deportes.com/v1/goles/${id}`, { method: 'DELETE' });
+      }
+    }
+  };
+
+  /** Alias para retrocompatibilidad con herramientas anteriores */
+  public get apis() {
+    return this.resources;
   }
 
-  async updateIssueComment(commentId, body) {}
-
-  async listIssueComments(issueId) {
-    return [];
+  // 2. Función personalizada expuesta para ser invocada desde Resource.lifecycle
+  public async subirVideoGol(golId: string | number, jugador: string): Promise<void> {
+    console.log(`Subiendo video del gol ${golId} marcado por ${jugador}...`);
+    // Llamada a servicio de almacenamiento S3 o procesamiento de video
   }
+
+  formatRemoteId(id: number | string): string {
+    return `GOL#${id}`;
+  }
+
+  // Métodos de issue vacíos si no se utilizan tickets
+  async createIssue(payload: any) { return { id: 1, number: 1, title: payload.title, state: 'open' }; }
+  async updateIssue(id: any, payload: any) { return { id, number: Number(id), title: payload.title || '', state: 'open' }; }
+  async closeIssue(id: any) {}
+  async getIssue(id: any) { return null; }
+  async listIssuesByLabel(label: string) { return []; }
+  async getMilestoneByTitle(title: string) { return undefined; }
 }
-
-module.exports = JiraProvider;
 ```
 
 ---
 
- Registro en `main.yml`
+## 4. Modalidad Basada en Incidencias (Issue-Based)
 
-Asocia el conector en tu archivo `main.yml` mediante el bloque `provider:`:
+Para conectar plataformas basadas en tickets (GitLab Issues, Jira, Azure DevOps Boards):
+
+```typescript
+// ./custom-providers/jira.ts
+import { IProvider, IProviderIssuePayload, IProviderIssueResult, IProviderResourceHandler } from '@fromeroc9/testform@beta';
+
+export default class JiraProvider implements IProvider {
+  public name = 'jira';
+
+  public resources: Record<string, IProviderResourceHandler> = {
+    issue: {
+      post: async (payload: IProviderIssuePayload) => this.createIssue(payload),
+      get: async (id: number | string) => this.getIssue(id),
+      patch: async (id: number | string, data: any) => this.updateIssue(id, data),
+      delete: async (id: number | string) => this.closeIssue(id)
+    }
+  };
+
+  public get apis() { return this.resources; }
+
+  formatRemoteId(id: number | string): string {
+    return `JIRA-${id}`;
+  }
+
+  async createIssue(payload: IProviderIssuePayload): Promise<IProviderIssueResult> {
+    const res = await fetch(`https://empresa.atlassian.net/rest/api/3/issue`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${process.env.JIRA_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: { summary: payload.title, description: payload.body } })
+    });
+    const data = await res.json();
+    return { id: data.id, number: parseInt(data.key.split('-')[1], 10), title: payload.title, state: 'open' };
+  }
+
+  async updateIssue(id: number | string, payload: Partial<IProviderIssuePayload>): Promise<IProviderIssueResult> {
+    return { id, number: Number(id), title: payload.title || '', state: 'open' };
+  }
+
+  async closeIssue(id: number | string): Promise<void> {}
+  async getIssue(id: number | string): Promise<IProviderIssueResult | null> { return null; }
+  async listIssuesByLabel(label: string): Promise<IProviderIssueResult[]> { return []; }
+  async getMilestoneByTitle(title: string): Promise<number | string | undefined> { return undefined; }
+}
+```
+
+---
+
+## 5. Declaración en `main.yml`
+
+Con paridad estricta a Terraform, los proveedores deben declararse en `testform.required_providers`:
 
 ```yaml
-# main.yml
+testform:
+  required_version: ">= 1.0.0"
+  required_providers:
+    sports: "./custom-providers/sports-provider.ts"
+    jira: "git::https://gitlab.empresa.com/qa/providers.git//jira.ts?ref=v1.2.0"
+
 provider:
-  custom:
-    source: "./providers/jira-provider.js"
-    host: "https://jira.company.com"
-    project_key: "PAYMENTS"
-    token_env: "JIRA_TOKEN"
+  sports:
+    api_url: "https://api.deportes.com"
 ```
 
-Al ejecutar `testform plan` y `testform apply`, Testform despachará las operaciones de sincronización a través de tu clase.
+---
 
+## 6. Generación con la CLI (`testform providers scaffold`)
+
+Para crear la plantilla de un nuevo proveedor con verbos REST pre-configurados:
+
+```bash
+# 1. Archivo único en TypeScript:
+testform providers scaffold sports
+
+# 2. Proyecto completo listo para Git / npm con Vitest y TypeScript:
+testform providers scaffold sports --project
+```

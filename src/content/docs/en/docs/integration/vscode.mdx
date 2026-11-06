@@ -3,30 +3,32 @@ title: "Visual Studio Code Extension"
 description: "Official guide for the Testform Visual Studio Code extension: LSP intelligence, full-screen Specs Hub Webview, native Test Explorer, state management, and standard language architecture."
 ---
 
-The official **Testform for Visual Studio Code** extension (`fromeroc9.testform`) transforms your editor into a high-performance Integrated Development Environment (IDE) tailored for **Test-as-Code** workflows.
+The official **Testform DSL for Visual Studio Code** extension (`fromeroc9.testform-dsl`) transforms your editor into a high-performance Integrated Development Environment (IDE) tailored for **Test-as-Code** workflows.
 
-It provides complete Language Server Protocol (LSP) intelligence, multi-layer variable autocompletion, native integration with the VS Code Test Explorer, a full-screen **Specs & Execution Hub**, state management tools, speculative plan executions, and bilingual Gherkin formatting.
+It provides complete Language Server Protocol (LSP) intelligence, multi-layer variable autocompletion, native integration with the VS Code Test Explorer, a full-screen **Specs & Execution Hub** with a retractable export drawer, a unified dual-mode explorer (State & Files), visual state management, speculative plan execution, granular custom field reporting, and bilingual Gherkin formatting.
 
 ---
 
-## What's New in Version 1.0.0
+## What's New in Version 1.2.0
 
-- 📑 **Full-Screen Specs Hub (`SpecsHubPanel`):** Test specifications (Test Cases, Test Runs, and Test Plans) have been migrated from the narrow sidebar tree view into a dedicated full-width Editor Tab Webview with real-time KPI metrics, live reactive filters, and direct execution actions.
-- ⚡ **Pure Standard Language Architecture:** Deprecated proprietary language IDs (`testform-yaml` and `testform-gherkin`) in favor of industry-standard `yaml` and `gherkin`. Eliminates syntax conflicts with Red Hat YAML, Prettier, or external linters.
-- 🎨 **Visual Polish & Non-Intrusive Badges:** Official dual-folder icon for `.testform` (matching `.vscode` style), dedicated file icons for manifests, and a subtle `TF` badge without overriding the editor's file text color scheme.
-- 🔘 **Interactive Status Prompt in Test Explorer:** Gutter execution runs now display an interactive status picker (`passed`, `failed`, `blocked`, `skipped`, `pending`) before recording state changes into the ledger.
-- 🎯 **Single-Dash CLI Flag Standard:** All terminal runs triggered by the extension enforce official single-dash flags (`-target`, `-auto-approve`, `-lock`).
+- 🧩 **Dynamic Custom Field Detector (`field-detector`):** Real-time workspace scanner that analyzes `main.yml`, `resource.yml`, `testform.state`, and `.feature` files to automatically discover, catalog, and count active project custom fields.
+- 🗂️ **Unified Dual-Mode Explorer (State vs. Files):** Seamlessly switch between **State Mode** (`testform.state`) and **Files Mode** (`*.feature`) directly from the top navigation bar of the Explorer view, with instant "Copy Canonical Address" (`testform.state.copyAddress`).
+- 📊 **Advanced Reports Explorer with Native Checkboxes:** Granularly select which custom fields to include or omit per report with native VS Code checkboxes, inline output format picker (`xlsx`, `md`, `docx`, `csv`, `json`), and one-click execution.
+- 📑 **Specs Hub Export Drawer:** Slide-out export drawer embedded in the Specs Hub Webview featuring report selection, format radio chips, and an interactive checklist of project custom fields with usage count badges.
+- 🐛 **Native Bug & Defect Tracking (`.bug.feature`):** First-class support for `@bug` resources, `@bg-X` identity tags, `tf-bug` template snippet, and dedicated `Bugs & Defects` category in State Explorer.
+- 🧠 **Context-Aware LSP Scope Detection:** Accurate scope classification (`testcase`, `testrun`, `testplan`, `bug`) enabling strict contextual suggestions for `Rule:` and `Scenario:` targets across 8 configurable insertion formats.
+- 🚀 **Google Antigravity IDE & Open VSX Support:** Available on Open VSX Registry and pre-configured for direct 1-click installation/updating in Google Antigravity IDE.
 
 ---
 
 ## Installation & Prerequisites
 
 ### 1. Prerequisites
-- **Visual Studio Code:** Version `1.85.0` or higher.
+- **Visual Studio Code:** Version `1.85.0` or higher (or Google Antigravity IDE / VSCodium / Cursor).
 - **Node.js:** Version `18.0.0` or higher.
 - **Testform CLI:** The command-line binary must be installed globally and available in your `PATH`:
   ```bash
-  npm install -g @fromeroc9/testform
+  npm install -g @fromeroc9/testform@beta
   ```
   Verify the installation:
   ```bash
@@ -34,18 +36,25 @@ It provides complete Language Server Protocol (LSP) intelligence, multi-layer va
   ```
 
 ### 2. Installation Options
-- **Direct VSIX Package Installation (Recommended):**
-  You can download the compiled v1.0.0 package directly from GitHub:
-  - 📥 **[Download testform-1.0.0.vsix](https://github.com/fromeroc9/testform-vscode/blob/master/testform-1.0.0.vsix)**
-
-  Once downloaded, install it from your terminal:
-  ```bash
-  code --install-extension testform-1.0.0.vsix
-  ```
-  Or from VS Code: Open the Extensions view (`Ctrl+Shift+X`), click the `...` menu in the top right, and choose **Install from VSIX...**.
-
 - **From the Visual Studio Code Marketplace:**
-  Coming soon directly via the Visual Studio Marketplace catalog (`fromeroc9.testform`).
+  Search for `Testform DSL` or install via the official identifier:
+  - 🌐 **[Visual Studio Marketplace: fromeroc9.testform-dsl](https://marketplace.visualstudio.com/items?itemName=fromeroc9.testform-dsl)**
+  ```bash
+  code --install-extension fromeroc9.testform-dsl
+  ```
+
+- **From Open VSX Registry (VSCodium, Cursor, Gitpod, Theia):**
+  - 🌐 **[Open VSX Registry: fromeroc9/testform-dsl](https://open-vsx.org/extension/fromeroc9/testform-dsl)**
+
+- **Direct VSIX Package Installation:**
+  Download the compiled `.vsix` package from GitHub and install:
+  ```bash
+  code --install-extension testform-dsl-1.2.0.vsix
+  ```
+  Or in **Google Antigravity IDE**:
+  ```powershell
+  antigravity-ide --install-extension testform-dsl-1.2.0.vsix --force
+  ```
 
 ---
 
@@ -159,6 +168,7 @@ Open the hub via **`Testform: Open Test Cases, Runs & Plans Hub`** or the docume
 4. **Direct Code Jump Navigation (`Jump to File`):** One click opens the target file in your editor and places your cursor on the exact scenario line.
 5. **Integrated Execution Triggers:** Speculative preview (`testform plan -target=...`) and apply reconciliation (`testform apply -target=...`) actions can be executed directly from individual rows.
 6. **Reactive Synchronization:** Watches workspace filesystem events; creating, modifying, or deleting `.feature` files immediately refreshes the dashboard without reloading.
+7. **Report Export Drawer:** Slide-out drawer at the top of the Specs Hub allowing you to choose report types (`testcase-summary`, `testrun-summary`, `testrun-detailed`, `defects`, `coverage`, `traceability`, etc.), output formats via radio chips (`xlsx`, `md`, `docx`, `csv`, `json`), and an interactive checklist of automatically detected project custom fields with live occurrence counters.
 
 ---
 
@@ -190,13 +200,14 @@ Access the dedicated **Testform Activity Bar** tab for lifecycle tools:
 ┌───────────────────────────────────────────────┐
 │ TESTFORM SIDEBAR                              │
 ├───────────────────────────────────────────────┤
-│ ▼ STATE EXPLORER                              │
+│ ▼ EXPLORER [State Mode / Files Mode]          │
 │   ▶ Test Cases (6)                            │
 │   ▼ Test Runs (1)                             │
 │     ▼ suites\smoke.run.feature.@tr-1          │
 │       ✔ auth\login.case.feature.@tc-1 (passed)│
 │       ✔ inventory\catalog.case.feature.@tc-4  │
 │   ▶ Test Plans (1)                            │
+│   ▶ Bugs & Defects (2)                        │
 │   ▶ Outputs (2)                               │
 ├───────────────────────────────────────────────┤
 │ ▼ MODULES & .TESTFORM                         │
@@ -209,15 +220,21 @@ Access the dedicated **Testform Activity Bar** tab for lifecycle tools:
 │     🔒 lock.json (.testform/cache)            │
 ├───────────────────────────────────────────────┤
 │ ▼ REPORTS & ANALYTICS                         │
-│   📊 Test Case Summary                        │
-│   📈 Detailed Test Runs                       │
-│   📋 Coverage Matrix                          │
+│   ▼ 📊 Test Case Summary [xlsx]               │
+│     ☑ priority (3 cases)                      │
+│     ☑ severity (3 cases)                      │
+│     ☐ module (1 case)                         │
+│   ▶ 📈 Detailed Test Runs [xlsx]              │
+│   ▶ 📋 Defect Backlog [xlsx]                  │
 └───────────────────────────────────────────────┘
 ```
 
-### 1. State Explorer (`testform.views.state`)
-- **Structured Resource Hierarchy:** Groups state ledger entries into `Test Cases`, `Test Runs`, `Test Plans`, and `Outputs`.
-- **Inspect Resource (JSON):** Open any resource to view its exact JSON representation from `testform.state`.
+### 1. State & Specifications Explorer (`testform.views.state`)
+- **Unified Dual-Mode Explorer:** Switch seamlessly between views with top navigation bar icons (`$(file-code)` / `$(database)`):
+  - **State Mode (`testform.state`):** Inspect reconciled resources categorized into `Test Cases`, `Test Runs`, `Test Plans`, `Bugs & Defects`, and `Outputs`. Expand executed test cases with live statuses, examine associated test runs, and view raw JSON attributes.
+  - **Files Mode (`*.feature`):** Browse the physical workspace specification hierarchy grouping Gherkin files, scenarios, and metadata tags.
+- **Copy Canonical Address:** Context menu and inline action (`$(copy)`) to quickly copy the exact canonical target address (`path/to/feature.@tc-01`) of any test case, suite, or execution to the clipboard.
+- **Inspect Resource (JSON):** Open any resource in a temporary editor tab to view its exact JSON representation from `testform.state`.
 - **Interactive Taint / Untaint:** Mark resources as `Tainted` (forcing recreation on the next plan/apply cycle) without terminal commands.
 - **State Remove (`state rm`):** Remove an item from the state ledger without deleting the specification file on disk.
 - **Force Unlock (`force-unlock`):** Release stuck remote or local locks with an interactive Lock ID prompt.
@@ -228,13 +245,10 @@ Access the dedicated **Testform Activity Bar** tab for lifecycle tools:
 - Audit internal cache state (`.testform/cache/backend.json` and `.testform/cache/lock.json`).
 
 ### 3. Reports & Analytics View (`testform.views.reports`)
-- One-click report generation:
-  - Test Case Summary (`testcase-summary`)
-  - Test Run Summary (`testrun-summary`)
-  - Detailed Test Runs (`testrun-detailed`)
-  - Test Plan Summary (`testplan-summary`)
-  - Coverage & Traceability Matrix (`coverage`, `matrix`)
-- Direct export format selection: **Markdown**, **Word (`.docx`)**, **Excel (`.xlsx`)**, **JSON**, or **CSV**.
+- **Official & Custom Reports:** Supports all core reports (`testcase-summary`, `testrun-summary`, `testrun-detailed`, `testplan-summary`, `defects`, `traceability`, `coverage`, `two-dimensional`, `test-case-activity`) and dynamically discovers user reports in `.testform/reports/*.ts`.
+- **Granular Custom Fields Selection (Native Checkboxes):** Expanding any report node presents an interactive checklist of project custom fields detected by the scanning engine. Select/deselect individual fields with native checkboxes, or use bulk select/deselect actions.
+- **Inline Format Selector:** Easily toggle the active output format between **Excel (`.xlsx`)**, **Markdown (`.md`)**, **Word (`.docx`)**, **CSV (`.csv`)**, and **JSON (`.json`)**.
+- **One-Click Direct Execution:** Inline Play button to run `testform report <slug> -format=<fmt> --fields="all|none|a,b,c"` in the integrated terminal with zero manual typing.
 
 ---
 
@@ -366,3 +380,9 @@ Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS) and type `Testform`:
 | **Testform: Update Modules** | `testform.modules.update` | Re-initializes and updates remote Git modules. |
 | **Testform: Refresh State Explorer** | `testform.state.refresh` | Reloads the state tree in the sidebar. |
 | **Testform: Format Document** | `testform.format` | Formats current Gherkin `.feature` file. |
+| **Testform: Switch Explorer to Files** | `testform.explorer.switchToFiles` | Switches the sidebar explorer to physical `.feature` files mode. |
+| **Testform: Switch Explorer to State** | `testform.explorer.switchToState` | Switches the sidebar explorer to the reconciled `testform.state` ledger view. |
+| **Testform: Copy Canonical Address** | `testform.state.copyAddress` | Copies the exact canonical address of a test case or suite to clipboard. |
+| **Testform: Run Report (with selection)** | `testform.report.runWithSelection` | Runs the selected report with active custom fields selection. |
+| **Testform: Select Output Format** | `testform.report.selectFormat` | Opens output format selector (XLSX, MD, DOCX, CSV, JSON). |
+| **Testform: Refresh Reports View** | `testform.report.refreshView` | Refreshes reports and rescans project custom fields. |

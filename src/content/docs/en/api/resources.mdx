@@ -1,9 +1,9 @@
 ---
 title: "Resources: registerResource"
-description: "Programmatic API reference for defining and overriding test resource mapping templates in Testform."
+description: "Programmatic API reference for defining attributes, lifecycle hooks, and internal state for test resources in Testform."
 ---
 
-The resources module defines how Gherkin scenarios (`Scenario:`) are mapped into structured attributes recognized by test management systems (Jira, Zephyr, Azure DevOps, TestRail, or proprietary APIs).
+The resources module defines how Gherkin scenarios (`Scenario:`) are mapped into canonical attributes (`attributes`), lifecycle hooks (`lifecycle`), and internal state (`state`) for remote test management platforms and APIs (GitHub, GitLab, Jira, TestRail, databases, or custom endpoints).
 
 ---
 
@@ -18,111 +18,157 @@ function registerResource(template: ResourceTemplate): void;
 
 ---
 
-## Types & Interfaces
+## Structure of `ResourceTemplate`
 
-### `ResourceTemplate`
-
-Defines field mappings and execution comment generators for a resource type:
+A resource definition is cleanly separated into 3 decoupled areas:
 
 ```typescript
 export interface ResourceTemplate {
-  /** Unique resource type name (e.g., 'jira_testcase', 'azure_testrun', 'github_testcase') */
+  /** Unique resource type name (e.g., 'github_testcase', 'metergol', 'jira_issue') */
   type: string;
 
-  /** List of fields extracted from the Gherkin scenario */
-  fields: ResourceField[];
+  /**
+   * Canonical attributes extracted from the Gherkin scenario.
+   * Dispatched directly to the provider's REST resource handler (post, patch, etc.).
+   */
+  attributes?: 
+    | ((scenario: ParserScenario, context?: any) => Record<string, any>)
+    | Record<string, ((scenario: ParserScenario, context?: any) => any) | any>;
 
-  /** Optional generator producing execution evidence and test comments */
-  comments?: (
-    scenario: any,
-    context?: any
-  ) => Array<{
-    identity: string;
-    status: string;
-    body: string;
-    title: string;
-  }>;
-}
-```
+  /**
+   * Optional lifecycle hooks to orchestrate operations before or after CRUD events.
+   */
+  lifecycle?: ResourceLifecycleHooks;
 
-### `ResourceField`
+  /**
+   * Internal attributes persisted directly into the cryptographic state ledger (testform.state).
+   */
+  state?: Record<string, ((scenario: ParserScenario, context?: any) => any) | any>;
 
-Describes an individual attribute mapping:
+  /** @deprecated Legacy dictionary mapping to provider.apis. Prefer attributes. */
+  api?: ResourceApiDefinition;
 
-```typescript
-export interface ResourceField {
-  /** Field name expected by the remote provider or target schema */
-  name: string;
-
-  /** Static value or extractor function receiving the scenario and context */
-  value: ((scenario: any, context?: any) => string | string[]) | string | string[];
-
-  /** True if the value is generated remotely during apply (e.g., remote ID) */
-  knownAfterApply?: boolean;
+  /** @deprecated Legacy list of flat fields. */
+  fields?: ResourceField[];
 }
 ```
 
 ---
 
-## Usage Patterns
+## Lifecycle Hooks: `ResourceLifecycleHooks`
 
-### 1. Registering a New Resource Type (`registerResource`)
+Lifecycle hooks enable pre-validation, token acquisition, and seamless orchestration of arbitrary custom provider methods:
 
-Create `.testform/resources/azure-devops.js`:
+```typescript
+export interface ResourceLifecycleHooks {
+  /** Runs before resource creation (pre-validation, external locks, token acquisition). */
+  beforeCreate?(args: { attributes: any; scenario: ParserScenario; context: any }): Promise<void> | void;
 
-```javascript
-// .testform/resources/azure-devops.js
-module.exports = {
-  type: 'azure_testcase',
-  fields: [
-    {
-      name: 'title',
-      value: (scenario) => scenario.name,
+  /**
+   * Runs immediately after the resource is created by the provider.
+   * Injects the assigned remote ID and the live provider instance to call custom methods.
+   */
+  afterCreate?(args: { id: string | number; attributes: any; provider: any; scenario: ParserScenario; context: any }): Promise<void> | void;
+
+  /** Runs before modifying an existing resource. */
+  beforeUpdate?(args: { id: string | number; attributes: any; provider: any; scenario: ParserScenario; context: any }): Promise<void> | void;
+
+  /** Runs after modifying the resource. */
+  afterUpdate?(args: { id: string | number; attributes: any; diff?: any; provider: any; scenario: ParserScenario; context: any }): Promise<void> | void;
+
+  /** Runs before destroying the resource. */
+  beforeDelete?(args: { id: string | number; provider: any; context: any }): Promise<void> | void;
+
+  /** Runs after destroying the resource. */
+  afterDelete?(args: { id: string | number; provider: any; context: any }): Promise<void> | void;
+}
+```
+
+---
+
+## Full Example: Custom Resource (`metergol`)
+
+Consider a domain resource decoupled from issues or tickets, such as `metergol` (recording sports goals into a database and triggering video uploads via provider methods):
+
+```typescript
+// .testform/resources/metergol.ts
+import { registerResource } from '@fromeroc9/testform@beta';
+
+export default {
+  type: 'metergol',
+
+  // 1. Attributes extracted from Gherkin scenario
+  attributes: (scenario, context) => ({
+    jugador: scenario.name,
+    minuto: scenario.custom?.fields?.minuto ?? 45,
+    equipo: scenario.custom?.fields?.equipo ?? 'Real Madrid',
+    esPenal: scenario.custom?.fields?.esPenal ?? false,
+  }),
+
+  // 2. Lifecycle orchestration & custom provider function execution
+  lifecycle: {
+    beforeCreate: async ({ attributes }) => {
+      if (attributes.minuto < 0 || attributes.minuto > 120) {
+        throw new Error(`Invalid minute: ${attributes.minuto}`);
+      }
     },
-    {
-      name: 'description',
-      value: (scenario) => scenario.description || 'No description provided',
-    },
-    {
-      name: 'priority',
-      value: (scenario) => scenario.custom?.fields?.priority || '2',
-    },
-    {
-      name: 'steps_count',
-      value: (scenario) => String(scenario.steps?.length || 0),
-    },
-    {
-      name: 'tags',
-      value: (scenario) => scenario.tags.filter(t => !t.startsWith('@tc-')),
-    },
-    {
-      name: 'remote_work_item_id',
-      value: () => '(known after apply)',
-      knownAfterApply: true,
+    afterCreate: async ({ id, attributes, provider }) => {
+      // Injects the live provider instance to call custom actions directly
+      if (provider.subirVideoGol) {
+        await provider.subirVideoGol(id, attributes.jugador);
+      }
     }
-  ],
-  comments: (scenario, context) => [
-    {
-      identity: scenario.custom?.identity || scenario.name,
-      status: scenario.custom?.fields?.status || 'passed',
-      title: `CI/CD Run #${context?.buildId || 'local'}`,
-      body: `Automated test run dispatched on environment: ${context?.environment || 'staging'}`
-    }
-  ]
+  },
+
+  // 3. Internal state persisted in the cryptographic state ledger
+  state: {
+    partidoId: () => 'final-champions-2026',
+    registeredAt: () => new Date().toISOString()
+  }
 };
+```
+
+---
+
+## Overriding Existing Resources
+
+You can override any built-in resource (such as `github_testcase`) to customize extracted attributes or append lifecycle hooks:
+
+```typescript
+// .testform/resources/custom-testcase.ts
+import { registerResource } from '@fromeroc9/testform@beta';
+
+registerResource({
+  type: 'github_testcase',
+  attributes: (scenario) => ({
+    title: `[QA] ${scenario.name}`,
+    body: '```gherkin\n' + scenario.steps.map(s => `${s.keyword}${s.text}`).join('\n') + '\n```',
+    labels: [...(scenario.tags || []), 'automated'],
+  }),
+  lifecycle: {
+    afterCreate: async ({ id, provider }) => {
+      console.log(`Testcase #${id} successfully synchronized with provider`);
+    }
+  }
+});
 ```
 
 ---
 
 ## Runtime Inspection (`resource`)
 
-The `resource` singleton enables querying registered templates:
+The `resource` registry singleton enables inspecting and evaluating loaded templates at runtime:
 
 ```typescript
 import { resource } from '@fromeroc9/testform@beta';
 
-// Get list of all registered resource type names
+// Inspect all registered types
 const types = resource.getRegisteredTypes();
-// ['github_testcase', 'github_testrun', 'testcase', 'azure_testcase', ...]
-```
+// ['github_testcase', 'github_testrun', 'testcase', 'metergol', ...]
 
+// Evaluate canonical attributes
+const attrs = resource.evaluateAttributes('metergol', scenario);
+
+// Retrieve lifecycle hooks
+const lifecycle = resource.getLifecycle('metergol');
+```

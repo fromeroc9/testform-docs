@@ -47,51 +47,47 @@ Declared fields automatically merge with the resource's native fields at runtime
 
 ## 2. Modifying Declared Resources (`registerResource`)
 
-Built-in resources (`github_testcase`, `github_testrun`, etc.) **are not closed black boxes**. Any team can modify or override fields, markdown body formatting, or labels using `registerResource()`.
+Built-in resources (`github_testcase`, `github_testrun`, etc.) **are not closed black boxes**. Any team can modify or override attributes, lifecycle orchestration hooks, or state persistence using `registerResource()`.
 
 User definitions automatically take precedence over system templates, preserving unmentioned fields:
 
 <Tabs>
 <TabItem label="TypeScript">
 ```typescript
-import { registerResource } from 'testform';
+import { registerResource } from '@fromeroc9/testform@beta';
 
 // Customize the built-in github_testcase resource
 registerResource({
     type: 'github_testcase',
-    fields: [
+    attributes: (s) => ({
         // Prefix test title with team tag
-        { name: 'title', value: (s) => `[QA-CORE] ${s.name}` },
+        title: `[QA-CORE] ${s.name}`,
         
         // Custom Markdown body format
-        { 
-            name: 'body', 
-            value: (s) => `## 📋 Test Case: ${s.name}\n\n### Steps:\n` + 
-                          s.steps.map(step => `- **${step.keyword}** ${step.text}`).join('\n') 
-        },
+        body: `## 📋 Test Case: ${s.name}\n\n### Steps:\n` + 
+              s.steps.map(step => `- **${step.keyword}** ${step.text}`).join('\n'),
 
         // Custom automated labels
-        { 
-            name: 'labels', 
-            value: (s) => [...new Set(['automated', ...(s.tags || []).map(t => t.replace('@', ''))])] 
+        labels: [...new Set(['automated', ...(s.tags || []).map(t => t.replace('@', ''))])] 
+    }),
+    lifecycle: {
+        afterCreate: async ({ id, attributes, provider }) => {
+            console.log(`Resource #${id} created in ${provider.name}`);
         }
-    ]
+    }
 });
 ```
 </TabItem>
 <TabItem label="JavaScript">
 ```javascript
-const { registerResource } = require('testform');
+const { registerResource } = require('@fromeroc9/testform@beta');
 
 registerResource({
     type: 'github_testcase',
-    fields: [
-        { name: 'title', value: (s) => `[QA-CORE] ${s.name}` },
-        { 
-            name: 'body', 
-            value: (s) => `## Test Case: ${s.name}\n\n` + s.steps.map(st => `${st.keyword}${st.text}`).join('\n') 
-        }
-    ]
+    attributes: (s) => ({
+        title: `[QA-CORE] ${s.name}`,
+        body: `## Test Case: ${s.name}\n\n` + s.steps.map(st => `${st.keyword}${st.text}`).join('\n')
+    })
 });
 ```
 </TabItem>
@@ -99,26 +95,35 @@ registerResource({
 
 ---
 
-## 3. Registering Custom Providers
+## 3. Registering Custom Resources & Providers
 
-To connect Testform to external platforms (Jira, TestRail, Zephyr, or proprietary tools), simply register new resources:
+To connect Testform to external platforms (Jira, TestRail, Zephyr, databases, or proprietary domain resources such as `metergol`), register new resources mapping their canonical attributes to the provider's resource handlers:
 
 ```typescript
-import { registerResource } from 'testform';
+import { registerResource } from '@fromeroc9/testform@beta';
 
 registerResource({
-    type: 'jira_testcase',
-    fields: [
-        { name: 'summary', value: (s) => s.name },
-        { 
-            name: 'description', 
-            value: (s) => s.steps.map(st => `${st.keyword} ${st.text}`).join('\n') 
+    type: 'metergol',
+    attributes: (s) => ({
+        jugador: s.name,
+        minuto: s.custom?.fields?.minuto ?? 90,
+        equipo: s.custom?.fields?.equipo ?? 'Local',
+        esPenal: s.custom?.fields?.esPenal ?? false
+    }),
+    lifecycle: {
+        beforeCreate: async ({ attributes }) => {
+            if (attributes.minuto < 0) throw new Error('Invalid minute');
         },
-        { 
-            name: 'priority', 
-            value: (s) => s.custom?.fields?.priority || 'Medium' 
+        afterCreate: async ({ id, attributes, provider }) => {
+            // Direct invocation of custom actions exposed on the live provider instance
+            if (provider.subirVideoGol) {
+                await provider.subirVideoGol(id, attributes.jugador);
+            }
         }
-    ]
+    },
+    state: {
+        tournament: () => 'Champions League 2026'
+    }
 });
 ```
 

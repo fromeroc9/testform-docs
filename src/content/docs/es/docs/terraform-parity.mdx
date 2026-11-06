@@ -41,11 +41,11 @@ Cada punto analizado evalúa cuatro dimensiones:
 
 ## Parte I: Componentes Principales del Lenguaje
 
-### 1. Configure Provider
-- **Estado en Testform:** `Implementado` (vía `main.yml` con plugins Playwright, Cypress, Appium, Artillery, K6).
-- **Motivo en Terraform:** Conectar Terraform con APIs externas (AWS, Azure, GCP, GitHub) mediante binarios gRPC desacoplados.
-- **Comparado / Faltante (Gap):** Terraform soporta múltiples instancias del mismo provider mediante alias (`provider "aws" { alias = "west" }`). En Testform, la configuración de providers es global o por step; falta soporte para alias de provider (`provider: playwright.firefox` vs `provider: playwright.chrome` dentro del mismo feature).
-- **¿Aplica a Testform?:** **Sí (Alta prioridad)**. Permitiría pruebas multi-navegador o multi-tenant simultáneas en un solo escenario.
+### 1. Configure Provider & Required Providers Registry
+- **Estado en Testform:** `Implementado al 100%` (vía `testform.required_providers` y bloque `provider:`).
+- **Motivo en Terraform:** Conectar con APIs externas (AWS, Azure, GCP, GitHub) mediante binarios desacoplados, locking de versiones y registro dinámico de plugins.
+- **Comparado / Faltante (Gap):** Paridad completa. Testform soporta declaración estricta en `testform.required_providers`, descarga automática durante `testform init` desde 4 fuentes (subrutas Git para archivos `.ts` individuales, repositorios Git completos, rutas locales y paquetes npm), generación de lockfile criptográfico `.testform.lock.hcl` con hashes `h1:<base64>`, transpilación en memoria al vuelo de TypeScript y validación estricta que bloquea proveedores no declarados (`Undeclared provider`) o no instalados (`Provider not installed`).
+- **¿Aplica a Testform?:** **Implementado al 100%**. Garantiza ejecución determinista y reproducible de pruebas en cualquier entorno.
 
 ### 2. Resources (`resource`)
 - **Estado en Testform:** `Implementado` (Los Scenarios de Gherkin y Steps son recursos de testing declarativos con ID de dirección `feature.tag`).

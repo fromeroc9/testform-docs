@@ -42,11 +42,11 @@ Each evaluated item examines four dimensions:
 
 ## Part I: Core Language Components
 
-### 1. Configure Provider
-- **Testform Status:** `Implemented` (via `main.yml` with Playwright, Cypress, Appium, Artillery, K6 plugins).
-- **Terraform Purpose:** Connect Terraform to external APIs (AWS, Azure, GCP, GitHub) via decoupled gRPC binaries.
-- **Comparison / Gap:** Terraform supports multiple instances of the same provider using aliases (`provider "aws" { alias = "west" }`). In Testform, provider configuration is global or per-step; lacks alias support (`provider: playwright.firefox` vs `provider: playwright.chrome` within the same feature).
-- **Applies to Testform?:** **Yes (High priority)**. Enables simultaneous multi-browser or multi-tenant tests in a single scenario.
+### 1. Configure Provider & Required Providers Registry
+- **Testform Status:** `100% Implemented` (via `testform.required_providers` and `provider:` blocks).
+- **Terraform Purpose:** Connect to external APIs (AWS, Azure, GCP, GitHub) via decoupled plugins, version locking, and dynamic registries.
+- **Comparison / Gap:** Complete parity. Testform supports strict declaration in `testform.required_providers`, automatic installation during `testform init` across 4 sources (Git subpaths for single `.ts` files, full Git repos, local paths, and npm packages), cryptographic `.testform.lock.hcl` lockfile generation with `h1:<base64>` hashes, in-memory TypeScript transpilation fallback, and strict whitelist validation blocking undeclared (`Undeclared provider`) or uninstalled (`Provider not installed`) providers.
+- **Applies to Testform?:** **100% Implemented**. Ensures deterministic and reproducible test execution across all environments.
 
 ### 2. Resources (`resource`)
 - **Testform Status:** `Implemented` (Gherkin Scenarios and Steps are declarative testing resources with address ID `feature.tag`).

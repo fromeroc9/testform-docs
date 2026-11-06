@@ -79,6 +79,31 @@ $ testform validate
 Error: The configuration contains errors.
 ```
 
+### Strict Provider Validations (Terraform Parity)
+
+`testform validate` enforces provider integrity and local state rules:
+
+#### 1. Undeclared provider in `required_providers`:
+If you configure a `provider: jira:` block in `main.yml` without declaring it under `testform.required_providers`:
+```text
+╷
+│ Error: Undeclared provider "jira"
+│ 
+│ The provider is configured, but was not declared in testform.required_providers.
+│ Run "testform init" to download and configure declared providers.
+╵
+```
+
+#### 2. Provider not installed in `.testform/providers/`:
+If a remote provider is declared but has not been installed locally:
+```text
+╷
+│ Error: Provider "gitlab" is not installed
+│ 
+│ Run "testform init" to download and install this provider.
+╵
+```
+
 ## Integration in CI/CD Pre-Commit & PR Checks
 
 Add `testform validate -json` to your GitHub Actions pull request checks to prevent invalid Gherkin syntax from being merged into main branches:

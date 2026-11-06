@@ -78,6 +78,31 @@ $ testform validate
 Error: The configuration contains errors.
 ```
 
+### Validación Estricta de Proveedores (Terraform Parity)
+
+`testform validate` comprueba que la declaración de proveedores y su estado local cumplan con las reglas de integridad:
+
+#### 1. Proveedor no declarado en `required_providers`:
+Si configuras un bloque `provider: jira:` en `main.yml` pero no lo declaraste en `testform.required_providers`:
+```text
+╷
+│ Error: Undeclared provider "jira"
+│ 
+│ The provider is configured, but was not declared in testform.required_providers.
+│ Run "testform init" to download and configure declared providers.
+╵
+```
+
+#### 2. Proveedor no instalado en `.testform/providers/`:
+Si un proveedor remoto está declarado pero no se ha descargado:
+```text
+╷
+│ Error: Provider "gitlab" is not installed
+│ 
+│ Run "testform init" to download and install this provider.
+╵
+```
+
 ## Integración en Pre-Commit y Verificaciones de PR en CI/CD
 
 Incorpora `testform validate -json` en tu flujo de trabajo de Pull Requests en GitHub Actions para prevenir el merge de sintaxis Gherkin defectuosa en las ramas principales:

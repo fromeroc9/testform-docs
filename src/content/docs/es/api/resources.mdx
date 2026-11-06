@@ -1,9 +1,9 @@
 ---
 title: "Recursos: registerResource"
-description: "Referencia de la API programática para definir y sobreescribir plantillas de recursos de pruebas en Testform."
+description: "Referencia de la API programática para definir atributos, hooks de ciclo de vida y estado de recursos en Testform."
 ---
 
-El módulo de recursos define cómo se traducen los escenarios Gherkin (`Scenario:`) en atributos estructurados para proveedores de gestión de pruebas (Jira, Zephyr, Azure DevOps, TestRail o APIs propietarias).
+El módulo de recursos define cómo se traducen los escenarios Gherkin (`Scenario:`) en atributos canónicos (`attributes`), hooks de ciclo de vida (`lifecycle`) y estado interno (`state`) para proveedores de pruebas y plataformas remotas (GitHub, GitLab, Jira, TestRail, bases de datos o APIs personalizadas).
 
 ---
 
@@ -18,103 +18,145 @@ function registerResource(template: ResourceTemplate): void;
 
 ---
 
-## Tipos e Interfaces
+## Estructura de `ResourceTemplate`
 
-### `ResourceTemplate`
-
-Define la estructura de campos y comentarios asociados a un tipo de recurso:
+Un recurso se compone de 3 secciones limpias y desacopladas:
 
 ```typescript
 export interface ResourceTemplate {
-  /** Tipo único del recurso (ej. 'jira_testcase', 'azure_testrun', 'github_testcase') */
+  /** Tipo único del recurso (ej. 'github_testcase', 'metergol', 'jira_issue') */
   type: string;
 
-  /** Lista de campos a mapear desde el escenario Gherkin */
-  fields: ResourceField[];
+  /**
+   * Atributos canónicos extraídos del escenario Gherkin.
+   * Se envían directamente al manejador REST del provider (post, patch, etc.).
+   */
+  attributes?: 
+    | ((scenario: ParserScenario, context?: any) => Record<string, any>)
+    | Record<string, ((scenario: ParserScenario, context?: any) => any) | any>;
 
-  /** Generador de comentarios/evidencias de ejecución (opcional) */
-  comments?: (
-    scenario: any,
-    context?: any
-  ) => Array<{
-    identity: string;
-    status: string;
-    body: string;
-    title: string;
-  }>;
-}
-```
+  /**
+   * Hooks opcionales del ciclo de vida para orquestar acciones
+   * antes o después de la creación, modificación o destrucción del recurso.
+   */
+  lifecycle?: ResourceLifecycleHooks;
 
-### `ResourceField`
+  /**
+   * Atributos internos persistidos directamente en el estado criptográfico (testform.state).
+   */
+  state?: Record<string, ((scenario: ParserScenario, context?: any) => any) | any>;
 
-Describe un atributo individual del recurso:
+  /** @deprecated Diccionario heredado de mapeo hacia provider.apis. Prefiera attributes. */
+  api?: ResourceApiDefinition;
 
-```typescript
-export interface ResourceField {
-  /** Nombre del campo en el sistema de destino */
-  name: string;
-
-  /** Valor estático o función extractora que recibe el escenario y contexto */
-  value: ((scenario: any, context?: any) => string | string[]) | string | string[];
-
-  /** Indica si el valor final se calcula tras la sincronización remota */
-  knownAfterApply?: boolean;
+  /** @deprecated Lista heredada de campos planos. */
+  fields?: ResourceField[];
 }
 ```
 
 ---
 
-## Modos de Uso
+## Hooks de Ciclo de Vida: `ResourceLifecycleHooks`
 
-### 1. Registrar un Nuevo Recurso (`registerResource`)
+Los hooks de ciclo de vida permiten ejecutar validaciones y coordinar llamadas a funciones personalizadas del proveedor:
 
-Crea `.testform/resources/azure-devops.js`:
+```typescript
+export interface ResourceLifecycleHooks {
+  /** Se ejecuta antes de crear el recurso (validación previa, obtención de tokens, etc.) */
+  beforeCreate?(args: { attributes: any; scenario: ParserScenario; context: any }): Promise<void> | void;
 
-```javascript
-// .testform/resources/azure-devops.js
-module.exports = {
-  type: 'azure_testcase',
-  fields: [
-    {
-      name: 'title',
-      value: (scenario) => scenario.name,
+  /**
+   * Se ejecuta inmediatamente tras crear el recurso en el proveedor.
+   * Recibe el ID remoto y la instancia viva del provider para ejecutar métodos custom.
+   */
+  afterCreate?(args: { id: string | number; attributes: any; provider: any; scenario: ParserScenario; context: any }): Promise<void> | void;
+
+  /** Se ejecuta antes de modificar un recurso existente */
+  beforeUpdate?(args: { id: string | number; attributes: any; provider: any; scenario: ParserScenario; context: any }): Promise<void> | void;
+
+  /** Se ejecuta después de modificar el recurso */
+  afterUpdate?(args: { id: string | number; attributes: any; diff?: any; provider: any; scenario: ParserScenario; context: any }): Promise<void> | void;
+
+  /** Se ejecuta antes de destruir el recurso */
+  beforeDelete?(args: { id: string | number; provider: any; context: any }): Promise<void> | void;
+
+  /** Se ejecuta después de destruir el recurso */
+  afterDelete?(args: { id: string | number; provider: any; context: any }): Promise<void> | void;
+}
+```
+
+---
+
+## Ejemplo Completo: Recurso Personalizado (`metergol`)
+
+Imaginemos un recurso completamente agnóstico a tickets, como `metergol`, que registra goles en un sistema deportivo y sube videos mediante una función personalizada del proveedor:
+
+```typescript
+// .testform/resources/metergol.ts
+import { registerResource } from '@fromeroc9/testform@beta';
+
+export default {
+  type: 'metergol',
+
+  // 1. Atributos extraídos del escenario Gherkin
+  attributes: (scenario, context) => ({
+    jugador: scenario.name,
+    minuto: scenario.custom?.fields?.minuto ?? 45,
+    equipo: scenario.custom?.fields?.equipo ?? 'Real Madrid',
+    esPenal: scenario.custom?.fields?.esPenal ?? false,
+  }),
+
+  // 2. Orquestación del ciclo de vida y llamadas personalizadas
+  lifecycle: {
+    beforeCreate: async ({ attributes }) => {
+      if (attributes.minuto < 0 || attributes.minuto > 120) {
+        throw new Error(`Minuto inválido: ${attributes.minuto}`);
+      }
     },
-    {
-      name: 'description',
-      value: (scenario) => scenario.description || 'Sin descripción',
-    },
-    {
-      name: 'priority',
-      value: (scenario) => scenario.custom?.fields?.priority || '2',
-    },
-    {
-      name: 'steps_count',
-      value: (scenario) => String(scenario.steps?.length || 0),
-    },
-    {
-      name: 'tags',
-      value: (scenario) => scenario.tags.filter(t => !t.startsWith('@tc-')),
-    },
-    {
-      name: 'remote_work_item_id',
-      value: () => '(known after apply)',
-      knownAfterApply: true,
+    afterCreate: async ({ id, attributes, provider }) => {
+      // Invocación directa de métodos custom expuestos en el proveedor
+      if (provider.subirVideoGol) {
+        await provider.subirVideoGol(id, attributes.jugador);
+      }
     }
-  ],
-  comments: (scenario, context) => [
-    {
-      identity: scenario.custom?.identity || scenario.name,
-      status: scenario.custom?.fields?.status || 'passed',
-      title: `Ejecución CI/CD #${context?.buildId || 'local'}`,
-      body: `Prueba ejecutada automáticamente en ambiente: ${context?.environment || 'staging'}`
-    }
-  ]
+  },
+
+  // 3. Datos persistidos en el ledger de estado local
+  state: {
+    partidoId: () => 'final-champions-2026',
+    registradoEn: () => new Date().toISOString()
+  }
 };
 ```
 
 ---
 
-## Registro en Tiempo de Ejecución (`resource`)
+## Sobreescribir Recursos Existentes
+
+Puede sobreescribir cualquier recurso existente (como `github_testcase`) para personalizar atributos o agregar hooks:
+
+```typescript
+// .testform/resources/custom-testcase.ts
+import { registerResource } from '@fromeroc9/testform@beta';
+
+registerResource({
+  type: 'github_testcase',
+  attributes: (scenario) => ({
+    title: `[QA] ${scenario.name}`,
+    body: '```gherkin\n' + scenario.steps.map(s => `${s.keyword}${s.text}`).join('\n') + '\n```',
+    labels: [...(scenario.tags || []), 'automated'],
+  }),
+  lifecycle: {
+    afterCreate: async ({ id, provider }) => {
+      console.log(`Testcase #${id} sincronizado exitosamente con el proveedor`);
+    }
+  }
+});
+```
+
+---
+
+## Inspección en Tiempo de Ejecución (`resource`)
 
 La instancia `resource` permite consultar e inspeccionar los templates cargados:
 
@@ -123,6 +165,11 @@ import { resource } from '@fromeroc9/testform@beta';
 
 // Consultar todos los tipos registrados
 const types = resource.getRegisteredTypes();
-// ['github_testcase', 'github_testrun', 'testcase', 'azure_testcase', ...]
-```
+// ['github_testcase', 'github_testrun', 'testcase', 'metergol', ...]
 
+// Evaluar atributos de un recurso
+const attrs = resource.evaluateAttributes('metergol', scenario);
+
+// Obtener hooks de ciclo de vida
+const lifecycle = resource.getLifecycle('metergol');
+```

@@ -23,12 +23,13 @@ It is always safe to run `testform init` multiple times to re-synchronize backen
 | `-migrate-state` | `false` | Reconfigures a backend and automatically migrates any existing state to the new location. |
 | `-lock=false` | `true` | Disables holding a state lock during migration (use with caution). |
 | `-lock-timeout=0s` | `0s` | Duration to retry acquiring a state lock if another process holds it. |
+| `-upgrade` | `false` | Updates provider plugins and modules to the newest versions matching constraints. |
 | `-no-color` | `false` | Disables color escape codes in output. |
 | `-json` | `false` | Emits output in machine-readable JSON format. |
 
 ## Real Execution Example
 
-### Standard Initialization
+### Standard Initialization with Provider Download
 
 ```bash
 $ testform init
@@ -38,6 +39,11 @@ Successfully configured the backend "local"! Testform will automatically
 use this backend unless the backend configuration changes.
 
 Initializing provider plugins...
+- Installing gitlab from git::https://gitlab.mycompany.com/qa/providers.git//gitlab.ts?ref=v1.2.0...
+- Installed gitlab v1.2.0 (entrypoint: gitlab.ts)
+
+Testform has created/updated the lock file .testform.lock.hcl to record the provider selections.
+Include this file in your version control repository.
 
 Testform has been successfully initialized!
 
@@ -45,10 +51,66 @@ You may now begin working with Testform. Try running "testform plan" to see
 any changes that are required for your test management resources. All Testform commands
 should now work.
 
-If you ever set or change modules or backend configuration for Testform,
+If you ever set or change modules, providers or backend configuration for Testform,
 rerun this command to reinitialize your working directory. If you forget, other
 commands will detect it and remind you to do so if necessary.
 ```
+
+## Provider Plugin Installation (`required_providers`)
+
+During `Initializing provider plugins...`, Testform reads the `testform.required_providers` block in `main.yml` and deterministically installs each provider into **`.testform/providers/<name>/`**:
+
+### Supported Download Sources
+
+1. **Git Subpaths for Single `.ts` Files:**
+   Downloads a single TypeScript file directly from a remote Git repository, executing it transparently with in-memory transpilation:
+   ```yaml
+   testform:
+     required_providers:
+       gitlab: "git::https://gitlab.mycompany.com/qa/providers.git//gitlab.ts?ref=v1.2.0"
+   ```
+2. **Full Git Repositories:**
+   Clones the repository at the specified ref/tag:
+   ```yaml
+   testform:
+     required_providers:
+       jira:
+         source: "git::https://github.com/mycompany/testform-provider-jira.git"
+         version: "1.0.0"
+   ```
+3. **Local Paths for Rapid Development:**
+   Copies or links local source files:
+   ```yaml
+   testform:
+     required_providers:
+       local: "./custom-providers/my-provider.ts"
+   ```
+4. **NPM Packages:**
+   Installs packaged providers published on npm or enterprise registries:
+   ```yaml
+   testform:
+     required_providers:
+       zephyr: "@mycompany/testform-provider-zephyr"
+   ```
+
+### The Lockfile (`.testform.lock.hcl`)
+
+Upon installation, `testform init` computes SHA-256 hashes using the `h1:<base64>` format and writes them into `.testform.lock.hcl`:
+
+```hcl
+# This file is maintained automatically by "testform init".
+# Manual edits may be lost in future updates.
+
+provider "gitlab" {
+  version     = "1.2.0"
+  constraints = ">= 1.2.0"
+  hashes = [
+    "h1:A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8S9t0U1v=",
+  ]
+}
+```
+
+Commit this file into Git to ensure all developers and CI/CD pipelines run the exact same provider code.
 
 ### Initialization without Backend (`-backend=false`)
 

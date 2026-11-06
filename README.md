@@ -12,6 +12,8 @@
   <a href="https://fromeroc9.github.io/testform-docs/"><img src="https://img.shields.io/badge/docs-online-4F46E5?style=flat-square&logo=gitbook&logoColor=white" alt="Docs Online" /></a>
   <a href="https://github.com/fromeroc9/testform-docs/actions/workflows/deploy.yml"><img src="https://img.shields.io/github/actions/workflow/status/fromeroc9/testform-docs/deploy.yml?branch=main&label=deploy&style=flat-square" alt="Deploy Status" /></a>
   <a href="https://starlight.astro.build/"><img src="https://img.shields.io/badge/built%20with-Starlight%20%2B%20Astro-FF5D01?style=flat-square&logo=astro&logoColor=white" alt="Built with Starlight" /></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=fromeroc9.testform-dsl"><img src="https://img.shields.io/badge/VS%20Code-Marketplace-007ACC?style=flat-square&logo=visualstudiocode&logoColor=white" alt="VS Code Marketplace" /></a>
+  <a href="https://open-vsx.org/extension/fromeroc9/testform-dsl"><img src="https://img.shields.io/badge/Open%20VSX-Registry-9E00FF?style=flat-square&logo=eclipseche&logoColor=white" alt="Open VSX Registry" /></a>
   <a href="https://github.com/fromeroc9/testform"><img src="https://img.shields.io/badge/core-testform-0284C7?style=flat-square&logo=github&logoColor=white" alt="Core Repository" /></a>
   <a href="https://github.com/fromeroc9/testform/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square" alt="License" /></a>
 </p>
@@ -24,12 +26,25 @@ This site is built with **[Astro](https://astro.build/)** and **[Starlight](http
 
 ---
 
-## 🌐 Live Documentation
+## 🌐 The Testform Ecosystem
+
+The Testform ecosystem is composed of three interconnected solutions designed to standardize and automate Test-as-Code across your workflows:
+
+| Solution | Description | Repositories & Registries |
+| :--- | :--- | :--- |
+| ⚡ **Testform CLI** | Core declarative Test-as-Code state orchestration engine for Git. Planning, reconciliation, and reporting. | [![NPM](https://img.shields.io/badge/npm-package-CB3837?style=flat-square&logo=npm&logoColor=white)](https://www.npmjs.com/package/@fromeroc9/testform@beta) · [GitHub: fromeroc9/testform](https://github.com/fromeroc9/testform) |
+| 📖 **Documentation Portal** | Comprehensive bilingual documentation, guides, architecture deep-dives, CLI reference, and API specs. | 🌐 **[testform-docs Portal](https://fromeroc9.github.io/testform-docs/)** · [GitHub: fromeroc9/testform-docs](https://github.com/fromeroc9/testform-docs) |
+| 🧩 **VS Code Extension** | Official IDE language support: Testform DSL IntelliSense, syntax highlighting, Test Explorer, and state visualizer. | [![VS Code Marketplace](https://img.shields.io/badge/VS%20Code-Marketplace-007ACC?style=flat-square&logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=fromeroc9.testform-dsl) [![Open VSX](https://img.shields.io/badge/Open%20VSX-Registry-9E00FF?style=flat-square&logo=eclipseche&logoColor=white)](https://open-vsx.org/extension/fromeroc9/testform-dsl) · [GitHub: fromeroc9/testform-vscode](https://github.com/fromeroc9/testform-vscode) |
+
+---
+
+## 🌐 Live Documentation Portal
 
 - **Production Portal:** 👉 **[https://fromeroc9.github.io/testform-docs/](https://fromeroc9.github.io/testform-docs/)**
 - **Spanish Documentation (Default):** [https://fromeroc9.github.io/testform-docs/es/](https://fromeroc9.github.io/testform-docs/es/)
 - **English Documentation:** [https://fromeroc9.github.io/testform-docs/en/](https://fromeroc9.github.io/testform-docs/en/)
-- **Core Engine Repository:** [fromeroc9/testform](https://github.com/fromeroc9/testform)
+- **Core CLI Engine:** [fromeroc9/testform](https://github.com/fromeroc9/testform)
+- **VS Code Extension:** [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=fromeroc9.testform-dsl) · [Open VSX Registry](https://open-vsx.org/extension/fromeroc9/testform-dsl)
 
 ---
 

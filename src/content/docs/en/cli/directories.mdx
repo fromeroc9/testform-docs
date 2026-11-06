@@ -16,23 +16,36 @@ Just as HashiCorp Terraform relies on `.terraform` and `~/.terraform.d`, **Testf
 my-project/
 ├── main.yml
 ├── testform.state
+├── .testform.lock.hcl         # Cryptographic provider lockfile (h1: hashes and pinned versions)
 └── .testform/
-    ├── environment                # Name of the currently selected workspace
-    ├── cache/                     # Engine auto-generated and temporary files
-    │   ├── backend.json           # Initialized active backend configuration (testform init)
-    │   ├── lock.json              # Provider dependency lock and cryptographic checksums
-    │   └── data.json              # Local mock database for provider: local
-    ├── modules/                   # Remote modules downloaded from Git repositories
+    ├── environment            # Name of the currently selected workspace
+    ├── cache/                 # Engine auto-generated and temporary files
+    │   ├── backend.json       # Initialized active backend configuration (testform init)
+    │   ├── lock.json          # Provider dependency lock and cryptographic checksums
+    │   └── data.json          # Local mock database for provider: local
+    ├── providers/             # Downloaded and installed provider plugins (testform init)
+    │   └── <provider_name>/
+    │       ├── index.js / provider.ts
+    │       └── package.json
+    ├── modules/               # Remote modules downloaded from Git repositories
     │   └── <module_name>/
     │       ├── main.yml
-    │       ├── policies/          # Quality policies inherited from the shared module
-    │       └── resources/         # Resource templates inherited from the shared module
-    ├── policies/                  # Local custom validation policies (.ts, .js)
-    ├── resources/                 # Local custom resource templates (.ts, .js)
-    ├── reports/                   # Custom report extensions (.ts), formats (.format.ts), and templates (.docx, .xlsx)
-    ├── backends/                  # Local custom backend storage drivers
-    └── ephemeral/                 # Metadata of active ephemeral test sandboxes (testform ephemeral)
+    │       ├── policies/      # Quality policies inherited from the shared module
+    │       └── resources/     # Resource templates inherited from the shared module
+    ├── policies/              # Local custom validation policies (.ts, .js)
+    ├── resources/             # Local custom resource templates (.ts, .js)
+    ├── reports/               # Custom report extensions (.ts), formats (.format.ts), and templates (.docx, .xlsx)
+    ├── backends/              # Local custom backend storage drivers
+    └── ephemeral/             # Metadata of active ephemeral test sandboxes (testform ephemeral)
 ```
+
+---
+
+## Components and Files in Project Root
+
+### `.testform.lock.hcl`
+- **When it is generated:** During `testform init` when resolving `testform.required_providers`.
+- **Purpose:** Records the exact versions and cryptographic SHA-256 hashes (`h1:<base64>`) for each downloaded provider plugin. Ensures deterministic and identical executions across all team workstations and CI/CD pipelines.
 
 ---
 
@@ -47,7 +60,11 @@ my-project/
 - **When it is generated:** When managing workspaces via `testform workspace new <name>` or `testform workspace select <name>`.
 - **Purpose:** A single-line plain text file storing the name of the currently selected workspace (e.g. `staging` or `production`). If absent, Testform defaults to the `default` workspace.
 
-### 3. `modules/`
+### 3. `providers/`
+- **When it is generated:** During `testform init`, whenever `main.yml` declares entries in `testform.required_providers`.
+- **Purpose:** Dedicated directory where Testform downloads and stores executable provider plugins (from Git subpaths, full repos, or npm packages). The dynamic loader (`src/providers/loader.ts`) executes code directly from here.
+
+### 4. `modules/`
 - **When it is generated:** During `testform init`, whenever `main.yml` declares module blocks referencing remote sources (`git::https://...`).
 - **Purpose:** Holds frozen local copies of remote test modules. This ensures subsequent runs of `testform plan` and `testform apply` remain deterministic and do not depend on continuous internet access or external version control hosts.
 

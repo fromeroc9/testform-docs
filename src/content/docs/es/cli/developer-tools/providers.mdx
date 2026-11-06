@@ -134,6 +134,39 @@ $ testform providers schema -json
 }
 ```
 
+### 5. `testform providers scaffold`
+
+```bash
+testform providers scaffold <nombre> [directorio] [--project]
+```
+
+Genera plantillas y código base estructurado para crear proveedores personalizados sin tener que escribir interfaces ni configurar el entorno desde cero.
+
+#### Modalidad 1: Archivo Único `.ts` (Integración Rápida)
+Genera un único archivo TypeScript tipado con la interfaz `IProvider`:
+
+```bash
+$ testform providers scaffold gitlab
+Created custom-providers/gitlab.ts
+```
+
+Testform transpila este archivo de forma transparente al vuelo durante `testform plan` o `testform apply`.
+
+#### Modalidad 2: Proyecto Completo Empresarial (`--project`)
+Crea una estructura de proyecto independiente lista para Git o publicación en npm, incluyendo pruebas unitarias con Vitest:
+
+```bash
+$ testform providers scaffold gitlab --project
+Created provider project structure in ./testform-provider-gitlab:
+  - package.json
+  - tsconfig.json
+  - README.md
+  - src/index.ts
+  - src/client.ts
+  - src/types.ts
+  - test/provider.test.ts
+```
+
 ---
 
 ## Opciones Generales del Comando

@@ -1,10 +1,11 @@
 ---
 title: "Configure Providers"
+description: "Guía completa para declarar, descargar y crear proveedores dinámicos en Testform con paridad arquitectónica con Terraform."
 ---
 
 Los **Providers** en Testform son plugins modulares desacoplados que conectan la especificación declarativa de pruebas BDD con las **plataformas de gestión de calidad y estado** (GitHub Issues / Projects, GitLab, Jira o Ledger Local).
 
-Al igual que en Terraform un provider gestiona la comunicación con la API de un proveedor de nube (AWS, Azure, GCP) para registrar el estado de la infraestructura, en Testform un provider gestiona la comunicación con el issue tracker o el almacenamiento de estado para **crear, actualizar, cerrar y versionar casos de prueba y ejecuciones como código en Git**.
+Al igual que en Terraform un provider gestiona la comunicación con la API de un proveedor de nube (AWS, Azure, GCP), en Testform un provider gestiona la comunicación con el issue tracker o el almacenamiento de estado para **crear, actualizar, cerrar y versionar casos de prueba y ejecuciones como código en Git**.
 
 :::caution
 **Diferencia Clave: Providers vs Test Runners**  
@@ -14,90 +15,591 @@ Al igual que en Terraform un provider gestiona la comunicación con la API de un
 
 ---
 
-## Declaración en `main.yml`
+## 1. Declaración de Providers Requeridos (`required_providers`)
 
-Los providers se configuran en el archivo principal **`main.yml`**:
+Siguiendo el estándar de Terraform, todo proyecto formal declara sus dependencias en el bloque **`testform.required_providers`** dentro de `main.yml`:
 
 ```yaml
 # main.yml
 testform:
   required_version: ">= 1.0.0"
-  backend:
-    local:
-      path: "./testform.state"
+  required_providers:
+    # 1. Archivo individual desde Git (Subpath con tag de versión)
+    gitlab: "git::https://gitlab.miempresa.com/qa/providers.git//gitlab.ts?ref=v1.2.0"
 
+    # 2. Repositorio completo con sintaxis de objeto
+    jira:
+      source: "git::https://github.com/miempresa/testform-provider-jira.git"
+      version: "1.0.0"
+
+    # 3. Paquete corporativo desde NPM / GitLab / GitHub Packages
+    zephyr:
+      source: "@mi-empresa/testform-provider-zephyr"
+      version: "~> 1.0.0"
+
+    # 4. Proveedor local para desarrollo y pruebas rápidas
+    local: "./custom-providers/local-provider.ts"
+
+# Configuración y credenciales de los proveedores declarados
 provider:
-  github:
-    owner: "mi-organizacion"
-    repository: "mi-sistema-web"
-    token_env: "GITHUB_TOKEN"
+  gitlab:
+    host: "https://gitlab.miempresa.com"
+    project_id: "12345"
+    token_env: "GITLAB_TOKEN"
+
   jira:
-    host: "mi-empresa.atlassian.net"
-    project_key: "QA"
-    email: "qa-team@empresa.com"
+    domain: "miempresa.atlassian.net"
+    token: "XYZ..."
 ```
 
----
-
-## Providers Disponibles
-
-| Provider | Tipo de Almacenamiento | Uso Recomendado |
-|---|---|---|
-| **`local`** | Archivo local `testform.state` | Proyectos ágiles, pruebas locales y suites autónomas en Git sin dependencias externas. |
-| **`github`** | GitHub Issues + GitHub Projects (GraphQL) | Equipos que centralizan sus especificaciones y ejecuciones en GitHub Enterprise / Cloud. |
-| **`gitlab`** | GitLab Issues + Scoped Labels | Pipelines de GitLab CI/CD con trazabilidad en tableros de GitLab. |
-| **Custom Providers** | Conectores propios registrados vía `registerResource()` | Integraciones a medida con herramientas propietarias de QA o TestRail/Xray. |
-
----
-
-## Configuración Detallada de GitHub Provider (`provider: github`)
-
-Cuando utilizas GitHub como proveedor de gestión de calidad, Testform interactúa con la API GraphQL de **GitHub Projects (Projects V2)** y la API REST de **GitHub Issues**. Para garantizar la sincronización bidireccional, el repositorio y la organización deben configurarse con las siguientes especificaciones:
-
-### 1. Tablero GitHub Projects (Projects V2)
-- Debe existir un proyecto de GitHub Projects V2 (a nivel de organización o usuario) vinculado al repositorio.
-- El proyecto debe contener un campo de tipo selección única (*Single-select*) denominado exactamente **`Status`**.
-- El campo `Status` debe incluir obligatoriamente los siguientes valores de opción:
-  - `Todo`
-  - `Done`
-  - `passed`
-  - `failed`
-  - `blocked`
-  - `skipped`
-  - `unexecuted`
-
-### 2. Etiquetas Requeridas (Labels)
-Testform mapea los recursos declarativos (`testcase`, `testrun`, `testplan`, etc.) con etiquetas en las incidencias de GitHub. Las siguientes 5 etiquetas son obligatorias:
-- `bug`
-- `testcase`
-- `testplan`
-- `testreport`
-- `testrun`
-
-### 3. Permisos de Autenticación (PAT)
-El token de autenticación configurado (`token_env` o `testform login`) debe contar con los siguientes alcances:
-- **Classic Personal Access Token (PAT):**
-  - Scope `repo` (Acceso completo a repositorios privados/públicos).
-  - Scope `project` (Lectura y escritura en proyectos de GitHub).
-- **Fine-Grained Personal Access Token:**
-  - Repositorio: Permiso `Issues` en modo **Read and write**.
-  - Organización: Permiso `Projects` en modo **Read and write**.
-
-:::tip[Automatización Rápida]
-Puedes aprovisionar todas las etiquetas, el proyecto de GitHub Projects V2 y los workflows de sincronización automáticamente ejecutando la acción [Install Testform Labels and Project](https://github.com/fromeroc9/testform/blob/main/.github/workflows/install.yml) en tu repositorio.
+:::tip[Regla de Validación Estricta (Terraform Parity)]
+Cuando declaras `required_providers`, la CLI de Testform actúa como una lista blanca estricta:
+1. **Provider no declarado:** Si configuras un bloque `provider.jira`, pero no declaraste `jira` en `required_providers`, Testform abortará con `Error: Undeclared provider "jira"`.
+2. **Provider no instalado:** Si declaras un provider remoto pero no has ejecutado `testform init`, Testform abortará con `Error: Provider "gitlab" is not installed. Run "testform init"`.
 :::
 
 ---
 
-## Inicialización del Provider (`testform init`)
+## 2. Todas las Formas de Descargar y Consumir un Provider
 
-Antes de ejecutar un plan, `testform init` autentica y valida el provider configurado:
+Testform soporta 4 métodos de resolución y descarga:
+
+### A. Subruta Git (Descarga de Archivo Individual)
+Descarga **únicamente un archivo específico** (por ejemplo, `gitlab.ts` o `jira.js`) dentro de un repositorio Git, sin necesidad de clonar dependencias innecesarias:
+
+```yaml
+testform:
+  required_providers:
+    # Sintaxis: git::<URL_REPO>//<SUBPATH>?ref=<TAG_O_RAMA>
+    gitlab: "git::https://gitlab.miempresa.com/qa/providers.git//gitlab.ts?ref=v1.2.0"
+```
+
+### B. Repositorio Git Completo
+Descarga un repositorio dedicado con control de ramas o tags:
+
+```yaml
+testform:
+  required_providers:
+    # Vía HTTPS
+    jira: "git::https://github.com/miempresa/testform-provider-jira.git?ref=v1.0.0"
+
+    # Vía SSH
+    zephyr: "git::git@gitlab.miempresa.com:qa/provider-zephyr.git?ref=v2.0.0"
+```
+
+### C. Registro de Paquetes (NPM / GitHub Packages / GitLab Registry)
+Instala un paquete distribuido mediante un gestor de dependencias:
+
+```yaml
+testform:
+  required_providers:
+    jira:
+      source: "@mi-empresa/testform-provider-jira"
+      version: "^1.0.0"
+```
+
+### D. Ruta Local Directa (Desarrollo Offline)
+Apunta a un archivo o carpeta en tu disco local sin descargas de red:
+
+```yaml
+testform:
+  required_providers:
+    local: "./custom-providers/local-provider.ts"
+```
+
+---
+
+## 3. Las 3 Formas de Crear un Provider Propio
+
+Cualquier provider en Testform es simplemente una clase que implementa la interfaz **`IProvider`**. Tienes 3 alternativas para crearlo, de menor a mayor complejidad:
+
+### Opción 1: El Simple (Archivo Único `.ts` o `.js`)
+
+Ideal para: **Equipos ágiles que quieren conectar una herramienta interna sin configuraciones complejas.**
+
+No necesitas crear un proyecto de Node.js, ni `package.json`, ni compilar con Webpack. Creas un único archivo `gitlab.ts`:
+
+```typescript
+// gitlab.ts
+export default class GitLabProvider {
+  private host: string;
+  private token: string;
+  private projectId: string;
+
+  constructor(config: Record<string, any>) {
+    this.host = config.host || 'https://gitlab.com';
+    this.token = process.env[config.token_env || 'GITLAB_TOKEN'] || '';
+    this.projectId = config.project_id;
+  }
+
+  formatRemoteId(id: number | string): string {
+    return `#${id}`;
+  }
+
+  async createIssue(payload: any) {
+    const res = await fetch(`${this.host}/api/v4/projects/${this.projectId}/issues`, {
+      method: 'POST',
+      headers: {
+        'PRIVATE-TOKEN': this.token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        title: payload.title,
+        description: payload.body,
+        labels: (payload.labels || []).join(',')
+      })
+    });
+    const data = await res.json();
+    return { id: data.id, number: data.iid, title: data.title, state: data.state };
+  }
+
+  async updateIssue(issueId: number | string, payload: any) {
+    // Implementar llamada PATCH/PUT
+    return { id: issueId, number: Number(issueId), title: payload.title || '', state: 'opened' };
+  }
+
+  async closeIssue(issueId: number | string) {
+    await fetch(`${this.host}/api/v4/projects/${this.projectId}/issues/${issueId}?state_event=close`, {
+      method: 'PUT',
+      headers: { 'PRIVATE-TOKEN': this.token }
+    });
+  }
+
+  async getIssue(issueId: number | string) {
+    const res = await fetch(`${this.host}/api/v4/projects/${this.projectId}/issues/${issueId}`, {
+      headers: { 'PRIVATE-TOKEN': this.token }
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return { id: data.id, number: data.iid, title: data.title, state: data.state };
+  }
+
+  async listIssuesByLabel(label: string) {
+    return [];
+  }
+
+  async getMilestoneByTitle(title: string) {
+    return undefined;
+  }
+}
+```
+
+:::note[Transpilación Automática al Vuelo]
+Testform transpile en memoria los archivos `.ts` en tiempo de ejecución. No necesitas compilarlo previamente a JavaScript.
+:::
+
+---
+
+### Opción 2: El Complejo (Repositorio Git Estructurado)
+
+Ideal para: **Proveedores corporativos con múltiples módulos, cliente HTTP robusto, autenticación avanzada y tests unitarios.**
+
+Estructura recomendada del repositorio:
+```
+testform-provider-jira/
+├── README.md
+├── package.json
+├── tsconfig.json
+├── src/
+│   ├── index.ts        <-- Exporta la clase principal (export default o export class Provider)
+│   ├── client.ts       <-- Cliente Axios / Fetch con reintentos
+│   ├── types.ts        <-- Definición de DTOs y esquemas
+│   └── services/
+│       ├── issues.ts
+│       └── milestones.ts
+└── test/
+    └── provider.test.ts
+```
+
+En su `package.json`, asegúrate de definir el archivo principal:
+```json
+{
+  "name": "testform-provider-jira",
+  "version": "1.0.0",
+  "main": "src/index.ts"
+}
+```
+
+---
+
+### Opción 3: El Paquete Distribuido (NPM / Package Registry)
+
+Ideal para: **Publicar providers en repositorios de artefactos privados (GitLab Package Registry, GitHub Packages, Artifactory o npmjs.org).**
+
+1. Se compila con TypeScript:
+   ```bash
+   tsc -p tsconfig.json
+   ```
+2. La carpeta `dist/` contiene los `.js` generados:
+   ```json
+   {
+     "name": "@mi-empresa/testform-provider-gitlab",
+     "version": "1.2.0",
+     "main": "dist/index.js",
+     "types": "dist/index.d.ts",
+     "files": ["dist"]
+   }
+   ```
+3. Se publica con `npm publish`.
+4. En `main.yml`, cualquier proyecto del equipo lo consume indicando únicamente el nombre del paquete:
+   ```yaml
+   testform:
+     required_providers:
+       gitlab:
+         source: "@mi-empresa/testform-provider-gitlab"
+         version: "1.2.0"
+   ```
+
+---
+
+## 4. Generador Automático de Plantillas (`testform providers scaffold`)
+
+Para que no tengas que escribir un provider desde cero ni adivinar los nombres de los métodos o tipos, Testform incluye un generador automático que soporta **ambas modalidades**:
+
+```bash
+testform providers scaffold <nombre> [directorio] [--project]
+```
+
+### Modalidad 1: Archivo Único `.ts` (Para integraciones rápidas)
+
+```bash
+# Genera custom-providers/gitlab.ts con la clase GitLabProvider lista para rellenar
+testform providers scaffold gitlab
+```
+
+Crea automáticamente el archivo con todas las interfaces TypeScript, métodos tipados y comentarios.
+
+### Modalidad 2: Proyecto Completo Estructurado (`--project`)
+
+Para crear un repositorio independiente listo para subir a Git o publicar en npm:
+
+```bash
+# Genera el proyecto testform-provider-gitlab/ con estructura completa
+testform providers scaffold gitlab --project
+```
+
+Estructura generada automáticamente:
+```
+testform-provider-gitlab/
+├── package.json        # Configuración de compilación y scripts (build, test)
+├── tsconfig.json       # Configuración de TypeScript ES2022 / NodeNext
+├── README.md           # Guía de desarrollo y consumo en Testform
+├── src/
+│   ├── index.ts        # Clase principal que implementa IProvider
+│   ├── client.ts       # Cliente HTTP tipado con autenticación por token
+│   └── types.ts        # Interfaces y DTOs
+└── test/
+    └── provider.test.ts # Pruebas unitarias con Vitest
+```
+
+:::tip[Listo para Git]
+Una vez generado con `--project`, solo debes hacer:
+```bash
+cd testform-provider-gitlab
+npm install
+npm test
+git init && git add . && git commit -m "feat: initial gitlab provider"
+git tag v1.0.0
+```
+Y ya puedes referenciarlo en cualquier `main.yml` de tu empresa.
+:::
+
+---
+
+## 5. Especificación Completa de la API (`IProvider` Contract Reference)
+
+Testform soporta **dos modelos de implementación** para un provider:
+1. **Modo Issue-Based (Recomendado para QA):** Para plataformas basadas en tickets/incidencias (GitLab, Jira, GitHub, Azure DevOps).
+2. **Modo Agnóstico CRUD (`apis`):** Para conectar con cualquier API REST arbitraria, base de datos interna o herramientas que no usen el concepto de "Issue" (e.g. TestRail, microservicios corporativos).
+
+---
+
+### 5.1. Modo 1: Enfoque Basado en Incidencias (Issue-Based)
+
+Ideal para el 90% de integraciones de QA. Implementa métodos de alto nivel para gestionar casos de prueba y ejecuciones como tickets:
+
+#### Tipos de Entrada y Salida
+
+```typescript
+export interface IProviderIssuePayload {
+  title: string;                 // Título del caso de prueba o ejecución
+  body: string;                  // Descripción en Markdown con pasos BDD
+  labels: string[];              // Etiquetas (e.g. ['testcase', 'auth', 'smoke'])
+  assignees?: string[];          // Usuarios asignados
+  milestone?: number | string;   // ID del hito / sprint
+  state?: string;                // 'open' | 'closed'
+}
+
+export interface IProviderIssueResult {
+  id: number | string;           // ID único en la base de datos remota
+  number: number;                // Número visible de issue / ticket (e.g. 102)
+  title: string;                 // Título
+  body?: string;                 // Descripción
+  state: string;                 // 'open' | 'closed'
+  labels?: string[];             // Lista de etiquetas confirmadas
+  created_at?: string;           // ISO 8601 timestamp
+  updated_at?: string;           // ISO 8601 timestamp
+}
+```
+
+#### Métodos del Ciclo de Vida
+
+| Método | Tipo | Cuándo se llama | Qué debe hacer |
+|---|---|---|---|
+| **`constructor(config)`** | Requerido | Al inicializar el provider | Recibe el diccionario de opciones configurado bajo `provider.<nombre>` en `main.yml` (tokens, host, project_id, etc.). |
+| **`formatRemoteId(id)`** | Requerido | En plan, apply y state | Devuelve el formato legible del ticket (`#102` para GitHub/GitLab, `QA-102` para Jira). |
+| **`createIssue(payload)`** | Requerido | `testform apply` (acción `add`) | Crea el caso de prueba o ejecución en la API remota (HTTP POST) y retorna `IProviderIssueResult`. |
+| **`updateIssue(id, payload)`**| Requerido | `testform apply` (acción `change`) | Actualiza atributos modificados en la incidencia remota (HTTP PATCH/PUT). |
+| **`closeIssue(id)`** | Requerido | `testform destroy` / `replace` | Cierra o archiva la incidencia en la plataforma remota. |
+| **`getIssue(id)`** | Requerido | `testform refresh` | Consulta la API remota por ID para detectar deriva (*drift*) entre Git y la nube. Retorna `null` si fue eliminado. |
+| **`listIssuesByLabel(label)`**| Requerido | Sincronización masiva | Obtiene las incidencias que contengan una etiqueta específica. |
+| **`getMilestoneByTitle(title)`**| Requerido | Asociación de sprints | Resuelve el nombre de un hito/sprint (e.g. "Sprint 2026-Q1") al ID numérico en la plataforma. |
+| **`addToProject(id)`** | *Opcional* | Sincronización con tableros | Vincula el ticket a un tablero Kanban o Project Board (GitHub Projects V2, Jira Board). |
+| **`updateProjectItemFields(itemId, fields)`** | *Opcional* | Campos personalizados | Sincroniza campos custom (e.g. `Squad`, `Priority`, `Quarter`) en el ítem del tablero. |
+| **`addSubIssue(parentId, childId)`** | *Opcional* | Jerarquía testplan / testrun | Enlaza un caso de prueba como sub-tarea o sub-issue del testrun padre. |
+
+---
+
+### 5.2. Modo 2: Enfoque Agnóstico de Recursos (`resources: Record<string, IProviderResourceHandler>`)
+
+Si tu destino **no es un issue tracker** (por ejemplo, una base de datos PostgreSQL, un microservicio interno o TestRail), tu provider expone manejadores de recursos bajo la propiedad `resources` con verbos HTTP estándar, alias y funciones personalizadas:
+
+```typescript
+export interface IProviderResourceHandler<TAttrs = any, TResult = any> {
+  // ─── Verbos HTTP Estándar del Ciclo de Vida ───
+  post?(attributes: TAttrs, context?: any): Promise<TResult>;
+  get?(id: string | number, context?: any): Promise<TResult | null>;
+  patch?(id: string | number, attributes: Partial<TAttrs>, context?: any): Promise<TResult>;
+  put?(id: string | number, attributes: TAttrs, context?: any): Promise<TResult>;
+  delete?(id: string | number, context?: any): Promise<void>;
+
+  // ─── Alias Semánticos ───
+  create?(data: TAttrs, context?: any): Promise<TResult>;
+  update?(id: string | number, data: TAttrs, context?: any): Promise<TResult>;
+
+  // ─── Métodos y Acciones Personalizadas Arbitrarias ───
+  [customAction: string]: ((...args: any[]) => Promise<any>) | undefined;
+}
+```
+
+#### Ejemplo de Implementación Agnóstica:
+
+```typescript
+// custom-providers/internal-api.ts
+export default class InternalQaProvider {
+  public name = 'internal-qa';
+
+  // Expone endpoints REST por tipo de recurso
+  public resources = {
+    testcase: {
+      post: async (attrs: any) => await fetch('/api/v1/cases', { method: 'POST', body: JSON.stringify(attrs) }),
+      patch: async (id: any, attrs: any) => await fetch(`/api/v1/cases/${id}`, { method: 'PATCH', body: JSON.stringify(attrs) }),
+      delete: async (id: any) => await fetch(`/api/v1/cases/${id}`, { method: 'DELETE' }),
+      get: async (id: any) => await fetch(`/api/v1/cases/${id}`).then(r => r.json())
+    },
+    testrun: {
+      post: async (attrs: any) => await fetch('/api/v1/runs', { method: 'POST', body: JSON.stringify(attrs) }),
+      get: async (id: any) => await fetch(`/api/v1/runs/${id}`).then(r => r.json())
+    }
+  };
+
+  /** Alias de retrocompatibilidad */
+  public get apis() {
+    return this.resources;
+  }
+
+  formatRemoteId(id: number | string): string {
+    return `CASE-${id}`;
+  }
+}
+```
+
+El motor de `testform apply` detecta si el provider implementa `resources[resourceType]` y despacha automáticamente `post()` (o `create`), `patch()`/`put()` (o `update`), `delete()` y `get()`.
+
+---
+
+### 5.3. ¿Cómo Conectan los Recursos (Custom Resources) con un Provider Agnóstico?
+
+A diferencia de Terraform (donde el Provider y los Recursos vienen rígidamente acoplados en el mismo paquete binario), **Testform utiliza una Arquitectura Desacoplada (Decoupled Architecture)**:
+
+1. **El Recurso (`Resource` / `Custom Resource`)**: Modela el dominio BDD / Gherkin (escenarios, tags, pasos) y define:
+   - **`attributes`**: Los datos canónicos extraídos del escenario que se enviarán a `provider.resources[type].post(attributes)`.
+   - **`lifecycle`**: Hooks (`beforeCreate`, `afterCreate`, `beforeUpdate`, `afterUpdate`, `beforeDelete`, `afterDelete`) que reciben la instancia viva de `provider` para invocar métodos personalizados arbitrarios (ej. subir videos, sincronizar con el VAR, notificar a Slack).
+2. **El Proveedor (`Provider`)**: Modela el canal de transporte y protocolo (HTTP REST, GraphQL, DB, Kafka) y define:
+   - **`resources`**: Manejadores con verbos REST (`post`, `get`, `patch`, `put`, `delete`).
+   - Métodos o funciones personalizadas adicionales expuestas en la clase del proveedor.
+3. **El Motor (`Engine Dispatcher`)**: Hace de puente automático:
+   - Ejecuta `lifecycle.beforeCreate`.
+   - Envía los `attributes` a `resources[tipo].post(attributes)`.
+   - Ejecuta `lifecycle.afterCreate({ id, attributes, provider })`.
+
+#### Diagrama de Conexión
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│                        TESTFORM ENGINE                         │
+│                                                                │
+│  1. Escenario Gherkin / Feature                                │
+│           │                                                    │
+│           ▼                                                    │
+│  2. Resource Template (Built-in o Custom)                     │
+│     attributes: (scenario, ctx) => ({ jugador, minuto, ... })  │
+│     lifecycle: {                                               │
+│        beforeCreate: async ({ attributes }) => { ... },        │
+│        afterCreate: async ({ id, attributes, provider }) => {   │
+│           await provider.subirVideoGol(id, attributes.jugador);│
+│        }                                                       │
+│     }                                                          │
+│           │                                                    │
+│           │ evaluateAttributes() -> atributos canónicos        │
+│           ▼                                                    │
+│  3. Engine Dispatcher (apply / destroy)                        │
+│     Despacha a provider.resources[tipo].post(attributes)       │
+│           │                                                    │
+│           ▼                                                    │
+│  4. Agnostic Provider                                          │
+│     resources: {                                               │
+│        metergol: {                                             │
+│           post: async (attrs, ctx) => result,                  │
+│           patch: async (id, attrs, ctx) => result,             │
+│           delete: async (id, ctx) => void                      │
+│        }                                                       │
+│     }                                                          │
+│     subirVideoGol(golId, jugador): async () => { ... }         │
+│           │                                                    │
+│           ▼                                                    │
+│  5. State Ledger (.testform/state.json)                       │
+│     Guarda remoteId, hash, y atributos del estado              │
+└────────────────────────────────────────────────────────────────┘
+```
+
+#### Ejemplo Práctico: Conexión Paso a Paso (`metergol`)
+
+**Paso 1: Tu Recurso emite los atributos y define el ciclo de vida (`.testform/resources/metergol.ts`)**
+```typescript
+import { registerResource } from '@fromeroc9/testform@beta';
+
+export default function() {
+  registerResource({
+    type: 'metergol',
+    attributes: (scenario) => ({
+      jugador: scenario.name,
+      minuto: scenario.custom?.fields?.minuto ?? 90,
+      equipo: scenario.custom?.fields?.equipo ?? 'Local',
+      esPenal: scenario.custom?.fields?.esPenal ?? false
+    }),
+    lifecycle: {
+      afterCreate: async ({ id, attributes, provider }) => {
+        // Llama a la función personalizada del provider directamente
+        if (provider.subirVideoGol) {
+          await provider.subirVideoGol(id, attributes.jugador);
+        }
+      }
+    },
+    state: {
+      torneo: () => 'Champions League 2026'
+    }
+  });
+}
+```
+
+**Paso 2: Tu Provider implementa el manejador del recurso y sus funciones personalizadas (`custom-providers/sports.ts`)**
+```typescript
+export default class SportsProvider {
+  public name = 'sports';
+
+  public resources = {
+    metergol: {
+      post: async (attrs: any) => {
+        const res = await fetch('https://api.deportes.com/v1/goles', {
+          method: 'POST',
+          body: JSON.stringify(attrs)
+        });
+        const json = await res.json();
+        return { id: json.gol_id, number: json.gol_id };
+      },
+      delete: async (id: any) => {
+        await fetch(`https://api.deportes.com/v1/goles/${id}`, { method: 'DELETE' });
+      }
+    }
+  };
+
+  public get apis() { return this.resources; }
+
+  // Función custom consumida por el recurso en afterCreate
+  public async subirVideoGol(golId: string | number, jugador: string) {
+    console.log(`Subiendo video del gol #${golId} de ${jugador}...`);
+  }
+
+  formatRemoteId(id: string | number) {
+    return `GOL-${id}`;
+  }
+}
+```
+
+**Paso 3: El Engine ejecuta el ciclo de vida sin fricción intermedia**
+- En `testform apply (add)`: El engine ejecuta `beforeCreate`, luego `resources.metergol.post(attributes)`, y finalmente `afterCreate` que invoca `provider.subirVideoGol()`.
+- En `testform apply (change)`: Llama a `beforeUpdate`, `resources.metergol.patch(remoteId, attributes)` y `afterUpdate`.
+- En `testform destroy`: Llama a `beforeDelete`, `resources.metergol.delete(remoteId)` y `afterDelete`.
+- En el `state.json`: Queda registrado como `[id=GOL-99]` gracias a `formatRemoteId`.
+
+---
+
+## 6. Ciclo de Vida y Comandos de la CLI
+
+### Inicialización (`testform init`)
+Descarga los providers declarados a la carpeta interna **`.testform/providers/<nombre>/`** y genera el archivo de bloqueo:
 
 ```bash
 testform init
 ```
 
-Durante el `init`:
-1. Verifica las credenciales de acceso (tokens de entorno como `GITHUB_TOKEN` o `GITLAB_TOKEN`).
-2. Configura el backend de estado y el archivo de bloqueo concurrente (`.lock`).
-3. Comprueba el acceso al repositorio y a los tableros del proyecto.
+Salida en consola:
+```text
+Initializing provider plugins...
+- Installing gitlab from git::https://gitlab.miempresa.com/...//gitlab.ts?ref=v1.2.0...
+- Installed gitlab v1.2.0 (entrypoint: gitlab.ts)
+
+Testform has created/updated the lock file .testform.lock.hcl to record the provider selections.
+Include this file in your version control repository.
+```
+
+### Inspección del Árbol (`testform providers`)
+Para verificar qué proveedores y versiones requiere tu proyecto:
+
+```bash
+testform providers
+```
+
+Salida visual:
+```text
+Providers required by configuration:
+.
+├── provider[gitlab] 1.2.0 (git::https://gitlab.miempresa.com/qa/providers.git//gitlab.ts?ref=v1.2.0)
+└── provider[jira] 1.0.0 (git::https://github.com/miempresa/testform-provider-jira.git)
+```
+
+### El Archivo de Bloqueo (`.testform.lock.hcl`)
+Garantiza que todos los miembros del equipo y los ejecutores de CI/CD descarguen exactamente los mismos binarios verificando su hash SHA-256:
+
+```hcl
+# This file is maintained automatically by "testform init".
+# Manual edits may be lost in future updates.
+
+provider "gitlab" {
+  version     = "1.2.0"
+  constraints = ">= 1.2.0"
+  hashes = [
+    "h1:47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
+  ]
+}
+```
+
+---
+
+## 7. Deprecación de `provider: custom`
+
+:::warning[Aviso de Deprecación]
+La sintaxis legacy `provider: custom` queda **obsoleta**.  
+No utilices el nombre genérico `custom`. Asigna siempre el nombre real de tu proveedor (`gitlab`, `jira`, `zephyr`, `local`) en `testform.required_providers`.
+:::
