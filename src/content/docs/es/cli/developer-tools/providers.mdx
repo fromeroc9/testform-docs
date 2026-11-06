@@ -169,6 +169,73 @@ Created provider project structure in ./testform-provider-gitlab:
 
 ---
 
+### 6. `testform providers resource`
+
+```bash
+testform providers resource [acción] [nombre] [opciones]
+```
+
+Administra e inspecciona las plantillas de **recursos** (`ResourceTemplate`) asociados a los proveedores, permitiendo listar, visualizar o generar nuevas plantillas con tipado estricto:
+
+#### Listar Recursos Registrados (`list`):
+```bash
+$ testform providers resource
+# o testform providers resource list
+
+REGISTERED RESOURCE TEMPLATES
+────────────────────────────────────────
+  • github_testcase
+  • github_testrun
+  • register-pokemon             [lifecycle hooks]
+```
+
+#### Generar Plantilla de Recurso (`scaffold`):
+```bash
+$ testform providers resource scaffold pokemon_trainer
+
+✔ Successfully scaffolded custom resource template at:
+  .testform/resources/pokemon_trainer.ts
+```
+
+El archivo generado contiene la definición completa de `attributes`, `state` y `lifecycle` hooks:
+
+```typescript
+import { ResourceTemplate, ParserScenario } from '@fromeroc9/testform';
+
+export const pokemon_trainerResource: ResourceTemplate = {
+    type: "pokemon_trainer",
+    attributes: (scenario: ParserScenario) => ({
+        title: scenario.name,
+        description: scenario.description,
+        tags: scenario.tags,
+        ...scenario.custom?.fields
+    }),
+    state: {
+        status: (scenario: ParserScenario) => scenario.custom?.fields?.status || 'active',
+        synced_at: () => new Date().toISOString()
+    },
+    lifecycle: {
+        beforeCreate: async ({ attributes }) => {},
+        afterCreate: async ({ id, attributes, provider }) => {}
+    }
+};
+
+export default pokemon_trainerResource;
+```
+
+#### Inspeccionar un Recurso (`show`):
+```bash
+$ testform providers resource show register-pokemon
+
+Resource Template: register-pokemon
+  Type:        register-pokemon
+  Attributes:  function(scenario, context)
+  State:       region, capturadoEn
+  Lifecycle:   beforeCreate, afterCreate
+```
+
+---
+
 ## Opciones Generales del Comando
 
 | Opción | Por Defecto | Descripción |

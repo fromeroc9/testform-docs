@@ -169,6 +169,73 @@ Created provider project structure in ./testform-provider-gitlab:
 
 ---
 
+### 6. `testform providers resource`
+
+```bash
+testform providers resource [action] [name] [options]
+```
+
+Manages and inspects **resource templates** (`ResourceTemplate`) linked to providers, allowing you to list, view, or scaffold new strongly-typed templates:
+
+#### List Registered Resources (`list`):
+```bash
+$ testform providers resource
+# or testform providers resource list
+
+REGISTERED RESOURCE TEMPLATES
+────────────────────────────────────────
+  • github_testcase
+  • github_testrun
+  • register-pokemon             [lifecycle hooks]
+```
+
+#### Scaffold Resource Template (`scaffold`):
+```bash
+$ testform providers resource scaffold pokemon_trainer
+
+✔ Successfully scaffolded custom resource template at:
+  .testform/resources/pokemon_trainer.ts
+```
+
+The generated file contains a complete blueprint with `attributes`, `state`, and `lifecycle` hooks:
+
+```typescript
+import { ResourceTemplate, ParserScenario } from '@fromeroc9/testform';
+
+export const pokemon_trainerResource: ResourceTemplate = {
+    type: "pokemon_trainer",
+    attributes: (scenario: ParserScenario) => ({
+        title: scenario.name,
+        description: scenario.description,
+        tags: scenario.tags,
+        ...scenario.custom?.fields
+    }),
+    state: {
+        status: (scenario: ParserScenario) => scenario.custom?.fields?.status || 'active',
+        synced_at: () => new Date().toISOString()
+    },
+    lifecycle: {
+        beforeCreate: async ({ attributes }) => {},
+        afterCreate: async ({ id, attributes, provider }) => {}
+    }
+};
+
+export default pokemon_trainerResource;
+```
+
+#### Inspect Resource Details (`show`):
+```bash
+$ testform providers resource show register-pokemon
+
+Resource Template: register-pokemon
+  Type:        register-pokemon
+  Attributes:  function(scenario, context)
+  State:       region, capturadoEn
+  Lifecycle:   beforeCreate, afterCreate
+```
+
+---
+
 ## General Command Options
 
 | Option | Default | Description |
