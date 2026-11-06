@@ -1,0 +1,113 @@
+---
+title: "testform resource"
+---
+
+```bash
+testform [opciones globales] resource [acción] [nombre] [opciones]
+```
+
+El comando `testform resource` permite inspeccionar, listar y generar plantillas de scaffolding para **recursos personalizados** (`ResourceTemplate`), almacenados en `.testform/resources/`, en el directorio local `./resources/` o expuestos mediante módulos compartidos.
+
+:::note[Arquitectura de Recursos Desacoplada]
+Los recursos definen el contrato entre los escenarios Gherkin (`Scenario:`) y los proveedores (`IProvider`). Mediante un recurso se configuran los `attributes` canónicos, los atributos persistidos en `state` y los hooks de ciclo de vida (`lifecycle`).
+:::
+
+---
+
+## Listar Recursos Registrados (`testform resource` o `testform resource list`)
+
+Ejecuta el comando sin subcomandos o con la acción `list` para ver todos los recursos registrados en el espacio de trabajo:
+
+```bash
+$ testform resource
+
+REGISTERED RESOURCE TEMPLATES
+────────────────────────────────────────
+  • github_testcase
+  • github_testrun
+  • github_testplan
+  • register-pokemon             [lifecycle hooks]
+
+Use 'testform resource scaffold <name>' to generate a new template.
+```
+
+---
+
+## Generar Scaffolding de un Nuevo Recurso (`scaffold` / `new`)
+
+Para crear rápidamente un recurso personalizado con tipado completo, atributos, estado y hooks de ciclo de vida:
+
+```bash
+$ testform resource scaffold pokemon_trainer
+
+✔ Successfully scaffolded custom resource template at:
+  /path/to/project/.testform/resources/pokemon_trainer.ts
+
+Resource type: pokemon_trainer
+Edit the file to customize attributes, state fields, and lifecycle hooks.
+```
+
+El archivo generado contendrá una plantilla canónica lista para producción:
+
+```typescript
+import { ResourceTemplate, ParserScenario } from '@fromeroc9/testform';
+
+export const pokemon_trainerResource: ResourceTemplate = {
+    // Identificador único del tipo de recurso
+    type: "pokemon_trainer",
+
+    // Atributos canónicos evaluados desde el escenario Gherkin
+    attributes: (scenario: ParserScenario, context?: any) => ({
+        title: scenario.name,
+        description: scenario.description,
+        tags: scenario.tags,
+        ...scenario.custom?.fields
+    }),
+
+    // Atributos persistidos en el libro mayor de estado (.testform/state.json)
+    state: {
+        status: (scenario: ParserScenario) => scenario.custom?.fields?.status || 'active',
+        synced_at: () => new Date().toISOString()
+    },
+
+    // Hooks de ciclo de vida
+    lifecycle: {
+        beforeCreate: async ({ attributes, scenario, context }) => {},
+        afterCreate: async ({ id, attributes, provider, scenario, context }) => {},
+        beforeUpdate: async ({ id, attributes, provider, scenario, context }) => {},
+        afterUpdate: async ({ id, attributes, diff, provider, scenario, context }) => {},
+        beforeDelete: async ({ id, provider, context }) => {},
+        afterDelete: async ({ id, provider, context }) => {}
+    }
+};
+
+export default pokemon_trainerResource;
+```
+
+---
+
+## Inspeccionar un Recurso (`show`)
+
+Permite visualizar la configuración y hooks definidos para un tipo de recurso:
+
+```bash
+$ testform resource show register-pokemon
+
+Resource Template: register-pokemon
+  Type:        register-pokemon
+  Attributes:  function(scenario, context)
+  State:       region, capturadoEn
+  Lifecycle:   beforeCreate, afterCreate
+```
+
+---
+
+## Opciones Disponibles
+
+| Opción | Descripción |
+| :--- | :--- |
+| `scaffold <nombre>` | Genera una plantilla TypeScript en `.testform/resources/<nombre>.ts`. |
+| `show <nombre>` | Muestra la definición y hooks de un recurso específico. |
+| `list` | Lista todos los recursos registrados (acción por defecto). |
+| `--json` | Emite la respuesta en formato JSON estructurado. |
+| `-C, --chdir <dir>` | Cambia el directorio de trabajo antes de ejecutar el comando. |
