@@ -7,10 +7,10 @@ Automate test case validation and state reconciliation on every Pull Request and
 
 ## Recommended GitOps Lifecycle
 
-1. **Pull Requests:** Executes `testform validate` and `testform plan`. The generated speculative diff is posted directly as a comment on the PR.
-2. **Merge to Main:** Executes `testform apply -auto-approve` to atomically commit and push approved test specifications to remote platforms.
+1. **Pull Requests:** Executes `testform validate` and `testform plan`. The generated speculative diff is posted directly as a comment on the PR, and a binary plan file is generated.
+2. **Merge to Main:** Executes `testform apply tfplan.bin` (or `-auto-approve`) to atomically commit and push approved test specifications to remote platforms.
 
-## Workflow Manifest (.github/workflows/testform.yml)
+## Standard Workflow Manifest (.github/workflows/testform.yml)
 
 ```yaml
 name: Testform CI/CD
@@ -84,6 +84,60 @@ jobs:
         run: npx testform apply -auto-approve
 ```
 
+## Advanced Binary Plan Pipeline (.github/workflows/testform-plan.yml)
+
+For enterprise pipelines where zero-drift guarantees between reviewed plans and production execution are enforced:
+
+```yaml
+name: Testform Speculative Plan & Apply
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  plan:
+    name: Plan Speculative Diff
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - name: Run Testform Plan with Binary Output
+        env:
+          TESTFORM_GITHUB_TOKEN: ${{ secrets.TESTFORM_GITHUB_TOKEN }}
+        run: npx testform plan -out=tfplan.bin -detailed-exitcode || exit_code=$?
+      - name: Upload Execution Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: tfplan.bin
+          retention-days: 7
+
+  apply:
+    name: Apply Approved Plan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - name: Apply Direct
+        env:
+          TESTFORM_GITHUB_TOKEN: ${{ secrets.TESTFORM_GITHUB_TOKEN }}
+        run: npx testform apply -auto-approve
+```
+
 :::caution[Important: GitHub Actions Token & GitHub Projects V2]
 The default token generated automatically by GitHub Actions (`secrets.GITHUB_TOKEN`) has permissions limited to the current repository and **cannot mutate organization or user-level GitHub Projects (Projects V2)** boards.
 
@@ -92,4 +146,3 @@ If your workspace uses `provider: github` synchronized with GitHub Projects:
 2. Store it as a GitHub Secret in your repository (for example, `TESTFORM_GITHUB_TOKEN`).
 3. Replace `${{ secrets.GITHUB_TOKEN }}` with `${{ secrets.TESTFORM_GITHUB_TOKEN }}` in the `plan` and `apply` steps.
 :::
-

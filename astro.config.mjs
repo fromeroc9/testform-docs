@@ -48,6 +48,7 @@ export default defineConfig({
           label: 'DOCS',
           items: [
             { slug: 'docs' },
+            { slug: 'docs/playground', label: 'Web Playground' },
             {
               label: 'Primeros Pasos',
               translations: { en: 'Getting Started' },
@@ -80,6 +81,7 @@ export default defineConfig({
                   translations: { en: 'Meta-arguments' },
                   items: [{ autogenerate: { directory: 'docs/language/meta-arguments' } }],
                 },
+                { slug: 'docs/language/canonical-addresses' },
                 { slug: 'docs/language/search-and-import' },
                 { slug: 'docs/language/sensitive-data' },
                 { slug: 'docs/language/stacks' },

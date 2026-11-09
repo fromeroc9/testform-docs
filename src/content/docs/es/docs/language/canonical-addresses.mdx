@@ -1,0 +1,178 @@
+---
+title: "Direcciones Canónicas y Namespaces"
+description: "Arquitectura de Direcciones Canónicas de 2 niveles, resolución por sufijo/basename y namespaces con notación de puntos en Testform."
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+# Direcciones Canónicas y Namespaces
+
+En arquitecturas de pruebas a gran escala donde conviven cientos de repositorios y suites de prueba, identificar y referenciar un recurso de manera inequívoca sin escribir rutas infinitas es un desafío crítico.
+
+Testform implementa un **Modelo de Direcciones Canónicas de 2 Niveles**, resolución inteligente por **Sufijos y Basename**, y **Namespaces declarativos con notación de punto** (`@ns`).
+
+---
+
+## El Modelo de Address Canónico (2 Niveles)
+
+A diferencia de sistemas monolíticos que requieren rutas absolutas del disco, Testform unifica la identidad de todos los artefactos de testing en dos niveles bien definidos:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│  Nivel 1: Feature Address   →  [PathRelativoAlScaffold].[scope].feature │
+│  Nivel 2: Specific Address  →  [PathRelativoAlScaffold].[scope].feature.@[tag] │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+Ambos niveles respetan la delimitación del scaffold declarada en `main.yml` (por ejemplo `scaffold.directory: "testcase"`, `"testruns"`, etc.), eliminando prefijos redundantes de carpetas raíz.
+
+### Matriz de Recursos por Nivel
+
+| Recurso | Nivel 1: Feature Address (Archivo/Contenedor) | Nivel 2: Specific Address (Instancia puntual por `@Tag`) |
+|---|---|---|
+| **`@testcase`** | `ParaBank/account_services.case.feature` | `ParaBank/account_services.case.feature.@tc-01` |
+| **`@testrun`** | `ParaBank-20260611_155609.run.feature` | `ParaBank-20260611_155609.run.feature.@tr-1` |
+| **`@testplan`** | `release_q2.plan.feature` | `release_q2.plan.feature.@tp-1` |
+| **`@bug`** | `login_timeout.bug.feature` | `login_timeout.bug.feature.@bg-01` |
+
+:::tip[Simetría entre Rule y Scenario]
+Tanto la cláusula `Rule:` (que apunta a un archivo contenedor Nivel 1) como la cláusula `Scenario:` (que referencia un caso Nivel 2 o `@tag`) utilizan el mismo punto de partida relativo al scaffold configurado.
+:::
+
+:::note[Guía de Buenas Prácticas]
+- **Buena práctica (Good Practice):** Emplear la **Dirección Canónica** (`[PathRelativoAlScaffold].[scope].feature.@[tag]`, ej. `ParaBank/account_services.case.feature.@tc-01`). Garantiza unicidad, trazabilidad determinista y elimina ambigüedades en repositorios medianos.
+- **Mejor práctica (Best Practice):** Para proyectos grandes con jerarquías de carpetas profundas o direcciones largas, la mejor práctica recomendada es adoptar **Namespaces** (`@ns(nombre)`). Esto reduce drásticamente la longitud de las direcciones (`pix.boleto.case.feature.@tc-01`), previene refactorizaciones dolorosas si las carpetas se reorganizan y otorga una identidad modular limpia a cada suite.
+:::
+
+---
+
+## Delimitación de Scaffold (`main.yml`)
+
+El archivo de configuración raíz `main.yml` define los directorios base de búsqueda para cada alcance:
+
+```yaml
+# main.yml
+scaffold:
+  directory:
+    testcase: "testcase"
+    testrun: "testruns"
+    testplan: "testplans"
+    bug: "bugs"
+```
+
+Gracias a esta configuración:
+- La ruta física `testcase/SauceDemo/checkout.case.feature` se convierte canónicamente en `SauceDemo/checkout.case.feature`.
+- Nunca necesitas anteponer `testcase/` ni en tus archivos Gherkin ni al invocar el CLI.
+
+---
+
+## Resolución de Rutas Largas: Suffix Matching & Basename
+
+¿Qué sucede cuando tu jerarquía de carpetas es muy profunda, como `finanzas/cuentas/personas/transferencias/pix/boleto.case.feature`?
+
+Testform cuenta con un motor de **Resolución por Sufijo y Basename**:
+
+### 1. Basename Directo
+Si el nombre del archivo es único en el proyecto, puedes omitir todas las carpetas intermedias:
+
+```gherkin
+# En tu testrun o testplan:
+Rule:
+  boleto.case.feature
+
+  Scenario: @tc-01
+    * set status = passed
+```
+
+O bien directamente a nivel de escenario:
+```gherkin
+Scenario: boleto.case.feature.@tc-01
+  * set status = passed
+```
+
+### 2. Desambiguación por Sufijo
+Si existen dos archivos con el mismo nombre en diferentes módulos (por ejemplo `cobros/pix/boleto.case.feature` y `pagos/ted/boleto.case.feature`), no es necesario escribir la ruta completa. Solo incluye el sufijo diferenciador:
+
+```gherkin
+# Selecciona específicamente el de pix sin escribir toda la ruta raíz:
+Rule:
+  pix/boleto.case.feature
+```
+
+El motor del selector comprueba que la ruta del archivo termine con el sufijo indicado (`endsWith('/' + path)`), garantizando unicidad y brevedad.
+
+---
+
+## Namespaces con Notación de Puntos (`@ns`)
+
+Para proyectos modulares o microservicios donde las carpetas pueden reorganizarse frecuentemente, Testform permite declarar un **Namespace** formal en el encabezado del archivo `.feature`.
+
+### ¿Por qué `@ns` y no dos puntos (`:`)?
+1. **Evitar colisión con Gherkin**: En la gramática Gherkin, los dos puntos (`:`) son delimitadores de palabras clave (`Rule:`, `Scenario:`, `Feature:`). Usar `:` dentro de una ruta (ej. `pix:boleto`) genera ambigüedad léxica en los analizadores de sintaxis.
+2. **Distinción del bloque `module`**: En Testform, `module` ya designa campos de metadatos de negocio (`* field module = "Auth"`) y bloques de reutilización de infraestructura en `main.yml`. La directiva `@ns` (o `@namespace`) otorga una identidad pura de direccionamiento.
+
+### Declaración de un Namespace
+
+Agrega la etiqueta `@ns(nombre)` o `@namespace(nombre)` al inicio de tu archivo:
+
+```gherkin
+@testcase @ns(pix)
+Feature: Gestión de Cobros Inmediatos Pix
+
+  @tc-01
+  Scenario: Generación exitosa de código QR Pix dinámico
+    Given que el cliente solicita cobrar 150 BRL
+    When se genera el payload del QR
+    Then el código QR debe tener estado activo
+```
+
+### Direccionamiento con Notación de Puntos
+
+Con el namespace `@ns(pix)` declarado, el recurso adquiere automáticamente dos direcciones canónicas simplificadas:
+
+- **Nivel 1 (Feature Address):** `pix.boleto.case.feature`
+- **Nivel 2 (Specific Address):** `pix.boleto.case.feature.@tc-01`
+
+Puedes usar estas direcciones en cualquier parte:
+
+<Tabs>
+  <TabItem label="Gherkin Testrun">
+```gherkin
+@testrun @tr-10
+Feature: Certificación Pagos Brasil
+
+  # Conexión directa vía namespace
+  Scenario: pix.boleto.case.feature.@tc-01
+    * set status = passed
+```
+  </TabItem>
+  <TabItem label="CLI Target">
+```bash
+# Ejecutar únicamente este caso con Testform CLI
+testform apply -target="pix.boleto.case.feature.@tc-01"
+
+# O por el namespace completo
+testform plan -target="pix.boleto.case.feature"
+```
+  </TabItem>
+</Tabs>
+
+---
+
+## Soporte en VS Code & Antigravity IDE
+
+La extensión oficial **Testform DSL** (`testform-vscode`) incluye soporte nativo para este modelo:
+
+1. **IntelliSense contextual en `Rule:`**: Al presionar `Ctrl + Space` después de `Rule:`, se sugieren los archivos de prueba delimitados por el scaffold (ej. `ParaBank/account_services.case.feature`).
+2. **Autocompletado de `Scenario:`**:
+   - Dentro de un `Rule:`, sugiere los `@tag` correspondientes (`@tc-01`).
+   - En escenarios directos sin `Rule:`, sugiere la dirección canónica delimitada (`ParaBank/account_services.case.feature.@tc-01`) o la dirección con namespace (`pix.boleto.case.feature.@tc-01`).
+3. **Búsqueda difusa (Fuzzy Search)**: Puedes filtrar escenarios escribiendo el tag (`tc-01`), el nombre del archivo (`boleto`), el namespace (`pix`), o palabras del título del escenario.
+4. **Configuración del formato de inserción**:
+   En tu archivo `settings.json`:
+   ```json
+   {
+     "testform.testrun.targetFormat": "canonical"
+   }
+   ```
+   Valores disponibles: `"canonical"`, `"namespace"`, `"basename"`, `"tag"`.

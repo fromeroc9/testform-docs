@@ -15,49 +15,58 @@ El estado es un archivo estructurado en JSON que se genera y actualiza tras cada
 ```json
 {
   "version": "1.0.0",
-  "testform_version": "1.1.0",
   "serial": 12,
-  "lineage": "c8f2b1a9-45e1-...",
+  "lineage": "c8f2b1a9-45e1-4321-9876-abcdef012345",
+  "lastSync": "2026-11-09T10:00:00.000Z",
   "resources": [
     {
-      "address": "tests/features/cart.case.feature.@tc-01",
-      "type": "github_testcase",
-      "name": "tc-01",
-      "status": "passed",
-      "hash": "a1b2c3d4...",
+      "type": "testcase",
+      "address": "cart.case.feature.@tc-01",
+      "physicalAddress": "tests/features/cart.case.feature.@tc-01",
+      "path": "tests/features/cart.case.feature",
+      "tag": "@tc-01",
       "attributes": {
         "title": "Agregar producto al carrito",
-        "issueNumber": 401
-      }
+        "issueNumber": 401,
+        "remoteId": "401",
+        "localHash": "a1b2c3d4..."
+      },
+      "lastApplied": "2026-11-09T10:00:00.000Z"
     },
     {
-      "address": "tests/runs/checkout.run.feature.@tr-01",
-      "type": "github_testrun",
-      "name": "tr-01",
-      "status": "failed",
+      "type": "testrun",
+      "address": "pix.checkout.run.feature.@tr-01",
+      "physicalAddress": "tests/runs/checkout.run.feature.@tr-01",
+      "path": "tests/runs/checkout.run.feature",
+      "tag": "@tr-01",
+      "namespace": "pix",
       "attributes": {
         "title": "Ejecución Regresión Checkout",
+        "issueNumber": 402,
+        "remoteId": "402",
         "status": "failed",
         "testcases": {
-          "tests/features/cart.case.feature.@tc-01": "passed",
-          "tests/features/cart.case.feature.@tc-02": "failed"
-        },
-        "metadata": {}
-      }
+          "cart.case.feature.@tc-01": "passed",
+          "cart.case.feature.@tc-02": "failed"
+        }
+      },
+      "lastApplied": "2026-11-09T10:00:00.000Z"
     },
     {
-      "address": "tests/plans/sprint42.plan.feature.@tp-01",
-      "type": "github_testplan",
-      "name": "tp-01",
-      "status": "failed",
+      "type": "testplan",
+      "address": "sprint42.plan.feature",
+      "physicalAddress": "tests/plans/sprint42.plan.feature",
+      "path": "tests/plans/sprint42.plan.feature",
       "attributes": {
         "title": "Plan de Certificación Sprint 42",
+        "issueNumber": 403,
+        "remoteId": "403",
         "status": "failed",
-        "testruns": {
-          "tests/runs/checkout.run.feature.@tr-01": "failed"
-        },
-        "metadata": {}
-      }
+        "testruns": [
+          "pix.checkout.run.feature.@tr-01"
+        ]
+      },
+      "lastApplied": "2026-11-09T10:00:00.000Z"
     }
   ],
   "outputs": {
@@ -68,6 +77,64 @@ El estado es un archivo estructurado en JSON que se genera y actualiza tras cada
   }
 }
 ```
+
+### Estructura y Paridad con Terraform (State Schema v2)
+
+A diferencia de enfoques heredados monolíticos, el estado desacopla la **identidad lógica (`address`)** de la **ubicación en disco (`path`)**:
+
+| Campo | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `address` | `string` | Dirección canónica lógica: `[namespace.]basename.[scope].feature.[@tag]`. Si mueves un archivo de carpeta, el `address` permanece inmutable y Testform preserva la sincronización remota sin recrear recursos. |
+| `physicalAddress` | `string` | Dirección física exacta en disco: `path + tag` para `testcase` y `bug`, o `path` (+ `tag` opcional) para `testrun` y `testplan`. |
+| `path` | `string` | Ruta física del archivo relativa al scaffold o proyecto (ej. `tests/features/cart.case.feature`). |
+| `tag` | `string` | *(Opcional en runs y plans, obligatorio en cases y bugs)* Identificador atómico (`@tc-01`, `@tr-01`, `@tp-01`, `@bg-01`). |
+| `namespace` | `string` | *(Opcional)* Espacio de nombres lógico declarado con `@ns(nombre)`. |
+| `type` | `string` | Tipo canónico de recurso (`testcase`, `testrun`, `testplan`, `bug`). |
+| `attributes` | `object` | Diccionario de metadatos de sincronización: `localHash`, `remoteId`, `issueNumber`, `title`, labels y campos dinámicos. |
+| `lastApplied` | `string` | Timestamp ISO 8601 de la última aplicación exitosa. |
+
+---
+
+### Arquitectura Dual: Dirección Lógica vs Dirección Física
+
+Testform opera de manera bidireccional y transparente con ambas identidades en todos los comandos CLI (`-target`, `show`, `state`, etc.):
+
+1. **Para `testcase` y `bug`**:
+   * **Dirección Lógica:** `[namespace.]basename.@tag` (ej. `cart.case.feature.@tc-01` o `checkout.cart.case.feature.@tc-01`).
+   * **Dirección Física:** `path + tag` (ej. `folder1/cart.case.feature.@tc-01`).
+   * *El `tag` es obligatorio* porque un solo archivo `.case.feature` o `.bug.feature` contiene múltiples escenarios.
+
+2. **Para `testrun` y `testplan`**:
+   * **Dirección Lógica:** `[namespace.]basename.[@tag]` (ej. `smoke.run.feature.@tr-01` o simplemente `smoke.run.feature`).
+   * **Dirección Física:** `path` o `path + tag` (ej. `folder1/smoke.run.feature` o `folder1/smoke.run.feature.@tr-01`).
+   * *El `tag` es opcional* porque 1 archivo representa 1 ejecución o plan completo.
+
+---
+
+### Desempate Automático ante Archivos Homónimos (Cero Conflictos)
+
+¿Qué sucede si existen dos archivos con el mismo nombre en diferentes carpetas (ej. `folder1/a.case.feature` y `folder2/a.case.feature`)?
+
+1. **Si tienen `@ns(...)`:**
+   * Archivo 1 con `@ns(checkout)` ➔ `checkout.a.case.feature.@tc-01`
+   * Archivo 2 con `@ns(billing)` ➔ `billing.a.case.feature.@tc-01`
+   * Ambas direcciones lógicas son únicas. Cero conflicto.
+2. **Si NO tienen `@ns(...)`:**
+   * El motor detecta la duplicidad de basenames entre carpetas y **adopta automáticamente la dirección física relativa** (`folder1/a.case.feature.@tc-01` vs `folder2/a.case.feature.@tc-01`).
+   * **Garantía de cero colisiones** en el estado y en el reporte.
+
+---
+
+### Tabla Comparativa: El Viejo Identity Monolítico vs el Modelo Dual State v2
+
+| Característica | El Viejo `identity` (Monolítico) | El Nuevo Modelo Dual (State Schema v2) |
+| :--- | :--- | :--- |
+| **Estructura** | Un único string plano gigante:<br/>`tests/features/folder1/a.case.feature.@tc-01` | Estructurado y desacoplado:<br/>`address`: `[ns.]basename.@tag`<br/>`path`: `folder1/a.case.feature`<br/>`tag`: `@tc-01`<br/>`physicalAddress`: `folder1/a.case.feature.@tc-01` |
+| **Archivos con igual nombre** (`folder1/a` vs `folder2/a`) | No colisionaban porque el string incluía la ruta física completa. | **No colisionan:** Si no hay `@ns`, adopta automáticamente la ruta física (`folder1/a...` vs `folder2/a...`), **igual de seguro que el viejo**. |
+| **Al mover un archivo de carpeta** | **Catastrófico:** El string `identity` cambiaba, Testform creía que era un caso nuevo, **borraba el Issue en GitHub/Jira y creaba uno nuevo**, perdiendo todo el historial. | **Seguro:** Si tiene `@ns` o nombre único, el `address` permanece inmutable. Testform solo actualiza el `path` en el estado sin tocar el Issue remoto. |
+| **Tag en `testrun` y `testplan`** | Se pegaba obligatoriamente al final del path (`path.@tr-1`) o quedaba como path crudo. | **Opcional y limpio:** Puedes usar `folder1/a.run.feature.@tr-01` o simplemente `folder1/a.run.feature`. |
+| **Búsqueda y targeting (`-target`)** | Forzado a buscar por coincidencia de subcadenas o el path completo. | **Polimórfico:** Puedes targetear por tag (`@tc-01`), por dirección lógica (`a.case.feature.@tc-01`), o por ruta física (`folder1/a.case.feature.@tc-01`). |
+| **En los Testruns (`Rule: ...`)** | Podías referenciar por path o nombre de feature. | Acepta **path físico** (`folder1/a.case.feature`), **namespace** (`checkout.a.case.feature`) o **nombre base** (`a.case.feature`). |
 
 ### Atributos Clave de Recursos en el Estado
 

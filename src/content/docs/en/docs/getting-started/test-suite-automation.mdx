@@ -27,9 +27,9 @@ Testform **is not a test runner and does not compete with test execution engines
                             ▼
  ┌────────────────────────────────────────────────────────┐
  │  3. RECORDING RESULTS IN GHERKIN                       │
- │     testform suite mark "@tc-login=passed" -target=... │
+ │     testform suite set "@tc-login=passed" -target=... │
  └──────────────────────────┬─────────────────────────────┘
-                            │ (Updates "* mark status = passed" lines)
+                            │ (Updates "* set status = passed" lines)
                             ▼
  ┌────────────────────────────────────────────────────────┐
  │  4. REMOTE RECONCILIATION TO GITHUB / JIRA             │
@@ -58,11 +58,11 @@ Feature: Smoke Regression Suite
 
   Rule: auth.case.feature
     Scenario: Successful login with valid credentials
-      * mark status = pending
+      * set status = pending
 
   Rule: checkout.case.feature
     Scenario: Credit card payment
-      * mark status = pending
+      * set status = pending
 ```
 
 ### 2. File-Specific Address (`file.[@tag]`)
@@ -91,7 +91,7 @@ The command features 5 standardized subcommands:
 | `init` | Scaffolds the skeleton of a `.run.feature` or `.plan.feature` file. | `testform suite init -scope=<testrun\|testplan> [-title=<title>]` |
 | `fill` | Autocompletes empty `Rule` blocks in a testrun with their source `.case.feature` scenarios. | `testform suite fill -target=<target>` |
 | `link` | Links a testcase or testrun into a target suite. | `testform suite link "<identifier>=<status>" -target=<target>` |
-| `mark` | Updates execution outcomes (`* mark status = <status>`) inside a testrun. | `testform suite mark "<identifier>=<status>" -target=<target>` |
+| `mark` | Updates execution outcomes (`* set status = <status>`) inside a testrun. | `testform suite set "<identifier>=<status>" -target=<target>` |
 
 ---
 
@@ -131,8 +131,8 @@ Connect your automated runner with Testform inside GitHub Actions or GitLab CI:
 - name: Record Outcomes in Testform Suite
   run: |
     # Script parsing test-results.json to update Testform
-    npx testform suite mark "@tc-auth-001=passed" -target="@tr-1"
-    npx testform suite mark "@tc-checkout-001=failed" -target="@tr-1"
+    npx testform suite set "@tc-auth-001=passed" -target="@tr-1"
+    npx testform suite set "@tc-checkout-001=failed" -target="@tr-1"
 
 - name: Reconcile Remote State with GitHub Projects
   run: npx testform apply -auto-approve

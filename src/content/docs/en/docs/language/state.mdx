@@ -16,49 +16,58 @@ The state is a structured JSON ledger maintained after every `testform apply`. I
 ```json
 {
   "version": "1.0.0",
-  "testform_version": "1.1.0",
   "serial": 12,
-  "lineage": "c8f2b1a9-45e1-...",
+  "lineage": "c8f2b1a9-45e1-4321-9876-abcdef012345",
+  "lastSync": "2026-11-09T10:00:00.000Z",
   "resources": [
     {
-      "address": "tests/features/cart.case.feature.@tc-01",
-      "type": "github_testcase",
-      "name": "tc-01",
-      "status": "passed",
-      "hash": "a1b2c3d4...",
+      "type": "testcase",
+      "address": "cart.case.feature.@tc-01",
+      "physicalAddress": "tests/features/cart.case.feature.@tc-01",
+      "path": "tests/features/cart.case.feature",
+      "tag": "@tc-01",
       "attributes": {
         "title": "Add item to cart",
-        "issueNumber": 401
-      }
+        "issueNumber": 401,
+        "remoteId": "401",
+        "localHash": "a1b2c3d4..."
+      },
+      "lastApplied": "2026-11-09T10:00:00.000Z"
     },
     {
-      "address": "tests/runs/checkout.run.feature.@tr-01",
-      "type": "github_testrun",
-      "name": "tr-01",
-      "status": "failed",
+      "type": "testrun",
+      "address": "pix.checkout.run.feature.@tr-01",
+      "physicalAddress": "tests/runs/checkout.run.feature.@tr-01",
+      "path": "tests/runs/checkout.run.feature",
+      "tag": "@tr-01",
+      "namespace": "pix",
       "attributes": {
         "title": "Checkout Regression Run",
+        "issueNumber": 402,
+        "remoteId": "402",
         "status": "failed",
         "testcases": {
-          "tests/features/cart.case.feature.@tc-01": "passed",
-          "tests/features/cart.case.feature.@tc-02": "failed"
-        },
-        "metadata": {}
-      }
+          "cart.case.feature.@tc-01": "passed",
+          "cart.case.feature.@tc-02": "failed"
+        }
+      },
+      "lastApplied": "2026-11-09T10:00:00.000Z"
     },
     {
-      "address": "tests/plans/sprint42.plan.feature.@tp-01",
-      "type": "github_testplan",
-      "name": "tp-01",
-      "status": "failed",
+      "type": "testplan",
+      "address": "sprint42.plan.feature",
+      "physicalAddress": "tests/plans/sprint42.plan.feature",
+      "path": "tests/plans/sprint42.plan.feature",
       "attributes": {
         "title": "Sprint 42 Certification Plan",
+        "issueNumber": 403,
+        "remoteId": "403",
         "status": "failed",
-        "testruns": {
-          "tests/runs/checkout.run.feature.@tr-01": "failed"
-        },
-        "metadata": {}
-      }
+        "testruns": [
+          "pix.checkout.run.feature.@tr-01"
+        ]
+      },
+      "lastApplied": "2026-11-09T10:00:00.000Z"
     }
   ],
   "outputs": {
@@ -70,13 +79,71 @@ The state is a structured JSON ledger maintained after every `testform apply`. I
 }
 ```
 
+### Structure and Terraform Parity (State Schema v2)
+
+Unlike legacy monolithic approaches, the state completely decouples the **logical identity (`address`)** from the **physical disk location (`path`)**:
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `address` | `string` | Logical canonical address: `[namespace.]basename.[scope].feature.[@tag]`. If you move a file to another folder, the `address` remains immutable and Testform preserves remote sync without destroying/recreating resources. |
+| `physicalAddress` | `string` | Physical disk address: `path + tag` for `testcase` and `bug`, or `path` (+ optional `tag`) for `testrun` and `testplan`. |
+| `path` | `string` | Physical file path relative to scaffold or repository (e.g. `tests/features/cart.case.feature`). |
+| `tag` | `string` | *(Optional in runs and plans, required in cases and bugs)* Atomic unique identifier (`@tc-01`, `@tr-01`, `@tp-01`, `@bg-01`). |
+| `namespace` | `string` | *(Optional)* Logical namespace declared with `@ns(name)`. |
+| `type` | `string` | Canonical resource type (`testcase`, `testrun`, `testplan`, `bug`). |
+| `attributes` | `object` | Synchronization metadata dictionary: `localHash`, `remoteId`, `issueNumber`, `title`, labels, and dynamic fields. |
+| `lastApplied` | `string` | ISO 8601 timestamp of the last successful apply. |
+
+---
+
+### Dual Address Architecture: Logical vs Physical Address
+
+Testform operates bidirectionally and transparently with both identities across all CLI commands (`-target`, `show`, `state`, etc.):
+
+1. **For `testcase` and `bug`**:
+   * **Logical Address:** `[namespace.]basename.@tag` (e.g. `cart.case.feature.@tc-01` or `checkout.cart.case.feature.@tc-01`).
+   * **Physical Address:** `path + tag` (e.g. `folder1/cart.case.feature.@tc-01`).
+   * *`tag` is required* because a single `.case.feature` or `.bug.feature` file contains multiple test scenarios.
+
+2. **For `testrun` and `testplan`**:
+   * **Logical Address:** `[namespace.]basename.[@tag]` (e.g. `smoke.run.feature.@tr-01` or simply `smoke.run.feature`).
+   * **Physical Address:** `path` or `path + tag` (e.g. `folder1/smoke.run.feature` or `folder1/smoke.run.feature.@tr-01`).
+   * *`tag` is optional* because 1 file represents 1 complete execution or plan.
+
+---
+
+### Automatic Fallback for Homonymous Files (Zero Conflicts)
+
+What happens if two files share the exact same basename across different folders (e.g. `folder1/a.case.feature` and `folder2/a.case.feature`)?
+
+1. **If `@ns(...)` is defined:**
+   * File 1 with `@ns(checkout)` ➔ `checkout.a.case.feature.@tc-01`
+   * File 2 with `@ns(billing)` ➔ `billing.a.case.feature.@tc-01`
+   * Both logical addresses are distinct. Zero conflicts.
+2. **If NO `@ns(...)` is defined:**
+   * The engine detects identical basenames across folders and **automatically adopts the relative physical address** (`folder1/a.case.feature.@tc-01` vs `folder2/a.case.feature.@tc-01`).
+   * **Guaranteed zero collisions** in state and reports.
+
+---
+
+### Comparative Table: Legacy Monolithic Identity vs State Schema v2 Dual Model
+
+| Feature | Legacy Monolithic `identity` | Dual Model (State Schema v2) |
+| :--- | :--- | :--- |
+| **Structure** | A single giant flat string:<br/>`tests/features/folder1/a.case.feature.@tc-01` | Structured and decoupled:<br/>`address`: `[ns.]basename.@tag`<br/>`path`: `folder1/a.case.feature`<br/>`tag`: `@tc-01`<br/>`physicalAddress`: `folder1/a.case.feature.@tc-01` |
+| **Homonymous files** (`folder1/a` vs `folder2/a`) | Did not collide because the string included the full path. | **Does not collide:** If no `@ns`, automatically adopts the physical path (`folder1/a...` vs `folder2/a...`), **equally safe**. |
+| **Moving a file to another folder** | **Catastrophic:** The `identity` string changed, Testform treated it as a new resource, **deleted the remote Issue on GitHub/Jira and created a new one**, losing history. | **Safe:** With `@ns` or a unique name, the `address` remains immutable. Testform only updates `path` in state without touching the remote issue. |
+| **Tag in `testrun` and `testplan`** | Forcibly appended to the path (`path.@tr-1`) or left as raw path. | **Optional and clean:** You can use `folder1/a.run.feature.@tr-01` or simply `folder1/a.run.feature`. |
+| **Targeting (`-target`)** | Forced to match substrings or full path strings. | **Polymorphic:** You can target by tag (`@tc-01`), by logical address (`a.case.feature.@tc-01`), or by physical path (`folder1/a.case.feature.@tc-01`). |
+| **In Testruns (`Rule: ...`)** | Referenced by path or feature name. | Accepts **physical path** (`folder1/a.case.feature`), **namespace** (`checkout.a.case.feature`), or **base name** (`a.case.feature`). |
+
 ### Key Resource Attributes in State
 
 | Field | Resource(s) | Description |
 | :--- | :--- | :--- |
 | `status` | `testcase`, `testrun`, `testplan` | Execution outcome or consolidated Rollup Verdict. |
 | `testcases` | `testrun` | Key-value dictionary `{ [case_identity]: status }` of all executed test cases. |
-| `testruns` | `testplan` | Key-value dictionary `{ [run_identity]: status }` of all test runs included in the plan. |
+| `testruns` | `testplan` | Key-value dictionary or list of all test runs included in the plan. |
 | `metadata` | `testrun`, `testplan` | Extensible object for provider-specific attributes (build numbers, CI links, remote IDs). |
 
 ---

@@ -26,11 +26,11 @@ Feature: Regresión Rápida de Smoke
 
   Rule: auth.case.feature
     Scenario: Login exitoso con credenciales válidas
-      * mark status = pending
+      * set status = pending
 
   Rule: checkout.case.feature
     Scenario: Pago con tarjeta de crédito
-      * mark status = pending
+      * set status = pending
 ```
 
 ---
@@ -65,7 +65,7 @@ testform suite -target="@tr-01" -mark="@tc-01=passed"
 El motor actualiza la línea en el feature:
 ```gherkin
 Scenario: Login exitoso con credenciales válidas
-  * mark status = passed
+  * set status = passed
 ```
 Y al ejecutar `testform apply`, la tarjeta en **GitHub Projects V2** se mueve automáticamente a la columna **Done**.
 

@@ -20,6 +20,7 @@ Es una **operación especulativa y de solo lectura** que no altera ningún recur
 | `-target=address` | — | Limita la planificación a una única identidad de recurso (por ejemplo: `login.case.feature.@tc-1`). Admite múltiples declaraciones. |
 | `-json` | `false` | Emite el plan en formato estructurado JSON. |
 | `-detailed-exitcode` | `false` | Devuelve códigos de salida detallados (`0` = plan vacío sin cambios, `2` = cambios pendientes de aplicar). |
+| `-watch`, `--watch` | `false` | Ejecuta el comando en modo continuo e interactivo, monitoreando archivos `.feature` y recalculando el diff en milisegundos mediante la caché incremental de AST. |
 
 ## Indicadores de Diff
 
@@ -28,6 +29,18 @@ Las acciones se representan mediante los símbolos estándar de diff de Terrafor
 - `~` **update in-place**: El recurso existe remotamente, pero sus propiedades locales (título, pasos, etiquetas, campos) han cambiado.
 - `-` **destroy**: El recurso existe en el estado pero ha sido eliminado del código local.
 - `-/+` **replace**: El recurso está marcado como dañado (tainted) o su identidad fundamental cambió; será destruido y recreado.
+
+## Modo Watch Interactivo (`--watch`)
+
+Para flujos de trabajo de desarrollo rápido y retroalimentación inmediata ("Master Faster"), `testform plan --watch` mantiene una sesión viva en la terminal:
+
+```bash
+testform plan --watch
+```
+
+- **Caché Incremental AST**: Emplea validación de `mtimeMs` y tamaño en bytes (`.testform/cache/parser-ast.json`) para reanalizar exclusivamente los archivos que han mutado en disco.
+- **Detección Inteligente de Renombres y Movimientos**: Si mueves un archivo `.feature` entre carpetas o lo renombras, el motor heurístico preserva el enlace con la incidencia remota (`localHash` / `tag` + título) evitando destrucciones y recreaciones accidentales.
+- **Debounce Activo (300ms)**: Agrupa múltiples eventos de escritura de disco del editor para evitar recálculos redundantes.
 
 ## Ejemplo de Ejecución Real
 
@@ -77,4 +90,3 @@ Al ejecutarse con `-detailed-exitcode`:
 - `0`: Ejecución exitosa con diff vacío (no hay cambios requeridos).
 - `1`: Ocurrió un error.
 - `2`: Ejecución exitosa con diff no vacío (existen cambios pendientes de aplicar).
-

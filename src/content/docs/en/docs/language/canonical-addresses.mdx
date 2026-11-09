@@ -1,0 +1,178 @@
+---
+title: "Canonical Addresses and Namespaces"
+description: "2-Level Canonical Address architecture, suffix/basename resolution, and dot-notation namespaces in Testform."
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+# Canonical Addresses and Namespaces
+
+In enterprise-scale testing architectures where hundreds of repositories and test suites coexist, identifying and targeting resources accurately without writing endless file paths is critical.
+
+Testform implements a **2-Level Canonical Address Architecture**, intelligent **Suffix and Basename Resolution**, and declarative **Dot-Notation Namespaces** (`@ns`).
+
+---
+
+## The Canonical Address Model (2 Levels)
+
+Unlike legacy frameworks requiring absolute file paths from disk, Testform standardizes the identity of all quality management resources into two clean levels:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│  Level 1: Feature Address   →  [ScaffoldRelativePath].[scope].feature  │
+│  Level 2: Specific Address  →  [ScaffoldRelativePath].[scope].feature.@[tag] │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+Both levels strictly honor the scaffold delimitation declared in `main.yml` (e.g. `scaffold.directory: "testcase"`, `"testruns"`, etc.), eliminating redundant root folder prefixes.
+
+### Resource Matrix by Level
+
+| Resource | Level 1: Feature Address (File/Container) | Level 2: Specific Address (Target instance by `@Tag`) |
+|---|---|---|
+| **`@testcase`** | `ParaBank/account_services.case.feature` | `ParaBank/account_services.case.feature.@tc-01` |
+| **`@testrun`** | `ParaBank-20260611_155609.run.feature` | `ParaBank-20260611_155609.run.feature.@tr-1` |
+| **`@testplan`** | `release_q2.plan.feature` | `release_q2.plan.feature.@tp-1` |
+| **`@bug`** | `login_timeout.bug.feature` | `login_timeout.bug.feature.@bg-01` |
+
+:::tip[Symmetry Between Rule and Scenario]
+Both the `Rule:` clause (which links to a Level 1 container feature) and the `Scenario:` clause (which references a Level 2 case or `@tag`) share the exact same starting point relative to the configured scaffold directory.
+:::
+
+:::note[Best Practice Guidelines]
+- **Good Practice:** Use **Canonical Addresses** (`[ScaffoldRelativePath].[scope].feature.@[tag]`, e.g. `ParaBank/account_services.case.feature.@tc-01`). It ensures uniqueness, deterministic traceability, and eliminates ambiguity across repositories.
+- **Best Practice:** For large codebases with deeply nested folder hierarchies or lengthy paths, the recommended best practice is adopting **Namespaces** (`@ns(name)`). This dramatically shortens addresses (`pix.boleto.case.feature.@tc-01`), insulates test references from physical folder reorganizations, and gives each domain a clean, modular identity.
+:::
+
+---
+
+## Scaffold Delimitation (`main.yml`)
+
+The root `main.yml` manifest declares the base search directory for each scope:
+
+```yaml
+# main.yml
+scaffold:
+  directory:
+    testcase: "testcase"
+    testrun: "testruns"
+    testplan: "testplans"
+    bug: "bugs"
+```
+
+Because of this configuration:
+- The physical path `testcase/SauceDemo/checkout.case.feature` becomes canonically `SauceDemo/checkout.case.feature`.
+- You never need to write `testcase/` inside your Gherkin features or CLI commands.
+
+---
+
+## Handling Deep Paths: Suffix Matching & Basename
+
+What happens when your directory tree is deeply nested, such as `finance/accounts/retail/transfers/pix/boleto.case.feature`?
+
+Testform includes an intelligent **Suffix Matching and Basename Resolution** engine:
+
+### 1. Direct Basename Resolution
+If the filename is unique within your project, you can omit all parent directories:
+
+```gherkin
+# In your testrun or testplan:
+Rule:
+  boleto.case.feature
+
+  Scenario: @tc-01
+    * set status = passed
+```
+
+Or directly at scenario level:
+```gherkin
+Scenario: boleto.case.feature.@tc-01
+  * set status = passed
+```
+
+### 2. Suffix Disambiguation
+If two files share the same filename in different modules (e.g. `billing/pix/boleto.case.feature` and `payouts/ted/boleto.case.feature`), you don't need the entire root path. Simply supply the distinguishing folder suffix:
+
+```gherkin
+# Target specifically the pix file without writing the full root path:
+Rule:
+  pix/boleto.case.feature
+```
+
+The selector engine verifies that the file path ends with the given suffix (`endsWith('/' + path)`), guaranteeing precision and brevity.
+
+---
+
+## Dot-Notation Namespaces (`@ns`)
+
+For microservices or modular codebases where folder structures may change, Testform allows you to declare a formal **Namespace** in the feature header.
+
+### Why `@ns` and Not Colons (`:`)?
+1. **Avoiding Gherkin Grammar Collisions**: In Gherkin syntax, colons (`:`) are keyword delimiters (`Rule:`, `Scenario:`, `Feature:`). Using `:` within address paths (e.g. `pix:boleto`) creates lexical ambiguity for parsers.
+2. **Distinction from `module`**: In Testform, `module` is already used for business metadata fields (`* field module = "Auth"`) and reusable infrastructure blocks in `main.yml`. The `@ns` (or `@namespace`) tag provides clean, dedicated address identity.
+
+### Declaring a Namespace
+
+Add the `@ns(name)` or `@namespace(name)` tag to the top of your feature file:
+
+```gherkin
+@testcase @ns(pix)
+Feature: Pix Instant Payment Management
+
+  @tc-01
+  Scenario: Generate dynamic Pix QR code successfully
+    Given customer requests payment of 150 BRL
+    When the QR payload is generated
+    Then the QR code should be active
+```
+
+### Addressing with Dot Notation
+
+With `@ns(pix)` declared, the resource automatically gains two clean addresses:
+
+- **Level 1 (Feature Address):** `pix.boleto.case.feature`
+- **Level 2 (Specific Address):** `pix.boleto.case.feature.@tc-01`
+
+You can use these addresses everywhere:
+
+<Tabs>
+  <TabItem label="Gherkin Testrun">
+```gherkin
+@testrun @tr-10
+Feature: Payment Certification Brazil
+
+  # Direct link via namespace address
+  Scenario: pix.boleto.case.feature.@tc-01
+    * set status = passed
+```
+  </TabItem>
+  <TabItem label="CLI Target">
+```bash
+# Target only this scenario with Testform CLI
+testform apply -target="pix.boleto.case.feature.@tc-01"
+
+# Or target the entire namespace feature
+testform plan -target="pix.boleto.case.feature"
+```
+  </TabItem>
+</Tabs>
+
+---
+
+## VS Code & Antigravity IDE Integration
+
+The official **Testform DSL** extension (`testform-vscode`) integrates natively with this model:
+
+1. **Contextual IntelliSense in `Rule:`**: Pressing `Ctrl + Space` after `Rule:` suggests scaffold-delimited feature files (e.g. `ParaBank/account_services.case.feature`).
+2. **`Scenario:` Autocompletion**:
+   - Under a `Rule:`, it suggests matching identity tags (`@tc-01`).
+   - In direct scenarios without a `Rule:`, it suggests delimited canonical addresses (`ParaBank/account_services.case.feature.@tc-01`) and namespace addresses (`pix.boleto.case.feature.@tc-01`).
+3. **Fuzzy Search**: Filter candidates by typing tags (`tc-01`), file basenames (`boleto`), namespaces (`pix`), or words from the scenario title.
+4. **Target Format Preference**:
+   In your VS Code `settings.json`:
+   ```json
+   {
+     "testform.testrun.targetFormat": "canonical"
+   }
+   ```
+   Supported options: `"canonical"`, `"namespace"`, `"basename"`, `"tag"`.

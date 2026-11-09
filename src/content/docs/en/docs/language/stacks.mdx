@@ -27,11 +27,11 @@ Feature: Fast Smoke Regression
 
   Rule: auth.case.feature
     Scenario: Valid credentials login
-      * mark status = pending
+      * set status = pending
 
   Rule: checkout.case.feature
     Scenario: Credit card checkout
-      * mark status = pending
+      * set status = pending
 ```
 
 ---
@@ -66,7 +66,7 @@ testform suite -target="@tr-01" -mark="@tc-01=passed"
 The engine updates the rule within the `.run.feature` file:
 ```gherkin
 Scenario: Valid credentials login
-  * mark status = passed
+  * set status = passed
 ```
 
 And when running `testform apply`, the synchronized item card on **GitHub Projects V2** transitions automatically to **Done**.

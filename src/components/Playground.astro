@@ -1,0 +1,784 @@
+---
+// Interactive Testform Web Playground Component
+interface Props {
+  lang?: 'es' | 'en';
+}
+
+const { lang = 'es' } = Astro.props;
+
+const t = {
+  es: {
+    title: 'Testform Web Playground',
+    subtitle: 'Simulador interactivo en el navegador: edita especificaciones, evalúa planes y visualiza el ledger de estado en tiempo real.',
+    presetLabel: 'Plantilla de prueba:',
+    presetCases: '1. Casos de Prueba (testcase)',
+    presetRun: '2. Ejecución de Prueba (* set status)',
+    presetDrift: '3. Detección de Drift (Cambio local)',
+    presetBridge: '4. Ingesta de Resultados (testform import)',
+    btnPlan: '⚡ testform plan',
+    btnApply: '▶ testform apply',
+    btnBridge: '📥 testform import',
+    btnReset: '↻ Reiniciar',
+    tabVisual: 'Visual Diff',
+    tabTerminal: 'Salida CLI',
+    tabState: 'testform.state',
+    statAdd: 'Para Agregar',
+    statChange: 'Para Cambiar',
+    statDestroy: 'Para Destruir',
+    stateSummary: 'Serial del Estado:',
+    resourcesCount: 'Recursos Totales:'
+  },
+  en: {
+    title: 'Testform Web Playground',
+    subtitle: 'Interactive in-browser simulator: edit specs, evaluate execution plans, and inspect the state ledger in real time.',
+    presetLabel: 'Sample Preset:',
+    presetCases: '1. Test Cases (testcase)',
+    presetRun: '2. Test Run (* set status)',
+    presetDrift: '3. Drift Detection (Local Change)',
+    presetBridge: '4. Ingesta de Resultados (testform import)',
+    btnPlan: '⚡ testform plan',
+    btnApply: '▶ testform apply',
+    btnBridge: '📥 testform import',
+    btnReset: '↻ Reset',
+    tabVisual: 'Visual Diff',
+    tabTerminal: 'CLI Output',
+    tabState: 'testform.state',
+    statAdd: 'To Add',
+    statChange: 'To Change',
+    statDestroy: 'To Destroy',
+    stateSummary: 'State Serial:',
+    resourcesCount: 'Total Resources:'
+  }
+}[lang];
+---
+
+<div class="tf-playground">
+  <!-- Top Bar -->
+  <div class="pg-header">
+    <div class="pg-title-group">
+      <div class="pg-title">
+        <span class="pg-icon">⚡</span>
+        <span>{t.title}</span>
+        <span class="pg-badge">Live Sandbox</span>
+      </div>
+      <p class="pg-desc">{t.subtitle}</p>
+    </div>
+
+    <div class="pg-controls">
+      <label class="pg-select-wrap">
+        <span class="pg-select-label">{t.presetLabel}</span>
+        <select id="pgPresetSelect" class="pg-select">
+          <option value="cases">{t.presetCases}</option>
+          <option value="run">{t.presetRun}</option>
+          <option value="drift">{t.presetDrift}</option>
+          <option value="bridge">{t.presetBridge}</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <!-- Main Grid Workspace -->
+  <div class="pg-grid">
+    <!-- Left Column: Source Editor -->
+    <div class="pg-col pg-editor-col">
+      <div class="col-header">
+        <div class="col-tabs">
+          <span class="col-tab active" id="tabFileName">tests/todo.case.feature</span>
+        </div>
+        <div class="col-actions">
+          <button class="pg-btn pg-btn-ghost" id="btnReset">{t.btnReset}</button>
+        </div>
+      </div>
+      <div class="editor-wrap">
+        <textarea id="pgCodeEditor" class="pg-textarea" spellcheck="false"></textarea>
+      </div>
+      <!-- Action Toolbar -->
+      <div class="pg-toolbar">
+        <button class="pg-btn pg-btn-plan" id="btnPlan">{t.btnPlan}</button>
+        <button class="pg-btn pg-btn-apply" id="btnApply">{t.btnApply}</button>
+        <button class="pg-btn pg-btn-bridge" id="btnBridge">{t.btnBridge}</button>
+      </div>
+    </div>
+
+    <!-- Right Column: Output Hub -->
+    <div class="pg-col pg-output-col">
+      <div class="col-header">
+        <div class="col-tabs" role="tablist">
+          <button class="col-tab active" data-tab="visual" id="tabBtnVisual">{t.tabVisual}</button>
+          <button class="col-tab" data-tab="terminal" id="tabBtnTerminal">{t.tabTerminal}</button>
+          <button class="col-tab" data-tab="state" id="tabBtnState">{t.tabState}</button>
+        </div>
+        <div class="col-meta" id="pgStateMeta">
+          <span>{t.stateSummary} <strong id="stateSerialVal">1</strong></span>
+        </div>
+      </div>
+
+      <!-- Tab 1: Visual Plan Diff -->
+      <div class="output-panel active" id="panelVisual">
+        <div class="visual-diff-wrap">
+          <div class="diff-summary-bar">
+            <span class="diff-pill pill-add" id="pillAddCount">+ 0 {t.statAdd}</span>
+            <span class="diff-pill pill-change" id="pillChangeCount">~ 0 {t.statChange}</span>
+            <span class="diff-pill pill-destroy" id="pillDestroyCount">- 0 {t.statDestroy}</span>
+          </div>
+          <div class="diff-cards-list" id="diffCardsContainer">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Terminal Output -->
+      <div class="output-panel" id="panelTerminal">
+        <div class="term-window">
+          <pre class="term-output" id="termOutputText"><code class="language-ansi">Ready. Click 'testform plan' or 'testform apply' to execute.</code></pre>
+        </div>
+      </div>
+
+      <!-- Tab 3: testform.state JSON -->
+      <div class="output-panel" id="panelState">
+        <div class="state-json-wrap">
+          <pre class="state-json"><code id="stateJsonCode">{}</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .tf-playground {
+    margin: 2rem 0;
+    border-radius: 12px;
+    border: 1px solid var(--sl-color-gray-5, rgba(255, 255, 255, 0.1));
+    background: var(--sl-color-bg-sidebar, #12151c);
+    color: var(--sl-color-white, #f3f4f6);
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  }
+
+  /* Header */
+  .pg-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--sl-color-gray-5, rgba(255, 255, 255, 0.08));
+  }
+  .pg-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .pg-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .pg-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 20px;
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    text-transform: uppercase;
+  }
+  .pg-desc {
+    font-size: 0.85rem;
+    opacity: 0.7;
+    margin: 0 !important;
+  }
+
+  /* Preset Select */
+  .pg-select-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+  }
+  .pg-select {
+    background: rgba(0, 0, 0, 0.3);
+    color: inherit;
+    border: 1px solid var(--sl-color-gray-5, rgba(255, 255, 255, 0.15));
+    border-radius: 6px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    outline: none;
+    cursor: pointer;
+  }
+
+  /* Grid Layout */
+  .pg-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 520px;
+  }
+  @media (max-width: 900px) {
+    .pg-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Column Containers */
+  .pg-col {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--sl-color-gray-5, rgba(255, 255, 255, 0.08));
+  }
+  .pg-output-col {
+    border-right: none;
+  }
+
+  /* Headers in Columns */
+  .col-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    background: rgba(0, 0, 0, 0.25);
+    border-bottom: 1px solid var(--sl-color-gray-5, rgba(255, 255, 255, 0.08));
+    font-size: 0.85rem;
+  }
+  .col-tabs {
+    display: flex;
+    gap: 0.4rem;
+  }
+  .col-tab {
+    background: transparent;
+    color: inherit;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    font-weight: 500;
+    opacity: 0.65;
+    transition: all 0.15s ease;
+  }
+  .col-tab:hover {
+    opacity: 0.9;
+  }
+  .col-tab.active {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  /* Editor Textarea */
+  .editor-wrap {
+    flex: 1;
+    display: flex;
+    background: #0d1117;
+    position: relative;
+  }
+  .pg-textarea {
+    width: 100%;
+    height: 100%;
+    min-height: 380px;
+    background: transparent;
+    color: #e6edf3;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    padding: 1rem;
+    border: none;
+    outline: none;
+    resize: none;
+    white-space: pre;
+    tab-size: 2;
+  }
+
+  /* Toolbar */
+  .pg-toolbar {
+    display: flex;
+    gap: 0.6rem;
+    padding: 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid var(--sl-color-gray-5, rgba(255, 255, 255, 0.08));
+  }
+  .pg-btn {
+    border-radius: 6px;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+  }
+  .pg-btn-plan {
+    background: #0284c7;
+    color: #ffffff;
+  }
+  .pg-btn-plan:hover {
+    background: #0369a1;
+  }
+  .pg-btn-apply {
+    background: #16a34a;
+    color: #ffffff;
+  }
+  .pg-btn-apply:hover {
+    background: #15803d;
+  }
+  .pg-btn-bridge {
+    background: #9333ea;
+    color: #ffffff;
+  }
+  .pg-btn-bridge:hover {
+    background: #7e22ce;
+  }
+  .pg-btn-ghost {
+    background: transparent;
+    color: inherit;
+    border-color: rgba(255, 255, 255, 0.15);
+    opacity: 0.8;
+  }
+  .pg-btn-ghost:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  /* Output Panels */
+  .output-panel {
+    display: none;
+    flex: 1;
+    overflow-y: auto;
+    background: #0d1117;
+    max-height: 480px;
+  }
+  .output-panel.active {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Visual Diff Panel */
+  .visual-diff-wrap {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .diff-summary-bar {
+    display: flex;
+    gap: 0.6rem;
+    padding-bottom: 0.5rem;
+  }
+  .diff-pill {
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+  .pill-add {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.35);
+  }
+  .pill-change {
+    background: rgba(234, 179, 8, 0.15);
+    color: #eab308;
+    border: 1px solid rgba(234, 179, 8, 0.35);
+  }
+  .pill-destroy {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+  }
+
+  .diff-cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .card-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    font-size: 0.82rem;
+  }
+  .card-item.add { border-left: 4px solid #22c55e; }
+  .card-item.change { border-left: 4px solid #eab308; }
+  .card-item.destroy { border-left: 4px solid #ef4444; }
+
+  .card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.4rem;
+  }
+  .card-addr {
+    font-family: monospace;
+    font-weight: 600;
+    color: #38bdf8;
+  }
+  .card-action-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+  }
+  .add .card-action-tag { background: #166534; color: #86efac; }
+  .change .card-action-tag { background: #713f12; color: #fde047; }
+  .card-title {
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+  .card-steps {
+    font-family: monospace;
+    font-size: 0.75rem;
+    opacity: 0.85;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  /* Terminal Panel */
+  .term-window {
+    padding: 1rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+  .term-output {
+    margin: 0 !important;
+    background: transparent !important;
+    padding: 0 !important;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  /* State JSON Panel */
+  .state-json-wrap {
+    padding: 1rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.8rem;
+  }
+  .state-json {
+    margin: 0 !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    const presets = {
+      cases: {
+        file: 'tests/todo.case.feature',
+        content: `@testcase @e2e
+Feature: Gestión de Tareas en TodoMVC
+  # Casos declarativos versionados en Git con Testform
+
+  @tc-01 @smoke
+  Scenario: Creación de una nueva tarea
+    Given el usuario navega a la URL "\${var.app_url}"
+    When ingresa la tarea "Comprar pan"
+    And presiona Enter
+    Then la lista de tareas contiene 1 elemento
+
+  @tc-02 @regression
+  Scenario: Marcar tarea como completada
+    Given existe al menos 1 tarea activa en la lista
+    When el usuario marca la casilla de verificación
+    Then el estado de la tarea cambia a completada
+`
+      },
+      run: {
+        file: 'tests/sprint_12.run.feature',
+        content: `@testrun @release
+Feature: Ciclo de Ejecución de Pruebas Sprint 12
+  # Registro declarativo de resultados usando * set
+
+  @tr-01
+  Scenario: tests/todo.case.feature.@tc-01
+    * set status = passed
+    * set target = tests/todo.case.feature.@tc-01
+    * set duration = 1.25s
+    * set evidence = "evidence/todo-created.png"
+
+  @tr-02
+  Scenario: tests/todo.case.feature.@tc-02
+    * set status = failed
+    * set target = tests/todo.case.feature.@tc-02
+    * set duration = 2.10s
+    * set trace = "AssertionError: Expected checkbox to be checked"
+`
+      },
+      drift: {
+        file: 'tests/todo.case.feature',
+        content: `@testcase @e2e
+Feature: Gestión de Tareas en TodoMVC
+  # Un cambio en el título o pasos genera drift detectado en plan
+
+  @tc-01 @smoke
+  Scenario: Creación de una tarea con validación de límite
+    Given el usuario navega a la URL "\${var.app_url}"
+    When ingresa la tarea "Comprar pan de centeno artesanal"
+    And presiona Enter
+    Then la lista de tareas contiene 1 elemento
+
+  @tc-02 @regression
+  Scenario: Marcar tarea como completada
+    Given existe al menos 1 tarea activa en la lista
+    When el usuario marca la casilla de verificación
+    Then el estado de la tarea cambia a completada
+`
+      },
+      bridge: {
+        file: 'results.xml',
+        content: `<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Jest Tests" tests="2" failures="1" errors="0" time="3.45">
+  <testsuite name="Todo Suite" tests="2" failures="1" time="3.45">
+    <testcase classname="todo.case.feature" name="Creación de una nueva tarea [@tc-01]" time="1.20" />
+    <testcase classname="todo.case.feature" name="Marcar tarea como completada [@tc-02]" time="2.25">
+      <failure message="AssertionError: Expected completed state">Element #todo-1 did not toggle</failure>
+    </testcase>
+  </testsuite>
+</testsuites>
+`
+      }
+    };
+
+    let simulatedState = {
+      version: '1.0',
+      serial: 1,
+      lineage: '8e1f04b2-564a-449e-b49c-30018f267a12',
+      lastSync: new Date().toISOString(),
+      provider: 'local',
+      resources: [],
+      outputs: {}
+    };
+
+    const codeEditor = document.getElementById('pgCodeEditor');
+    const presetSelect = document.getElementById('pgPresetSelect');
+    const tabFileName = document.getElementById('tabFileName');
+    const btnPlan = document.getElementById('btnPlan');
+    const btnApply = document.getElementById('btnApply');
+    const btnBridge = document.getElementById('btnBridge');
+    const btnReset = document.getElementById('btnReset');
+
+    const tabBtnVisual = document.getElementById('tabBtnVisual');
+    const tabBtnTerminal = document.getElementById('tabBtnTerminal');
+    const tabBtnState = document.getElementById('tabBtnState');
+
+    const panelVisual = document.getElementById('panelVisual');
+    const panelTerminal = document.getElementById('panelTerminal');
+    const panelState = document.getElementById('panelState');
+
+    const pillAddCount = document.getElementById('pillAddCount');
+    const pillChangeCount = document.getElementById('pillChangeCount');
+    const pillDestroyCount = document.getElementById('pillDestroyCount');
+    const diffCardsContainer = document.getElementById('diffCardsContainer');
+    const termOutputText = document.getElementById('termOutputText');
+    const stateJsonCode = document.getElementById('stateJsonCode');
+    const stateSerialVal = document.getElementById('stateSerialVal');
+
+    function setTab(name) {
+      [tabBtnVisual, tabBtnTerminal, tabBtnState].forEach(b => b.classList.remove('active'));
+      [panelVisual, panelTerminal, panelState].forEach(p => p.classList.remove('active'));
+
+      if (name === 'visual') {
+        tabBtnVisual.classList.add('active');
+        panelVisual.classList.add('active');
+      } else if (name === 'terminal') {
+        tabBtnTerminal.classList.add('active');
+        panelTerminal.classList.add('active');
+      } else if (name === 'state') {
+        tabBtnState.classList.add('active');
+        panelState.classList.add('active');
+      }
+    }
+
+    tabBtnVisual.addEventListener('click', () => setTab('visual'));
+    tabBtnTerminal.addEventListener('click', () => setTab('terminal'));
+    tabBtnState.addEventListener('click', () => setTab('state'));
+
+    function loadPreset(key) {
+      const p = presets[key] || presets.cases;
+      tabFileName.textContent = p.file;
+      codeEditor.value = p.content;
+      btnBridge.style.display = key === 'bridge' ? 'inline-block' : 'none';
+      renderState();
+    }
+
+    presetSelect.addEventListener('change', e => {
+      loadPreset(e.target.value);
+      runPlan();
+    });
+
+    btnReset.addEventListener('click', () => {
+      loadPreset(presetSelect.value);
+      runPlan();
+    });
+
+    function parseScenarios(raw) {
+      const lines = raw.split('\n');
+      const scenarios = [];
+      let current = null;
+
+      for (let line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('Scenario:')) {
+          if (current) scenarios.push(current);
+          current = {
+            title: trimmed.replace(/^Scenario:\s*/, ''),
+            steps: [],
+            tags: [],
+            status: 'pending'
+          };
+        } else if (trimmed.startsWith('@')) {
+          const tags = trimmed.split(/\s+/).filter(t => t.startsWith('@'));
+          if (current) {
+            current.tags.push(...tags);
+          }
+        } else if (current && (trimmed.startsWith('Given') || trimmed.startsWith('When') || trimmed.startsWith('Then') || trimmed.startsWith('And') || trimmed.startsWith('*'))) {
+          current.steps.push(trimmed);
+          if (trimmed.includes('set status = passed')) current.status = 'passed';
+          if (trimmed.includes('set status = failed')) current.status = 'failed';
+        }
+      }
+      if (current) scenarios.push(current);
+      return scenarios;
+    }
+
+    function renderState() {
+      stateSerialVal.textContent = simulatedState.serial;
+      stateJsonCode.textContent = JSON.stringify(simulatedState, null, 2);
+    }
+
+    function runPlan() {
+      const text = codeEditor.value;
+      const scenarios = parseScenarios(text);
+      const changes = [];
+
+      for (const s of scenarios) {
+        const existing = simulatedState.resources.find(r => r.identity === s.title);
+        if (!existing) {
+          changes.push({ action: 'add', scenario: s });
+        } else if (existing.attributes.steps.length !== s.steps.length || existing.attributes.status !== s.status) {
+          changes.push({ action: 'change', scenario: s, old: existing });
+        }
+      }
+
+      const adds = changes.filter(c => c.action === 'add');
+      const modifs = changes.filter(c => c.action === 'change');
+      const destroys = changes.filter(c => c.action === 'destroy');
+
+      pillAddCount.textContent = `+ ${adds.length} To Add`;
+      pillChangeCount.textContent = `~ ${modifs.length} To Change`;
+      pillDestroyCount.textContent = `- ${destroys.length} To Destroy`;
+
+      if (changes.length === 0) {
+        diffCardsContainer.innerHTML = '<div style="padding: 1.5rem; text-align: center; opacity: 0.7;">✨ No changes. State is up to date with specifications.</div>';
+      } else {
+        diffCardsContainer.innerHTML = changes.map(c => `
+          <div class="card-item ${c.action}">
+            <div class="card-top">
+              <span class="card-addr">${c.scenario.title}</span>
+              <span class="card-action-tag">${c.action.toUpperCase()}</span>
+            </div>
+            <div class="card-title">${c.scenario.tags.join(' ')}</div>
+            <div class="card-steps">
+              ${c.scenario.steps.map(st => `<div>${st}</div>`).join('')}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Terminal Output
+      let term = `Acquiring state lock. This may take a few moments...\n\n`;
+      term += `Testform will perform the following actions:\n\n`;
+      for (const c of changes) {
+        const prefix = c.action === 'add' ? '+' : '~';
+        term += `  ${prefix} ${c.scenario.title}\n`;
+      }
+      term += `\nPlan: ${adds.length} to add, ${modifs.length} to change, ${destroys.length} to destroy.\n`;
+      term += `\nNote: You didn't use the -out option to save this plan, so Testform can't guarantee to take exactly these actions if you run "testform apply" now.`;
+      termOutputText.textContent = term;
+    }
+
+    function runApply() {
+      const text = codeEditor.value;
+      const scenarios = parseScenarios(text);
+
+      for (const s of scenarios) {
+        const idx = simulatedState.resources.findIndex(r => r.identity === s.title);
+        const resourceItem = {
+          type: 'testcase',
+          identity: s.title,
+          attributes: {
+            title: s.title,
+            tags: s.tags,
+            steps: s.steps,
+            status: s.status,
+            updatedAt: new Date().toISOString()
+          }
+        };
+
+        if (idx !== -1) {
+          simulatedState.resources[idx] = resourceItem;
+        } else {
+          simulatedState.resources.push(resourceItem);
+        }
+      }
+
+      simulatedState.serial += 1;
+      simulatedState.lastSync = new Date().toISOString();
+      renderState();
+
+      termOutputText.textContent = `Acquiring state lock...\n\nApplying plan...\nApply complete! Resources: ${scenarios.length} applied, 0 destroyed.\n\nState serial updated to ${simulatedState.serial}.`;
+      setTab('terminal');
+      runPlan();
+    }
+
+    function runBridge() {
+      const gherkinRun = `@testrun @junit
+Feature: Ingested Test Execution via Runner Bridge
+  # Auto-generated by testform import results.xml
+
+  @tr-01
+  Scenario: todo.case.feature.@tc-01
+    * set status = passed
+    * set target = todo.case.feature.@tc-01
+    * set duration = 1.20s
+
+  @tr-02
+  Scenario: todo.case.feature.@tc-02
+    * set status = failed
+    * set target = todo.case.feature.@tc-02
+    * set duration = 2.25s
+    * set trace = "AssertionError: Expected completed state"
+`;
+      tabFileName.textContent = 'tests/bridge_results.run.feature';
+      codeEditor.value = gherkinRun;
+      btnBridge.style.display = 'none';
+
+      termOutputText.textContent = `testform import results.xml\n\nParsed JUnit XML: 2 testcases found (1 passed, 1 failed).\nGenerated execution feature: tests/bridge_results.run.feature\nSyntax: Modern '* set' assignment.\nReady to run 'testform plan' or 'testform apply'.`;
+      setTab('terminal');
+      runPlan();
+    }
+
+    btnPlan.addEventListener('click', () => {
+      runPlan();
+      setTab('visual');
+    });
+
+    btnApply.addEventListener('click', () => {
+      runApply();
+    });
+
+    btnBridge.addEventListener('click', () => {
+      runBridge();
+    });
+
+    // Initialize
+    loadPreset('cases');
+    runPlan();
+  })();
+</script>

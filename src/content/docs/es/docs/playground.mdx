@@ -1,0 +1,34 @@
+---
+title: "Web Playground Interactivo"
+description: "Experimenta con Testform directamente en el navegador: edita especificaciones Gherkin, evalúa planes de ejecución y simula el ledger de estado."
+---
+
+import Playground from '../../../../components/Playground.astro';
+
+El **Testform Web Playground** es un entorno interactivo en el navegador que te permite experimentar con la filosofía **Test-as-Code (TMaC)** sin instalar dependencias locales.
+
+Prueba la validación de casos de prueba (`.case.feature`), la orquestación de corridas (`.run.feature`) usando la sintaxis moderna `* set`, la detección de drift y la ingesta automatizada mediante el **Runner Bridge**.
+
+<Playground lang="es" />
+
+## ¿Qué puedes probar en este Sandbox?
+
+### 1. Creación Declarativa de Casos (`.case.feature`)
+Selecciona la plantilla **Casos de Prueba**. Cada escenario actúa como un recurso inmutable versionado en Git con su etiqueta canónica (ej. `@tc-01`). Al presionar **testform plan**, el motor detecta los recursos que necesitan registrarse en el ledger (`+ To Add`).
+
+### 2. Registro de Resultados con `* set`
+Selecciona la plantilla **Ejecución de Prueba**. Observa cómo los resultados de pruebas, duraciones, evidencias y trazas de error se registran usando la asignación declarativa:
+```gherkin
+@tr-01
+Scenario: tests/todo.case.feature.@tc-01
+  * set status = passed
+  * set target = tests/todo.case.feature.@tc-01
+  * set duration = 1.25s
+  * set evidence = "evidence/todo-created.png"
+```
+
+### 3. Detección de Drift
+Selecciona **Detección de Drift** y modifica el texto o pasos en el editor. Al presionar **testform plan**, el motor de Testform compara la firma criptográfica local (`localHash`) contra el estado registrado y resalta de inmediato las discrepancias (`~ To Change`).
+
+### 4. Runner Bridge (`testform import -results=...`)
+Carga un reporte **JUnit XML** o **Playwright JSON** y haz clic en **testform import** para presenciar cómo el CLI convierte automáticamente los artefactos de tus runners de CI/CD (Jest, PyTest, Cypress, Playwright) en especificaciones `.run.feature` nativas.

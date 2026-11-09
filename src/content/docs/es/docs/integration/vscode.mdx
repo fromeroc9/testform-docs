@@ -15,7 +15,7 @@ Proporciona soporte completo para el protocolo Language Server (LSP), autocomple
 - 🗂️ **Explorador Unificado Dual-Mode (State vs. Files):** Alterna fluidamente entre **Modo Estado** (`testform.state`) y **Modo Archivos de Especificaciones** (`*.feature`) desde la barra superior del State Explorer, con acción rápida para copiar direcciones canónicas (`testform.state.copyAddress`).
 - 📊 **Gestión Avanzada de Reportes con Checkboxes Nativos:** Selección granular de qué custom fields incluir o excluir en cada reporte directamente desde el árbol lateral, selector interactivo de formato (`xlsx`, `md`, `docx`, `csv`, `json`), y botón de ejecución directa.
 - 📑 **Export Drawer en Specs Hub:** Nuevo cajón retráctil de exportación en el Specs Hub Webview con selector de reportes, formato en chips, y checklist interactivo de custom fields con contadores de frecuencia.
-- 🐛 **Soporte Nativo de Defectos & Bugs (`.bug.feature`):** Identificadores `@bg-X`, categoría dedicada de Bugs en State Explorer, snippets `tf-bug` y directivas canónicas `* mark target = ...`, `* mark trace = ...`, `* mark evidence = ...`.
+- 🐛 **Soporte Nativo de Defectos & Bugs (`.bug.feature`):** Identificadores `@bg-X`, categoría dedicada de Bugs en State Explorer, snippets `tf-bug` y directivas canónicas `* set target = ...`, `* set trace = ...`, `* set evidence = ...`.
 - 🧠 **LSP Inteligente y Detección de Scope de Documento:** Clasificación contextual precisa (`testcase`, `testrun`, `testplan`, `bug`) para sugerencias estrictas en `Rule:` y `Scenario:`, con 8 formatos de inserción de target (`tag`, `canonical`, etc.).
 - 🚀 **Compatibilidad con Google Antigravity IDE & Open VSX:** Publicado en Open VSX y soporte de instalación directa para Google Antigravity IDE.
 
@@ -80,7 +80,7 @@ A diferencia de extensiones que registran lenguajes propietarios rompiendo la co
 
 - **Lenguajes Estándar:** Opera directamente sobre los tipos de lenguaje nativos `yaml` y `gherkin`.
 - **Compatibilidad con Red Hat YAML y Prettier:** Los manifiestos `main.yml`, `variables.yml` y `*.vars.yml` son formateados y validados por Red Hat YAML o Prettier sin advertencias de conflicto de sintaxis.
-- **Inyección TextMate DSL:** La gramática propia de Testform inyecta reglas de resaltado semántico para variables `${var.*}`, `${local.*}`, directivas `@depends_on` y acciones `* mark status` directamente sobre la gramática base de Gherkin.
+- **Inyección TextMate DSL:** La gramática propia de Testform inyecta reglas de resaltado semántico para variables `${var.*}`, `${local.*}`, directivas `@depends_on` y acciones `* set status` directamente sobre la gramática base de Gherkin.
 
 ---
 
@@ -250,6 +250,28 @@ Al hacer clic en el icono de Testform en la barra de actividades de VS Code, acc
 - **Selector de Formato de Exportación:** Cambia ágilmente el formato de salida entre **Excel (`.xlsx`)**, **Markdown (`.md`)**, **Word (`.docx`)**, **CSV (`.csv`)** y **JSON (`.json`)**.
 - **Ejecución Directa con un Clic:** Botón Play inline para disparar inmediatamente `testform report <slug> -format=<fmt> --fields="all|none|a,b,c"` en la terminal integrada.
 
+### 4. State Time Machine View (`testform.views.history`)
+- **Línea de Tiempo Histórica con Git:** Panel dedicado que lista todos los commits de Git que modificaron `testform.state`.
+- **Badges de Serial y Metadatos:** Visualiza el número de serial `[#serial]`, autor, fecha relativa y resumen de recursos (Casos, Corridas, Planes y Bugs) en cada punto en el tiempo.
+- **Diff Nativo Virtual con el Estado Actual:** Haz doble clic en cualquier commit o haz clic en `$(git-compare)` para abrir una vista diferencial nativa de VS Code (`vscode.diff`) entre el estado histórico (`testform-state-revision://`) y tu archivo de estado local actual.
+- **Restauración Segura en un Clic (`$(discard)`):** Permite revertir `testform.state` al contenido exacto de ese commit de Git con un diálogo de confirmación modal.
+
+---
+
+## Visual Plan Diff Webview (`testform.showPlanDiff`)
+
+La extensión incluye un panel interactivo visual de inspección de planes especulativos, accesible desde la barra superior de cualquier archivo `.feature` (`$(diff)`), desde el menú Control Center o mediante `Testform: Show Visual Plan Diff`:
+
+- **Inspección de Cambios por Colores:**
+  - 🟢 **To Add (`+`)**: Recursos nuevos detectados en tus especificaciones pendientes de registrarse en el ledger.
+  - 🟡 **To Change (`~`)**: Modificaciones de atributos o hashes criptográficos (`localHash` drift).
+  - 🔴 **To Destroy (`-`)**: Recursos marcados para eliminación.
+  - 🔵 **To Replace (`+/-`)**: Recreaciones destructivas por cambios en atributos inmutables.
+- **Filtros Dinámicos y Búsqueda Instantánea:** Filtra por acción (`All`, `Add`, `Change`, `Destroy`) o busca en tiempo real por dirección canónica, nombre de escenario o etiquetas.
+- **Desglose de Pasos Gherkin:** Muestra la secuencia de pasos con palabras clave resaltadas (`Given`, `When`, `Then`, `* set`).
+- **Navegación al Código Fuente:** Haz clic en cualquier enlace de archivo y línea para saltar directamente a la especificación en el editor.
+- **Ejecución Inmediata de Apply:** Botón primario verde para ejecutar `testform apply` o `testform apply -auto-approve` directamente desde el Webview.
+
 ---
 
 ## Formateador Automático de Gherkin
@@ -298,7 +320,7 @@ Escribe el prefijo en el editor y presiona `Tab`:
 | `tf-testcase` | Plantilla completa de caso de prueba | `@testcase Feature: ... Scenario: ... Given/When/Then` |
 | `tf-scenario` | Escenario individual | `Scenario: ... Given/When/Then` |
 | `tf-scenario-outline` | Esquema de escenario con tabla Examples | `Scenario Outline: ... Examples: \| ... \|` |
-| `tf-testrun` | Manifiesto de ejecución de suite | `@testrun @tr-1 Feature: ... Rule: ... * mark status = ...` |
+| `tf-testrun` | Manifiesto de ejecución de suite | `@testrun @tr-1 Feature: ... Rule: ... * set status = ...` |
 | `tf-run-rule` | Regla de vinculación de archivo de casos | `Rule: path/to.case.feature Scenario: ...` |
 | `tf-testplan` | Manifiesto de plan de pruebas | `@testplan @tp-1 Feature: ... Rule: ...` |
 | `tf-depends-on` | Directiva de dependencia de ejecución | `@depends_on("modulo/login.case.feature.@tc-1")` |

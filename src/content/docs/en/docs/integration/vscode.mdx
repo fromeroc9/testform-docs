@@ -80,7 +80,7 @@ Unlike extensions that register proprietary language identifiers and break ecosy
 
 - **Standard Language IDs:** Operates directly on standard `yaml` and `gherkin` file types.
 - **Compatibility with Red Hat YAML & Prettier:** Your `main.yml`, `variables.yml`, and `*.vars.yml` manifests are properly formatted and validated by Red Hat YAML or Prettier without syntax warnings.
-- **TextMate DSL Injection:** The custom Testform grammar injects semantic highlighting for `${var.*}`, `${local.*}`, `@depends_on` directives, and `* mark status` actions directly over standard Gherkin and YAML grammar.
+- **TextMate DSL Injection:** The custom Testform grammar injects semantic highlighting for `${var.*}`, `${local.*}`, `@depends_on` directives, and `* set status` actions directly over standard Gherkin and YAML grammar.
 
 ---
 
@@ -250,6 +250,28 @@ Access the dedicated **Testform Activity Bar** tab for lifecycle tools:
 - **Inline Format Selector:** Easily toggle the active output format between **Excel (`.xlsx`)**, **Markdown (`.md`)**, **Word (`.docx`)**, **CSV (`.csv`)**, and **JSON (`.json`)**.
 - **One-Click Direct Execution:** Inline Play button to run `testform report <slug> -format=<fmt> --fields="all|none|a,b,c"` in the integrated terminal with zero manual typing.
 
+### 4. State Time Machine View (`testform.views.history`)
+- **Git-Powered State History:** Dedicated sidebar tree discovering every Git commit that altered `testform.state`.
+- **Snapshot Badges & Metadata:** Shows serial number badges `[#serial]`, author, relative timestamps, and resource breakdown (Cases, Runs, Plans, and Bugs) for each point in time.
+- **Virtual Diff with Current Working State:** Double-click any commit or click `$(git-compare)` to launch VS Code's native diff viewer (`vscode.diff`) against your current local state ledger via `testform-state-revision://`.
+- **One-Click Safe State Rollback (`$(discard)`):** Revert your working `testform.state` to the exact content of that Git revision after a safe confirmation prompt.
+
+---
+
+## Visual Plan Diff Webview (`testform.showPlanDiff`)
+
+The extension includes a dedicated, rich Webview panel to inspect speculative execution plans before applying, accessible from any `.feature` editor title bar (`$(diff)`), the Control Center menu, or the Command Palette:
+
+- **Color-Coded Change Inspection:**
+  - 🟢 **To Add (`+`)**: New resources detected in your specifications pending ledger creation.
+  - 🟡 **To Change (`~`)**: Attribute alterations and cryptographic signature drifts (`localHash`).
+  - 🔴 **To Destroy (`-`)**: Resources scheduled for deletion.
+  - 🔵 **To Replace (`+/-`)**: Destructive recreation caused by immutable attribute changes.
+- **Dynamic Filters & Real-Time Search:** Filter by action type (`All`, `Add`, `Change`, `Destroy`) or search on-the-fly by canonical address, scenario title, or tag.
+- **Formatted Gherkin Steps:** Visual step breakdown with highlighted BDD keywords (`Given`, `When`, `Then`, `* set`).
+- **Source Code Navigation:** Click any file link to immediately jump to the exact line in the editor.
+- **Direct Apply Execution:** One-click green button to execute `testform apply` or `testform apply -auto-approve` without leaving the panel.
+
 ---
 
 ## Intelligent Gherkin Formatter
@@ -298,7 +320,7 @@ Type the snippet prefix in your editor and hit `Tab`:
 | `tf-testcase` | Complete Test Case Feature template | `@testcase Feature: ... Scenario: ... Given/When/Then` |
 | `tf-scenario` | Single Test Scenario | `Scenario: ... Given/When/Then` |
 | `tf-scenario-outline` | Scenario Outline with Examples data table | `Scenario Outline: ... Examples: \| ... \|` |
-| `tf-testrun` | Executable Test Run Suite manifest | `@testrun @tr-1 Feature: ... Rule: ... * mark status = ...` |
+| `tf-testrun` | Executable Test Run Suite manifest | `@testrun @tr-1 Feature: ... Rule: ... * set status = ...` |
 | `tf-run-rule` | Rule linking test case file | `Rule: path/to.case.feature Scenario: ...` |
 | `tf-testplan` | Test Plan manifest | `@testplan @tp-1 Feature: ... Rule: ...` |
 | `tf-depends-on` | Execution dependency directive | `@depends_on("module/login.case.feature.@tc-1")` |

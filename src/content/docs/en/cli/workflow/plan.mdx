@@ -21,6 +21,7 @@ It is a **speculative, read-only operation** that does not make any mutations to
 | `-target=address` | — | Limits planning to a single resource identity (e.g. `login.case.feature.@tc-1`). May be specified multiple times. |
 | `-json` | `false` | Emits the plan in JSON format. |
 | `-detailed-exitcode` | `false` | Returns detailed exit codes (`0` = empty plan, `2` = changes present). |
+| `-watch`, `--watch` | `false` | Runs plan in continuous watch mode, monitoring `.feature` files and recomputing diffs in milliseconds via incremental AST cache. |
 
 ## Diff Indicators
 
@@ -29,6 +30,18 @@ Actions are indicated by standard Terraform diff symbols:
 - `~` **update in-place**: Resource exists remotely, but local attributes (title, steps, labels, fields) have changed.
 - `-` **destroy**: Resource exists in state but has been deleted from code.
 - `-/+` **replace**: Resource is tainted or identity has fundamentally changed; will be destroyed and recreated.
+
+## Interactive Watch Mode (`--watch`)
+
+For rapid local feedback loops ("Master Faster"), `testform plan --watch` keeps an active terminal session watching specification files:
+
+```bash
+testform plan --watch
+```
+
+- **Incremental AST Cache**: Leverages file `mtimeMs` and byte size validation in `.testform/cache/parser-ast.json` to only re-parse files that actually mutated on disk.
+- **Smart Rename / Move Detection**: When files are renamed or moved across folders, heuristics preserve existing remote issue linkages (`localHash` / `tag` + title), preventing accidental destroy and recreate cycles.
+- **300ms Debounce**: Buffers rapid editor keystrokes and disk writes.
 
 ## Real Execution Example
 
@@ -78,4 +91,3 @@ When running with `-detailed-exitcode`:
 - `0`: Succeeded with empty diff (no changes).
 - `1`: Error occurred.
 - `2`: Succeeded with non-empty diff (changes are present).
-

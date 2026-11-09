@@ -1,14 +1,25 @@
-﻿---
+---
 title: "testform import"
 ---
 
 ```bash
+# Modo A: Vinculación de Issue remoto
 testform [opciones globales] import [opciones] <direccion> <id-remoto>
+
+# Modo B: Ingesta de Resultados de Ejecución (Runner Bridge)
+testform import -results=<archivo> [opciones]
+testform import <archivo.xml|json> [opciones]
 ```
 
-El comando `testform import` incorpora recursos remotos preexistentes (por ejemplo: Issues de GitHub creados manualmente en la interfaz web antes de adoptar Testform) bajo la gestión declarativa de Testform **sin borrarlos ni recrearlos**.
+El comando `testform import` cumple dos funciones cardinales en la orquestación Test-as-Code:
+1. **Importación de Issues Remotos:** Incorpora recursos remotos preexistentes (por ejemplo: Issues de GitHub creados manualmente en la interfaz web antes de adoptar Testform) bajo la gestión declarativa de Testform **sin borrarlos ni recrearlos**.
+2. **Ingesta de Reportes de CI/CD (Runner Bridge):** Ingiere artefactos de resultados generados por runners automatizados de la industria (**Jest, PyTest, Playwright, Cypress, Cucumber, JUnit 4/5, Mocha**) y los sincroniza directamente en especificaciones `.run.feature` con sintaxis canónica `* set`.
 
-## Opciones del Comando
+---
+
+## Modo A: Importación de Issues Remotos
+
+### Opciones
 
 | Opción | Por Defecto | Descripción |
 | :--- | :--- | :--- |
@@ -16,34 +27,51 @@ El comando `testform import` incorpora recursos remotos preexistentes (por ejemp
 | `-lock=false` | `true` | Desactiva el bloqueo de estado durante la importación. |
 | `-no-color` | `false` | Desactiva colores en la consola. |
 
-## Smart Diffing
-
-Al importar un issue existente:
-1. Testform consulta la API del Provider y extrae el título completo, cuerpo, etiquetas, asignados y milestone.
-2. Registra la vinculación en `testform.state`.
-3. **Si el escenario NO existe aún en tu archivo local `.feature`**, Testform reconstruirá automáticamente el escenario Gherkin y lo añadirá a tu archivo local.
-4. Compara el issue contra los valores por defecto de `main.yml` y `Background:` para mantener tu código DRY y sin redundancias.
-
-## Ejemplo de Ejecución Real
-
+### Ejemplo
 ```bash
-$ testform import -scope=testcase "auth.case.feature.@tc-5" 104
-
-github_testcase.auth_case_feature__tc_5: Importing from ID "104"...
-github_testcase.auth_case_feature__tc_5: Import prepared!
-  Prepared github_testcase for import on auth.case.feature.@tc-5
-github_testcase.auth_case_feature__tc_5: Refreshing state... [id=104]
-
-Import successful!
-
-The resources that were imported are shown above. These resources are now in
-your Testform state and will henceforth be managed by Testform.
+testform import -scope=testcase "auth.case.feature.@tc-5" 104
 ```
 
-Tras importar, ejecuta `testform plan` para verificar que el código local coincide con el estado importado con cero diferencias.
+---
+
+## Modo B: Ingesta de Resultados de Pruebas (Runner Bridge)
+
+Permite conectar los pipelines de CI/CD con Testform sin fricción ni plugins propietarios.
+
+### Formatos Soportados con Detección Automática
+- **JUnit XML:** Detección por extensión `.xml` o tag raíz `<testsuites>` / `<testsuite>`. Compatible con PyTest, Jest (junit-reporter), Cypress, JUnit 5, NUnit.
+- **Playwright JSON:** Detección por estructura jerárquica `suites -> specs -> tests -> results`.
+- **Cucumber JSON:** Detección de matriz de features y escenarios BDD.
+
+### Opciones de Ingesta
+
+| Opción | Por Defecto | Descripción |
+| :--- | :--- | :--- |
+| `-results=<ruta>` | Requerido (o argumento posicional) | Ruta al archivo de reporte (`.xml` o `.json`). |
+| `-target=<ruta>` | Automático | Archivo `.run.feature` existente a actualizar in-situ. |
+| `-out=<ruta>` | `testruns/import-YYYYMMDD.run.feature` | Archivo destino si se crea una corrida nueva. |
+| `--auto-create-bugs` | `false` | Genera automáticamente especificaciones de bug (`@bg-*`) en `.bug.feature` para cada prueba fallida. |
+
+### Actualización In-Situ (`-target`)
+Si ya tienes una corrida declarada en `tests/sprint_12.run.feature` y deseas actualizar sus estados con los resultados del CI:
+```bash
+testform import -results=junit.xml -target=tests/sprint_12.run.feature
+# o simplemente:
+testform import junit.xml -target=tests/sprint_12.run.feature
+```
+
+Testform localiza cada escenario por su etiqueta `@tc-*` y actualiza o inyecta las directivas declarativas:
+```gherkin
+@tr-01
+Scenario: tests/auth/login.case.feature.@tc-01
+  * set status = passed
+  * set duration = 1.14s
+  * set target = tests/auth/login.case.feature.@tc-01
+```
+
+---
 
 ## Códigos de Salida
 
-- `0`: Recurso importado exitosamente.
-- `1`: Issue remoto no encontrado o recurso ya gestionado previamente en el estado.
-
+- `0`: Recurso o reporte importado exitosamente.
+- `1`: Issue remoto no encontrado o error al procesar el archivo de reporte.

@@ -1,0 +1,34 @@
+---
+title: "Interactive Web Playground"
+description: "Experiment with Testform directly in your browser: edit Gherkin specs, evaluate speculative execution plans, and simulate state ledger sync."
+---
+
+import Playground from '../../../../components/Playground.astro';
+
+The **Testform Web Playground** is an in-browser interactive environment allowing you to experience the **Test-as-Code (TMaC)** engine without installing local dependencies.
+
+Experiment with test case definitions (`.case.feature`), execution orchestration (`.run.feature`) using the modern `* set` directive, drift detection, and automated runner ingestion via the **Runner Bridge**.
+
+<Playground lang="en" />
+
+## What can you test in this Sandbox?
+
+### 1. Declarative Test Cases (`.case.feature`)
+Select the **Test Cases** preset. Each scenario acts as an immutable resource versioned in Git alongside its canonical target tag (e.g. `@tc-01`). Clicking **testform plan** detects resources pending registration in the ledger (`+ To Add`).
+
+### 2. Execution Logging with `* set`
+Select the **Test Run** preset. Notice how execution outcomes, durations, attachments, and failure traces are recorded using declarative assignments:
+```gherkin
+@tr-01
+Scenario: tests/todo.case.feature.@tc-01
+  * set status = passed
+  * set target = tests/todo.case.feature.@tc-01
+  * set duration = 1.25s
+  * set evidence = "evidence/todo-created.png"
+```
+
+### 3. Drift Detection
+Select **Drift Detection** and modify any step or scenario title. Clicking **testform plan** calculates cryptographic hashes (`localHash`) against the recorded state and highlights discrepancies (`~ To Change`).
+
+### 4. Runner Bridge (`testform import -results=...`)
+Feed raw **JUnit XML** or **Playwright JSON** and run **testform import** to watch Testform automatically convert your CI/CD runner reports (Jest, PyTest, Cypress, Playwright) into native `.run.feature` specifications.

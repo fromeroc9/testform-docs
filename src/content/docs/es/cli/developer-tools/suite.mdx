@@ -18,12 +18,12 @@ El comando `testform suite` gestiona y automatiza el ciclo de vida de los archiv
 testform suite init [opciones]
 testform suite -fill -target=<resource>
 testform suite -link="<id>[=status]" -target=<resource>
-testform suite -mark="<id>=status" -target=<resource>
+testform suite -set="<id>=status" -target=<resource>
 testform suite -tags="<address>"
 ```
 
 > [!NOTE]
-> Por conveniencia y compatibilidad con scripts de terminal, también puedes invocarlos como argumentos posicionales (ej. `testform suite fill ...`, `testform suite link ...`, `testform suite mark ...`).
+> Por conveniencia y compatibilidad con scripts de terminal, también puedes invocarlos como argumentos posicionales (ej. `testform suite fill ...`, `testform suite link ...`, `testform suite set ...`).
 
 ---
 
@@ -55,7 +55,7 @@ testform suite -fill -target="sprint42.run.feature"
 
 Cada escenario generado incluye el paso estándar de ejecución:
 ```gherkin
-* mark status = pending
+* set status = pending
 ```
 
 ---
@@ -81,7 +81,7 @@ Inyecta la estructura Gherkin adecuada directamente en el archivo de la suite si
   ```gherkin
   Rule: checkout.case.feature
     Scenario: @tc-1
-      * mark status = passed
+      * set status = passed
   ```
 
 #### En Ámbito `testplan`:
@@ -96,17 +96,17 @@ testform suite -link="@tr-42" -target="@tp-1"
 
 ---
 
-### 3. `-mark="<identificador>=<estado>"` (Registrar Estado de Ejecución)
+### 3. `-set="<identificador>=<estado>"` (Registrar Estado de Ejecución)
 Actualiza el resultado de ejecución (`passed`, `failed`, `pending`, `skipped`) de un caso en un `.run.feature`, sincronizando el archivo local y recalculando automáticamente el veredicto consolidado (*Rollup Verdict*) en el ledger de estado `testform.state`:
 
 ```bash
-testform suite -mark="@tc-1=passed" -target="@tr-42"
-testform suite -mark="checkout.case.feature.@tc-1=failed" -target="@tr-42"
-testform suite -mark="Pago con tarjeta exitoso=passed" -target="@tr-42"
+testform suite -set="@tc-1=passed" -target="@tr-42"
+testform suite -set="checkout.case.feature.@tc-1=failed" -target="@tr-42"
+testform suite -set="Pago con tarjeta exitoso=passed" -target="@tr-42"
 ```
 
 > [!WARNING]
-> Si la regla donde reside el caso aún es implícita (`Rule: checkout.case.feature`), debes ejecutar primero `-fill` antes de registrar estados con `-mark`.
+> Si la regla donde reside el caso aún es implícita (`Rule: checkout.case.feature`), debes ejecutar primero `-fill` antes de registrar estados con `-set`.
 
 ---
 

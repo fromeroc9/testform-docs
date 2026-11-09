@@ -13,7 +13,7 @@ The `testform suite` command automates the lifecycle of test suites (`testrun` a
 
 All `testform suite` subcommands include built-in **interactive self-help**:
 
-- Running simply `testform suite` without any subcommand opens an interactive menu to choose an operation (`init`, `fill`, `link`, `mark`).
+- Running simply `testform suite` without any subcommand opens an interactive menu to choose an operation (`init`, `fill`, `link`, `set`).
 - If you omit `-target` in `fill`, `link`, or `mark`, the CLI lists the available suites in your workspace with their identity tags and feature titles so you can pick one from a numbered list.
 - If you omit the scope or title in `init`, the CLI guides you step-by-step through creating it.
 - If you omit the testcase to link or mark, the CLI lets you select between implicit and explicit linking and pick the file and scenario interactively.
@@ -36,7 +36,7 @@ testform suite fill -target="@tr-42"
 ```
 > [!NOTE]
 > This subcommand is exclusive to the `testrun` scope. Each expanded scenario is generated with the step:
-> `* mark status = pending`
+> `* set status = pending`
 
 ### 3. `testform suite link`
 Directly writes Gherkin structure into the target suite file (`testrun` or `testplan`), supporting both **implicit** and **explicit** linking.
@@ -51,7 +51,7 @@ Directly writes Gherkin structure into the target suite file (`testrun` or `test
   Rule: checkout.case.feature
   ```
 
-- **Explicit Linking (specific scenario):** Links a specific scenario under its rule, injecting the step `* mark status = <status>` (defaults to `pending` if no status is provided):
+- **Explicit Linking (specific scenario):** Links a specific scenario under its rule, injecting the step `* set status = <status>` (defaults to `pending` if no status is provided):
   ```bash
   # With default status (pending)
   testform suite link "@tc-1" -target="@tr-42"
@@ -64,7 +64,7 @@ Directly writes Gherkin structure into the target suite file (`testrun` or `test
   ```gherkin
   Rule: checkout.case.feature
     Scenario: @tc-1
-      * mark status = passed
+      * set status = passed
   ```
 
 #### In `testplan` Scope
@@ -83,17 +83,17 @@ Feature: Q3 Release Plan
 > [!IMPORTANT]
 > Test plans (`testplan`) only link entire execution suites (`testrun`). By Testform specification and policy, `.plan.feature` files **must not contain explicit Scenario blocks**.
 
-### 4. `testform suite mark`
-Records or updates the execution status (`passed`, `failed`, `pending`, `skipped`) of an existing testcase in a test run (`testrun`), synchronizing the local Gherkin file (`* mark status = <status>`) and re-evaluating the consolidated Rollup Verdict directly in the state ledger `testform.state`:
+### 4. `testform suite set`
+Records or updates the execution status (`passed`, `failed`, `pending`, `skipped`) of an existing testcase in a test run (`testrun`), synchronizing the local Gherkin file (`* set status = <status>`) and re-evaluating the consolidated Rollup Verdict directly in the state ledger `testform.state`:
 ```bash
-testform suite mark "@tc-1=passed" -target="@tr-42"
-testform suite mark "checkout.case.feature.@tc-1=failed" -target="@tr-42"
-testform suite mark "Credit card payment=passed" -target="@tr-42"
+testform suite set "@tc-1=passed" -target="@tr-42"
+testform suite set "checkout.case.feature.@tc-1=failed" -target="@tr-42"
+testform suite set "Credit card payment=passed" -target="@tr-42"
 ```
 
 > [!WARNING]
 > **Requirement for Implicit Rules:**
-> If a testcase belongs to a rule that is still implicit (`Rule: file.case.feature`) and has not yet been expanded into the suite file, `suite mark` will not modify state and will emit an error requiring you to first run:
+> If a testcase belongs to a rule that is still implicit (`Rule: file.case.feature`) and has not yet been expanded into the suite file, `suite set` will not modify state and will emit an error requiring you to first run:
 > ```bash
 > testform suite fill -target="@tr-42"
 > ```

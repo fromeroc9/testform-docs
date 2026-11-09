@@ -26,9 +26,9 @@ Testform **no es un ejecutor de pruebas ni compite con runners** como Playwright
                             ▼
  ┌────────────────────────────────────────────────────────┐
  │  3. MARCADO DE RESULTADOS EN GHERKIN                   │
- │     testform suite mark "@tc-login=passed" -target=... │
+ │     testform suite set "@tc-login=passed" -target=... │
  └──────────────────────────┬─────────────────────────────┘
-                            │ (Actualiza línea "* mark status = passed")
+                            │ (Actualiza línea "* set status = passed")
                             ▼
  ┌────────────────────────────────────────────────────────┐
  │  4. CONCILIACIÓN REMOTA CONTRA GITHUB / JIRA           │
@@ -57,11 +57,11 @@ Feature: Smoke Suite Regresión
 
   Rule: auth.case.feature
     Scenario: Inicio de sesión exitoso
-      * mark status = pending
+      * set status = pending
 
   Rule: checkout.case.feature
     Scenario: Pago con tarjeta de crédito
-      * mark status = pending
+      * set status = pending
 ```
 
 ### 2. Dirección Específica de Archivo (`archivo.[@tag]`)
@@ -90,7 +90,7 @@ El comando dispone de 5 operaciones estandarizadas:
 | `init` | Crea el esqueleto base de una suite `.run.feature` o `.plan.feature`. | `testform suite init -scope=<testrun\|testplan> [-title=<title>]` |
 | `fill` | Autocompleta bloques `Rule` vacíos en un testrun con los casos de su `.case.feature`. | `testform suite fill -target=<target>` |
 | `link` | Vincula un caso o corrida de prueba dentro de una suite destino. | `testform suite link "<identifier>=<status>" -target=<target>` |
-| `mark` | Registra el estado de ejecución de un caso dentro de la corrida Gherkin. | `testform suite mark "<identifier>=<status>" -target=<target>` |
+| `mark` | Registra el estado de ejecución de un caso dentro de la corrida Gherkin. | `testform suite set "<identifier>=<status>" -target=<target>` |
 
 ---
 
@@ -130,8 +130,8 @@ En un pipeline de CI/CD (GitHub Actions, GitLab CI), puedes conectar tu runner a
 - name: Marcar Resultados en la Suite
   run: |
     # Script que lee test-results.json y actualiza Testform
-    npx testform suite mark "@tc-auth-001=passed" -target="@tr-1"
-    npx testform suite mark "@tc-checkout-001=failed" -target="@tr-1"
+    npx testform suite set "@tc-auth-001=passed" -target="@tr-1"
+    npx testform suite set "@tc-checkout-001=failed" -target="@tr-1"
 
 - name: Conciliar Estado en GitHub Projects
   run: npx testform apply -auto-approve

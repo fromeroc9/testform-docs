@@ -1,22 +1,22 @@
 {
   "name": "@fromeroc9/testform-docs",
-	"description": "Official documentation portal for Testform: the declarative Test-as-Code orchestration engine for Git.",
-	"author": "Flavio Romero <flavio.arc9@gmail.com>",
+  "description": "Official documentation portal for Testform: the declarative Test-as-Code orchestration engine for Git.",
+  "author": "Flavio Romero <flavio.arc9@gmail.com>",
   "type": "module",
-  "version": "1.1.0",
-  	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/fromeroc9/testform-docs.git"
-	},
-	"keywords": [
-		"test-management",
-		"test-as-code",
-		"gherkin",
-		"bdd",
-		"behavior-driven development",
-		"github",
-		"testform"
-	],
+  "version": "1.3.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fromeroc9/testform-docs.git"
+  },
+  "keywords": [
+    "test-management",
+    "test-as-code",
+    "gherkin",
+    "bdd",
+    "behavior-driven development",
+    "github",
+    "testform"
+  ],
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
