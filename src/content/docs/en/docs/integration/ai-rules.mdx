@@ -1,0 +1,122 @@
+---
+title: "AI Agent Rules (.cursorrules / CLAUDE.md)"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+When coding with AI assistants and autonomous coding agents (**Cursor**, **Claude Code**, **Antigravity**, **GitHub Copilot**, or **Windsurf**), the model requires clear directives and architectural constraints to produce 100% valid, drift-free **Test-as-Code** specifications.
+
+Testform provides an authoritative, standardized ruleset ready to drop into your repository root.
+
+---
+
+## 🚀 Quick Setup Templates
+
+Copy the respective template into your repository root based on the AI coding assistant you use:
+
+<Tabs>
+  <TabItem label="Cursor (.cursorrules)">
+    Create a file named `.cursorrules` in your project root:
+
+    ```markdown
+    # Testform AI Directives (.cursorrules)
+    - Declarative Test-as-Code paradigm (reconciled against testform.state).
+    - Scope primitives:
+      * @testcase in *.case.feature: scenarios require @tc-* identity and Given/When/Then steps. No arbitrary tags on Feature: line.
+      * @testrun @tr-* in *.run.feature: execution suites using '* set status = <passed|failed|pending|blocked|skipped|undefined|ambiguous>' and '* set duration = "X.Xs"'. Do NOT use Given/When/Then in testruns.
+      * @testplan @tp-* in *.plan.feature: master suites grouped with Rule: blocks. Attachments allowed ONLY in Background.
+      * @bug in *.bug.feature: defect scenarios tagged @bg-* with '* set target = <testcase.id>' and '* set severity = <critical|high|medium|low>'. Attachments allowed ONLY in Scenario.
+    - Attachment Governance:
+      * Follow scaffold.attach directory in main.yml.
+      * * set attach = "attachments/..." is allowed in Background and Scenario for testcase and testrun.
+      * * set attach in testplan is STRICTLY Background only.
+      * * set attach in bug is STRICTLY Scenario only (forbidden in Background).
+    ```
+  </TabItem>
+
+  <TabItem label="Claude Code (CLAUDE.md)">
+    Create a file named `CLAUDE.md` in your project root:
+
+    ```markdown
+    # Testform Guidelines for Claude Code
+
+    ## Core Commands
+    - Validate syntax: `testform validate`
+    - Speculative diff: `testform plan`
+    - Reconcile state: `testform apply -auto-approve`
+    - Query resources: `testform query testcase "priority=high"`
+
+    ## Gherkin Specifications
+    - Test Cases (*.case.feature): Feature has @testcase. Each scenario has sequential @tc-01, @tc-02 and Given/When/Then steps.
+    - Test Runs (*.run.feature): Feature has @testrun @tr-01. Scenarios contain '* set status = passed|failed|pending'.
+    - Test Plans (*.plan.feature): Feature has @testplan @tp-01. Group testruns using Rule: blocks.
+    - Bugs (*.bug.feature): Feature has @bug. Scenarios have @bg-01 with '* set target = <testcase>' and '* set status = open'.
+
+    ## Attachment Rules
+    - Bugs: Attachments ONLY inside Scenario.
+    - Test Plans: Attachments ONLY inside Background.
+    ```
+  </TabItem>
+
+  <TabItem label="Antigravity / Copilot (agent.md)">
+    Create a file named `agent.md` in your project root or in `.agent/rules.md`:
+
+    ```markdown
+    # Testform Project Directives
+    All QA assets must be authored using Testform Test-as-Code specifications.
+    Never bypass 'testform validate' or 'testform plan'.
+    Always use sequential identity numbering (@tc-01, @tr-01, @tp-01, @bg-01).
+    Strictly respect attachment placement rules (scaffold.attach in main.yml).
+    ```
+  </TabItem>
+</Tabs>
+
+---
+
+## 📐 The 4 Primitives and Strict Contracts
+
+### 1. Test Cases (`*.case.feature`)
+* **Feature Header**: Must declare `@testcase` on the `Feature:` line.
+* **Feature Tag Restriction**: Arbitrary functional tags (e.g. `@smoke`, `@regression`) on the `Feature:` line are **strictly prohibited**. Only `@testcase` and optionally `@ns(namespace)` are allowed. All functional tags belong on `Scenario:` lines.
+* **Sequential Identity**: Every scenario must have a sequential `@tc-*` tag (`@tc-01`, `@tc-02`).
+* **Mandatory BDD Steps**: Every scenario **must** contain at least one `Given`, `When`, and `Then` step.
+
+### 2. Test Runs (`*.run.feature`)
+* **Feature Header**: Must declare `@testrun @tr-01` on the `Feature:` line.
+* **Cucumber Execution Statuses**: `passed`, `failed`, `pending`, `blocked`, `skipped`, `undefined`, `ambiguous`.
+* **Directives**: Use `* set status = ...` and optionally `* set duration = "1.5s"`.
+* **Anti-Pattern**: Do **NOT** use `Given/When/Then` steps in `@testrun` files. Test runs record execution outcomes, not behavioral specifications.
+
+### 3. Master Test Plans (`*.plan.feature`)
+* **Feature Header**: Must declare `@testplan @tp-01` on the `Feature:` line.
+* **Suite Organization**: Group execution suites using `Rule:` blocks.
+* **Integrity**: A single `@testrun` must not be assigned to multiple test plans.
+
+### 4. Bugs and Defects (`*.bug.feature`)
+* **Feature Header**: Must begin with `@bug`.
+* **Scenario Level**: Each defect is a `Scenario:` tagged with `@bg-*` (`@bg-01`).
+* **Traceability Link**: Must include an explicit link to the target failing test case or run:  
+  `* set target = tests/login.case.feature.@tc-02`
+* **Metadata**: `* set severity = high` and `* set status = open`.
+
+---
+
+## 📎 Attachment Governance Matrix (`* set attach`)
+
+The `* set attach = "attachments/..."` directive is governed by the `attach-governance` policy:
+
+| Resource | Permitted in `Background:`? | Permitted in `Scenario:`? | Governance Rationale |
+|---|:---:|:---:|---|
+| **`testcase`** | ✅ **YES** | ✅ **YES** | `Background` for user story wireframes; `Scenario` for specific test mockups. |
+| **`testrun`** | ✅ **YES** | ✅ **YES** | `Background` for environment logs; `Scenario` for failure screenshots. |
+| **`testplan`** | ✅ **YES** | ❌ **FORBIDDEN** | Release acceptance criteria are plan-wide. |
+| **`bug`** | ❌ **FORBIDDEN** | ✅ **YES** | Bug evidence must attach to the specific defect scenario, never global background. |
+
+---
+
+## 🚫 Common Anti-Patterns for AI Agents to Avoid
+
+1. ❌ **Do not generate Given/When/Then steps in `@testrun` or `@testplan`**: Those resources use status statements and references.
+2. ❌ **Do not place attachments in the `Background:` of `@bug` files**: This triggers a blocking validation error.
+3. ❌ **Do not omit Given/When/Then in `*.case.feature`**: Full BDD structure is mandatory.
+4. ❌ **Do not duplicate identity numbers**: Always inspect existing tags to compute the next consecutive integer.

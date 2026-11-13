@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Universal AI Agent Directives & Rules (`es/docs/integration/ai-rules.mdx`, `en/docs/integration/ai-rules.mdx`):**
+  - Documented ready-to-use template files for Cursor (`.cursorrules`), Claude Code (`CLAUDE.md`), and Antigravity/Copilot (`agent.md`).
+  - Added strict syntax contracts for the 4 primitives (`testcase`, `testrun`, `testplan`, `bug`), step requirements (`Given/When/Then`), status conventions, and common anti-patterns.
+  - Published comprehensive Attachment Governance rules for `* set attach` per resource scope.
 - **Model Context Protocol (MCP) Server Documentation (`es/docs/integration/mcp.mdx`, `en/docs/integration/mcp.mdx`):**
   - Documented the official `@fromeroc9/testform-mcp` server enabling AI agents (Claude Desktop, Cursor, Antigravity, Cline, Zed) to manage Testform projects natively.
   - Provided step-by-step setup guides for `claude_desktop_config.json`, `.cursor/mcp.json`, and Antigravity IDE `mcp_servers`.
