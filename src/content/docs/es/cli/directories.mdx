@@ -18,11 +18,12 @@ mi-proyecto/
 ├── testform.state
 ├── .testform.lock.hcl         # Lockfile criptográfico de proveedores (hashes h1: y versiones fijadas)
 └── .testform/
+    ├── data.json              # Base de datos simulada del proveedor local (provider: local)
     ├── environment            # Nombre del workspace actualmente seleccionado
-    ├── cache/                 # Archivos autogenerados y temporales del motor
+    ├── cache/                 # Archivos temporales y de caché descartable del motor
     │   ├── backend.json       # Configuración del backend activo inicializado (testform init)
     │   ├── lock.json          # Lock file de dependencias y checksums de providers
-    │   └── data.json          # Base de datos simulada del proveedor local
+    │   └── parser-ast.json    # Caché incremental de AST para parseo rápido (.feature)
     ├── providers/             # Plugins de proveedores descargados e instalados (testform init)
     │   └── <nombre_proveedor>/
     │       ├── index.js / provider.ts
@@ -80,24 +81,31 @@ mi-proyecto/
 - **Propósito:** Contiene definiciones de recursos (`registerResource()`) que Testform compila y carga dinámicamente en tiempo de ejecución.
 
 ### 6. `cache/`
-- **Cuándo se genera:** De manera automática en tiempo de inicialización (`testform init`) o ejecución con el proveedor local.
-- **Propósito:** Almacena todos los artefactos autogenerados y temporales del motor de Testform:
-  - `lock.json`: Archivo de bloqueo de dependencias de proveedores con sus checksums criptográficos calculados (reemplazando cualquier archivo en la raíz del proyecto).
-  - `data.json`: Persistencia de incidencias, comentarios y campos simulados del proveedor local (`provider: local`).
-- **Aislamiento de seguridad:** Al concentrar los archivos generados dentro de `cache/`, se evita cualquier riesgo de sobreescribir o borrar accidentalmente el código personalizado que el usuario escribe en `.testform/policies/`, `.testform/resources/` o `.testform/reports/`.
+- **Cuándo se genera:** De manera automática en tiempo de inicialización (`testform init`) o parseo incremental.
+- **Propósito:** Almacena artefactos autogenerados y temporales del motor de Testform estrictamente descartables:
+  - `backend.json`: Configuración activa y hash del backend inicializado.
+  - `lock.json`: Archivo de bloqueo de dependencias de proveedores con sus checksums criptográficos calculados.
+  - `parser-ast.json`: Caché incremental del parser Gherkin (`AstCache`); es 100% descartable y se regenera automáticamente.
+- **Aislamiento de seguridad:** Al concentrar los archivos temporales dentro de `cache/`, se evita cualquier riesgo de sobreescribir o borrar accidentalmente código de usuario en `.testform/policies/`, `.testform/resources/` o `.testform/reports/`. Además, permite agregar `.testform/cache/` a `.gitignore` de forma directa y limpia sin excepciones complejas.
 
-### 6. `reports/`
+### 7. `data.json`
+- **Cuándo se genera:** Durante `testform apply` cuando el proyecto utiliza `provider: local`.
+- **Propósito:** Almacena la base de datos simulada del proveedor local (incidencias creadas, ejecuciones, comentarios, enlaces y campos personalizados).
+- **Persistencia en Git:** A diferencia del contenido de `cache/`, `data.json` reside directamente en `.testform/data.json` para que pueda versionarse en Git cuando se desea conservar el historial del proveedor local entre colaboradores o en CI/CD, sin colisionar con las cachés descartables.
+- **Migración automática:** Si un proyecto existente contiene la ruta anterior `.testform/cache/data.json`, Testform lo detecta automáticamente, lo migra a `.testform/data.json` y continúa funcionando de forma transparente.
+
+### 8. `reports/`
 - **Cuándo se utiliza:** Creado para extender el motor analítico de `testform report`.
 - **Propósito:**
   - **Reportes personalizados:** Archivos `<nombre>.ts` que implementan `IReport`.
   - **Formatos personalizados:** Archivos `<formato>.format.ts` que implementan `IReportFormat` (por ejemplo, exportadores a Slack, PDF o XML).
   - **Plantillas canónicas:** Archivos `report.docx` o `report.xlsx` ubicados en esta carpeta se cargan automáticamente como plantilla predeterminada sin necesidad de pasar el argumento `-template`.
 
-### 7. `ephemeral/`
+### 9. `ephemeral/`
 - **Cuándo se genera:** Al invocar `testform ephemeral up`.
 - **Propósito:** Almacena los identificadores de sesión, puertos y metadatos de los sandboxes temporales de prueba desplegados en ramas de CI/CD, permitiendo su inspección con `testform ephemeral list` y su posterior limpieza con `testform ephemeral down`.
 
-### 8. `backends/`
+### 10. `backends/`
 - **Cuándo se utiliza:** Para almacenar drivers de backend personalizados locales (`.ts` / `.js`) que implementan la interfaz `IBackend`.
 
 ---
@@ -128,20 +136,54 @@ A nivel de máquina de desarrollo o agente de ejecución de CI/CD, Testform mant
 
 ## Configuración en `.gitignore`
 
-El directorio `.testform/` está diseñado para ser transitorio y específico de cada máquina o entorno de ejecución. Debe agregarse al archivo `.gitignore` del proyecto:
+Lo que debes ignorar en Git depende de si utilizas un proveedor remoto (`github` / `gitlab`) o `provider: local`, y de si compartes extensiones locales dentro de `.testform/`:
+
+### Escenario A: Proveedor remoto (`github`, `gitlab`) o uso efímero de `provider: local`
+
+Los artefactos generados por `testform init` y las cachés temporales no deben subirse al repositorio:
 
 ```text
-# Directorio de trabajo local y cachés de Testform (incluye .testform/cache/)
-.testform/
+# Directorios generados y cachés de Testform
+.testform/cache/
+.testform/providers/
+.testform/modules/
+.testform/ephemeral/
+.testform/environment
 
-# Archivos de plan binarios y copias de seguridad de estado
+# Archivos de plan binarios, locks y backups de estado
 *.tfplan
 *.backup
+testform.state.lock
 
-# Archivo de estado si se utiliza un backend remoto (S3, GCS, Azure Blob)
-# Nota: Si se utiliza backend local y se requiere control de versiones en equipo,
-# testform.state puede incluirse en el repositorio según las políticas internas.
+# Si trabajas con provider: local en modo efímero (sin versionar estado ni base de datos local),
+# descomenta también:
+# testform.state
+# .testform/data.json
 ```
+
+> [!NOTE]
+> Las carpetas `.testform/policies/`, `.testform/resources/`, `.testform/reports/` y `.testform/backends/` contienen código y plantillas creadas por tu equipo, por lo que **sí deben versionarse en Git** cuando existan.
+
+### Escenario B: `provider: local` con persistencia de estado en Git (`backend: local`)
+
+Si decides versionar `testform.state` en Git usando `provider: local`, **debes versionar también `.testform/data.json`**:
+
+```text
+# Cachés temporales del motor
+.testform/cache/
+.testform/providers/
+.testform/modules/
+.testform/ephemeral/
+.testform/environment
+testform.state.lock
+
+# Archivos a versionar en Git para preservar la base de datos y ledger del proveedor local:
+# - testform.state
+# - .testform/data.json
+```
+
+> [!CAUTION]
+> Si subes `testform.state` al repositorio pero ignoras `.testform/data.json`, al clonar el proyecto y ejecutar `testform plan`, `testform apply` o `testform refresh` (que ejecutan `refresh` por defecto), Testform no encontrará los issues en `data.json`, **eliminará esos recursos de `testform.state`** y volverá a crearlos desde `#1` en la nueva máquina (con nuevas fechas y sin comentarios previos). Tus archivos `.feature` y `main.yml` no se pierden, pero la continuidad de `data.json` y del ledger sí se reinicia.
 
 > [!WARNING]
 > Nunca agregues ni confirmes el archivo `~/.testform.d/credentials.json` a un repositorio público o compartido, ya que contiene credenciales de acceso sensibles.
@@ -155,3 +197,4 @@ Si el directorio `.testform/` se elimina accidentalmente o se clona el proyecto 
 1. Ejecuta `testform init`.
 2. Testform reconstruirá automáticamente la estructura base, recreará `.testform/cache/backend.json` y descargará nuevamente los módulos declarados en `.testform/modules/`.
 3. Si el proyecto utilizaba un workspace diferente a `default`, selecciónalo con `testform workspace select <nombre>`.
+4. Si usas `provider: local` sin haber versionado `.testform/data.json`, ejecuta `testform apply` para regenerar la base de datos local y `testform.state` a partir de tus archivos `.feature`.

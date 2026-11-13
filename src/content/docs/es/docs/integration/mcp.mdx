@@ -1,0 +1,131 @@
+---
+title: "Servidor MCP (Model Context Protocol)"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+El **Servidor MCP de Testform** (`@fromeroc9/testform-mcp`) implementa el estándar abierto **Model Context Protocol (MCP)** para permitir que asistentes y agentes de inteligencia artificial (**Claude Desktop**, **Cursor**, **Antigravity**, **Cline**, **Zed**) interactúen de forma nativa y determinista con tus especificaciones de **Test-as-Code**.
+
+Con el servidor MCP, tu agente de IA puede auditar el ledger de estado, evaluar planes de ejecución (`plan`), aplicar cambios reconciliados (`apply`), diagnosticar ejecuciones fallidas, generar casos BDD y adjuntar evidencias siguiendo las reglas de gobernanza del proyecto.
+
+---
+
+## ⚡ Instalación y Configuración
+
+Puedes ejecutar el servidor directamente mediante `npx` (recomendado) o instalarlo globalmente.
+
+<Tabs>
+  <TabItem label="Claude Desktop">
+    Agrega la siguiente configuración a tu archivo `claude_desktop_config.json`:
+
+    * **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+    * **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+    * **Linux:** `~/.config/Claude/claude_desktop_config.json`
+
+    ```json
+    {
+      "mcpServers": {
+        "testform": {
+          "command": "npx",
+          "args": ["-y", "@fromeroc9/testform-mcp"]
+        }
+      }
+    }
+    ```
+  </TabItem>
+
+  <TabItem label="Cursor IDE">
+    Crea o edita el archivo `.cursor/mcp.json` en la raíz de tu proyecto o en tu configuración global de Cursor:
+
+    ```json
+    {
+      "mcpServers": {
+        "testform": {
+          "command": "npx",
+          "args": ["-y", "@fromeroc9/testform-mcp"]
+        }
+      }
+    }
+    ```
+  </TabItem>
+
+  <TabItem label="Antigravity IDE">
+    En tu configuración de Antigravity IDE o en tu archivo de configuración de extensiones MCP:
+
+    ```json
+    {
+      "mcp_servers": {
+        "testform": {
+          "command": "npx",
+          "args": ["-y", "@fromeroc9/testform-mcp"]
+        }
+      }
+    }
+    ```
+  </TabItem>
+
+  <TabItem label="Ejecución Local / Binario">
+    Si estás desarrollando o deseas ejecutar el binario localmente desde el repositorio clonado:
+
+    ```bash
+    git clone https://github.com/fromeroc9/testform-mcp.git
+    cd testform-mcp
+    npm install
+    npm run build
+    node dist/index.js
+    ```
+  </TabItem>
+</Tabs>
+
+---
+
+## 🛠️ Herramientas Expuestas al Agente (MCP Tools)
+
+El servidor expone herramientas estructuradas validadas con JSON Schema para que el LLM ejecute tareas sin riesgo de alucinaciones:
+
+| Herramienta | Parámetros Clave | Descripción |
+|---|---|---|
+| **`testform_plan`** | `workspaceDir`, `target`, `detailedExitCode`, `json` | Evalúa las diferencias contra el estado (`testform.state`) y detecta drift de pruebas sin alterar el disco. |
+| **`testform_apply`** | `workspaceDir`, `target`, `autoApprove` | Reconcilia especificaciones declarativas y actualiza el ledger de estado y los proveedores remotos. |
+| **`testform_validate`** | `workspaceDir`, `target`, `json` | Valida sintaxis Gherkin, etiquetas de identidad (`@tc-*`, `@tr-*`), schema `main.yml` y políticas de calidad. |
+| **`testform_query`** | `scope` (`testcase`, `testrun`, `testplan`, `bug`), `filter` | Consulta recursos filtrando por atributos como severidad, estado (`status=failed`) o etiquetas. |
+| **`testform_show`** | `workspaceDir`, `json` | Inspecciona el ledger de estado actual, recursos registrados, serial y outputs. |
+| **`testform_status`** | `workspaceDir` | Proporciona una vista general inmediata del workspace: conteo de archivos, escenarios, candados y rutas scaffold. |
+| **`testform_scaffold`** | `type`, `name`, `title`, `folder`, `target`, `scenarios` | Genera especificaciones estandarizadas con numeración secuencial garantizada (`@tc-01`, `@tr-01`, etc.). |
+| **`testform_report`** | `type`, `format` (`md`, `json`, `html`, `xlsx`, `docx`), `target`, `out` | Genera reportes modulares de QA en múltiples formatos de ingeniería. |
+| **`testform_attach`** | `filePath`, `targetFeatureFile`, `scenarioName`, `copyToScaffold` | Inyecta adjuntos y evidencias respetando la gobernanza (`scaffold.attach` en `main.yml`). |
+
+---
+
+## 📦 Recursos en Vivo (MCP Resources)
+
+Los agentes pueden leer el contexto del proyecto a través de URIs estándar:
+
+* **`testform://state`** (`application/json`): El archivo `testform.state` parseado con todos los recursos registrados, versión del motor y linaje de conciliación.
+* **`testform://schema`** (`application/json`): El esquema y configuración activa de `main.yml` (backend, proveedores y carpetas de scaffold).
+* **`testform://summary`** (`application/json`): Métricas en tiempo real sobre casos de prueba, corridas activas, defectos y cobertura.
+
+---
+
+## 💡 Plantillas de Prompts Asistidos (MCP Prompts)
+
+El servidor incluye prompts preconfigurados que guían al modelo de IA hacia las mejores prácticas de Test-as-Code:
+
+1. **`generate-test-cases`**: Transforma historias de usuario o criterios de aceptación en archivos `.case.feature` con estructura declarativa, pasos `Given/When/Then` y etiquetas secuenciales.
+2. **`diagnose-test-failure`**: Analiza trazas de fallo de un testrun y genera automáticamente el archivo `.bug.feature` con enlace explícito `* set target = ...`.
+3. **`create-regression-plan`**: Diseña un plan maestro `.plan.feature` estructurado por reglas para un sprint o versión de release.
+
+---
+
+## 💬 Ejemplos de Prompts en Lenguaje Natural
+
+Una vez conectado el servidor MCP a tu cliente (por ejemplo, en Cursor o Claude), puedes interactuar directamente:
+
+> *"Evalúa el impacto de los cambios actuales en los casos de prueba ejecutando un plan."*  
+> → El agente invoca automáticamente `testform_plan`.
+
+> *"Crea un nuevo caso de prueba para el flujo de recuperación de contraseña con 3 escenarios."*  
+> → El agente invoca `testform_scaffold` con `type: "testcase"`.
+
+> *"Consulta todos los bugs con severidad alta y genera un reporte en formato Markdown."*  
+> → El agente invoca `testform_query` con `scope: "bug"` y luego `testform_report`.

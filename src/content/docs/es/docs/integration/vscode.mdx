@@ -181,12 +181,14 @@ Testform se conecta directamente con la API nativa de Testing de Visual Studio C
 2. **Iconos Play en el Gutter:**
    Junto al número de línea de cada `Scenario` o título de característica, aparece el icono de ejecución de VS Code.
 3. **Selector Interactivo de Resultados:**
-   Al hacer clic en Play, la extensión despliega un selector interactivo para indicar el resultado de la prueba:
+   Al hacer clic en Play, la extensión despliega un selector interactivo con todos los estados de Cucumber Gherkin (además de `blocked`) para indicar el resultado de la prueba:
    - `passed` (Aprobada)
    - `failed` (Fallida)
-   - `blocked` (Bloqueada)
-   - `skipped` (Omitida)
    - `pending` (Pendiente)
+   - `skipped` (Omitida)
+   - `undefined` (Sin definir / sin step definition)
+   - `ambiguous` (Ambigua / múltiples step definitions)
+   - `blocked` (Bloqueada)
 4. **Sincronización en Vivo con el Estado:**
    Monitorea el archivo `testform.state` y actualiza visualmente los estados de ejecución en el árbol (`Passed` en verde, `Failed` en rojo, `Skipped` en gris).
 

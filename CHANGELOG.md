@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.1] - 2026-11-13
+
+### Added
+
+- **Model Context Protocol (MCP) Server Documentation (`es/docs/integration/mcp.mdx`, `en/docs/integration/mcp.mdx`):**
+  - Documented the official `@fromeroc9/testform-mcp` server enabling AI agents (Claude Desktop, Cursor, Antigravity, Cline, Zed) to manage Testform projects natively.
+  - Provided step-by-step setup guides for `claude_desktop_config.json`, `.cursor/mcp.json`, and Antigravity IDE `mcp_servers`.
+  - Documented all 9 MCP tools (`testform_plan`, `testform_apply`, `testform_validate`, `testform_query`, `testform_show`, `testform_status`, `testform_scaffold`, `testform_report`, `testform_attach`).
+  - Documented live MCP resources (`testform://state`, `testform://schema`, `testform://summary`) and prompt templates (`generate-test-cases`, `diagnose-test-failure`, `create-regression-plan`).
+- **Attachment System & Governance Documentation:**
+  - Documented `scaffold.attach` convention in `main.yml` specification.
+  - Added Attachment Governance matrix guide for `set attach` / `set evidence` in testcase, testrun, testplan, and bug resources.
+  - Enhanced Interactive Web Playground: expanded layout to 100% full-bleed viewport width, eliminating horizontal squeezing and removing right TOC sidebar constraints.
+
+## [1.3.0] - 2026-11-11
+
+### Added
+
+- **The 4 Declarative Resources & Bug Defect Specification (`en/` & `es/`):**
+  - Documented the fourth fundamental declarative primitive: `bug` (`.bug.feature`, `@bg-*`), alongside `testcase`, `testrun`, and `testplan` in `docs/test-as-code/resources.mdx`.
+  - Documented complete defect lifecycle statuses (`open`, `in_progress`, `resolved`, `reopened`, `discarded`, `duplicate`), Gherkin traceability statements (`* set target`, `status`, `trace`, `evidence`), and state ledger representations.
+- **Local Provider Persistence & PR Workflow Guidance (`en/` & `es/`):**
+  - Documented relocation of the local provider simulated database from `.testform/cache/data.json` to canonical `.testform/data.json` with seamless automatic backward compatibility in `docs/integration/ci-cd-github.mdx`, `docs/test-as-code/configuration.mdx`, and `cli/directories.mdx`.
+  - Documented `.testform/cache/parser-ast.json` persistence rules, 100% disposable cache `.gitignore` patterns, and conflict-free Pull Request workflows for `provider: local`.
+
+### Changed
+
+- **Cucumber Gherkin Status & Execution Duration Documentation (`en/` & `es/`):**
+  - Synchronized TestRun and status documentation across `docs/test-as-code/resources.mdx`, `docs/getting-started/test-suite-automation.mdx`, `cli/developer-tools/suite.mdx`, `cli/developer-tools/report.mdx`, `cli/storage/import.mdx`, `docs/integration/vscode.mdx`, `docs/language/search-and-import.mdx`, `es/docs/language/state.mdx`, and `api/reports.mdx` with Cucumber Gherkin statuses (`passed`, `failed`, `pending`, `skipped`, `undefined`, `ambiguous`, plus legacy `blocked`).
+  - Documented Cucumber JSON `result.duration` nanosecond import into `* set duration = ...` in `cli/storage/import.mdx`, updated VS Code QA Fast Pass status/command references in `docs/integration/vscode.mdx`, and aligned report CLI/API status examples in `cli/developer-tools/report.mdx` and `api/reports.mdx`.
+
+---
+
 ## [1.2.0] - 2026-11-09
 
 ### Added

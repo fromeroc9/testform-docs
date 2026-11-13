@@ -42,6 +42,7 @@ resource:
   global:
     scaffold:
       directory: "tests"
+      attach: "attachments"
     fields:
       - name: priority
         source: "tag"
@@ -52,6 +53,7 @@ resource:
     scaffold:
       directory: "tests/features"
       filename: "{slug}.case.feature"
+      attach: "attachments/testcases"
     fields:
       - name: module
         source: "step"
@@ -61,6 +63,7 @@ resource:
     scaffold:
       directory: "tests/runs"
       filename: "{slug}.run.feature"
+      attach: "attachments/testruns"
     fields:
       - name: environment
         source: "step"
@@ -70,6 +73,13 @@ resource:
     scaffold:
       directory: "tests/plans"
       filename: "{slug}.plan.feature"
+      attach: "attachments/plans"
+  bug:
+    match: "*.bug.feature"
+    scaffold:
+      directory: "tests/bugs"
+      filename: "{slug}.bug.feature"
+      attach: "attachments/bugs"
 ```
 
 ## Pipeline de Compilación y Procesamiento de Configuración
@@ -210,7 +220,7 @@ Testform soporta proveedores remotos (como GitHub y GitLab) asi como un proveedo
 
 ### Proveedor Local (`provider: local`)
 
-El proveedor local permite gestionar casos, ejecuciones y planes sin depender de ningun servicio en la nube ni requerir credenciales de red. Todas las incidencias, comentarios y campos simulados se registran en el archivo local `.testform/cache/data.json`.
+El proveedor local permite gestionar casos, ejecuciones y planes sin depender de ningun servicio en la nube ni requerir credenciales de red. Todas las incidencias, comentarios y campos simulados se registran en el archivo local `.testform/data.json` (con soporte de migración automática transparente si existía previamente en `.testform/cache/data.json`).
 
 Es ideal para desarrollo individual, pipelines aislados sin acceso a internet o pruebas conceptuales:
 
@@ -227,6 +237,12 @@ provider:
 ```
 
 Al utilizar `provider: local`, los comandos `testform plan` y `testform apply` crean identificadores locales con el prefijo `local:<numero>` (por ejemplo, `local:1`, `local:2`), garantizando total reproducibilidad offline.
+
+:::caution[Persistencia en Git y `.gitignore`]
+Tus archivos `.feature` y `main.yml` son siempre la fuente de verdad, pero la base de datos simulada del proveedor local vive en `.testform/data.json`.
+- Si versionas `testform.state` en Git para conservar el historial de ejecuciones e IDs `local:<n>`, **versiona también `.testform/data.json`** (consulta las reglas de `.gitignore` en [El Directorio .testform](../../cli/directories)).
+- En flujos por **Pull Requests**, evita ejecutar `testform apply` en ramas de PR si versionas estos JSON; aplica únicamente después del merge en `main` (ver [Flujo por PRs con `provider: local`](../integration/ci-cd-github#flujo-por-pull-requests-con-provider-local)).
+:::
 
 ### Proveedor GitHub (`provider.github`)
 

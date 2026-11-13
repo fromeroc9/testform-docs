@@ -43,6 +43,7 @@ resource:
   global:
     scaffold:
       directory: "tests"
+      attach: "attachments"
     fields:
       - name: priority
         source: "tag"
@@ -53,6 +54,7 @@ resource:
     scaffold:
       directory: "tests/features"
       filename: "{slug}.case.feature"
+      attach: "attachments/testcases"
     fields:
       - name: module
         source: "step"
@@ -62,6 +64,7 @@ resource:
     scaffold:
       directory: "tests/runs"
       filename: "{slug}.run.feature"
+      attach: "attachments/testruns"
     fields:
       - name: environment
         source: "step"
@@ -71,6 +74,13 @@ resource:
     scaffold:
       directory: "tests/plans"
       filename: "{slug}.plan.feature"
+      attach: "attachments/plans"
+  bug:
+    match: "*.bug.feature"
+    scaffold:
+      directory: "tests/bugs"
+      filename: "{slug}.bug.feature"
+      attach: "attachments/bugs"
 ```
 
 ## Compilation and Configuration Processing Pipeline
@@ -210,7 +220,7 @@ Testform supports remote issue trackers (such as GitHub and GitLab) as well as a
 
 ### Local Provider (`provider: local`)
 
-The local provider allows managing testcases, runs, and plans without relying on any external cloud service or network credentials. All simulated issues, comments, and project fields are saved locally into `.testform/cache/data.json`.
+The local provider allows managing testcases, runs, and plans without relying on any external cloud service or network credentials. All simulated issues, comments, and project fields are saved locally into `.testform/data.json` (with seamless automatic migration if an older `.testform/cache/data.json` file is present).
 
 This is ideal for offline development, air-gapped environments, or solo verification:
 
@@ -227,6 +237,12 @@ provider:
 ```
 
 When using `provider: local`, `testform plan` and `testform apply` assign local IDs prefixed with `local:<number>` (such as `local:1`, `local:2`), guaranteeing complete offline reproducibility.
+
+:::caution[Git Persistence and `.gitignore`]
+Your `.feature` files and `main.yml` remain the source of truth, while the simulated database for the local provider lives in `.testform/data.json`.
+- If you commit `testform.state` to Git to preserve execution history and `local:<n>` IDs, **commit `.testform/data.json` as well** (see the `.gitignore` rules in [The .testform Directory](../../cli/directories)).
+- In **Pull Request workflows**, avoid running `testform apply` inside PR branches when tracking those JSON files in Git; apply only after merging to `main` (see [Pull Request Workflow with `provider: local`](../integration/ci-cd-github#pull-request-workflow-with-provider-local)).
+:::
 
 ### GitHub Provider (`provider.github`)
 

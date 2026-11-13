@@ -41,7 +41,7 @@ Permite conectar los pipelines de CI/CD con Testform sin fricción ni plugins pr
 ### Formatos Soportados con Detección Automática
 - **JUnit XML:** Detección por extensión `.xml` o tag raíz `<testsuites>` / `<testsuite>`. Compatible con PyTest, Jest (junit-reporter), Cypress, JUnit 5, NUnit.
 - **Playwright JSON:** Detección por estructura jerárquica `suites -> specs -> tests -> results`.
-- **Cucumber JSON:** Detección de matriz de features y escenarios BDD.
+- **Cucumber JSON:** Detección de matriz de features y escenarios BDD. Conserva los 6 estados oficiales de Gherkin (`passed`, `failed`, `pending`, `skipped`, `undefined`, `ambiguous` siguiendo su precedencia real) y suma las duraciones en nanosegundos de pasos y hooks en `* set duration = ...`.
 
 ### Opciones de Ingesta
 

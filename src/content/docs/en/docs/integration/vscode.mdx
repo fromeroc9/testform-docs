@@ -181,12 +181,14 @@ Testform connects directly to VS Code's native Testing sidebar:
 2. **Gutter Execution Icons:**
    Play buttons appear next to line numbers for each `Scenario` or feature definition.
 3. **Interactive Status Selection Prompt:**
-   Clicking Play triggers an interactive outcome prompt before recording execution state:
+   Clicking Play triggers an interactive outcome prompt covering all Cucumber Gherkin statuses (plus QA `blocked`) before recording execution state:
    - `passed`
    - `failed`
-   - `blocked`
-   - `skipped`
    - `pending`
+   - `skipped`
+   - `undefined`
+   - `ambiguous`
+   - `blocked`
 4. **Real-Time State Synchronization:**
    Watches `testform.state` and dynamically updates tree test statuses (`Passed` in green, `Failed` in red, `Skipped` in gray).
 

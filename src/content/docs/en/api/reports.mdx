@@ -268,7 +268,7 @@ Official formats (`docx`, `xlsx`, `md`) process the following interpolation plac
 | `${date}` | Date | Generation timestamp formatted as `DD/MM/YYYY`. |
 | `${var.<name>}` | Variable | Value resolved from `*.vars.yml` or `-var="key=value"`. |
 | `${total}` | Number | Total test case or execution count in the report. |
-| `${passed}`, `${failed}`, `${pending}` | Number | Totals partitioned by execution status. |
+| `${passed}`, `${failed}`, `${pending}`, `${skipped}`, `${undefined}`, `${ambiguous}`, `${blocked}` | Number | Totals partitioned by execution status. |
 | `${tasa_exito}` | Percentage | Computed pass rate percentage (e.g. `85%`). |
 | `${report.metrics.<key>}` | Dynamic | Any custom metric registered in the `metrics` map. |
 | `${table}` or `${report.table}` | Structure | Positional marker where the styled data grid is inserted. |

@@ -3,7 +3,7 @@ title: "Declarative Resources"
 ---
 
 
-Testform defines four fundamental declarative resource primitives to model your end-to-end quality engineering strategy: `testcase`, `testrun`, `testplan`, and `testsuite`.
+Testform defines four fundamental declarative resource primitives to model your end-to-end quality engineering strategy: `testcase`, `testrun`, `testplan`, and `bug`.
 
 ## 1. The `testcase` Resource
 
@@ -73,11 +73,15 @@ Feature: Regression Test Run Build 412
 
 ### Rollup Verdict Engine
 
-Testform automatically determines the overall execution outcome (`status`) of each `testrun` by evaluating all individual child test cases (`testcases`). This calculation adheres to strict QA precedence rules:
+Testform automatically determines the overall execution outcome (`status`) of each `testrun` by evaluating all individual child test cases (`testcases`). This calculation follows Cucumber's Gherkin severity precedence plus legacy QA blocking rules:
 
-1. **`failed` (High Precedence):** If at least one testcase has failed, the entire `testrun` is deemed `failed`.
-2. **`pending` (Medium Precedence):** If no testcase failed, but at least one testcase remains `pending`, `blocked`, or `skipped` (or if the suite contains zero cases), the status is `pending`.
-3. **`passed` (Complete Consensus):** Conferred only when **100% of child test cases** have succeeded with status `passed`.
+1. **`failed` (Highest Precedence):** If at least one testcase has failed assertions/errors, the entire `testrun` is `failed`.
+2. **`ambiguous`:** If none failed, but at least one step matched multiple step definitions, the `testrun` is `ambiguous`.
+3. **`undefined`:** If none are `failed`/`ambiguous`, but at least one Gherkin step lacks a step definition, the `testrun` is `undefined`.
+4. **`blocked`:** If none of the above apply, but at least one case is `blocked`, the `testrun` is `blocked`.
+5. **`pending`:** If any case remains `pending` (or if the suite contains zero cases), the status is `pending`.
+6. **`skipped`:** If all cases are either `skipped` or `passed` with at least one `skipped`, the `testrun` is `skipped`.
+7. **`passed` (Complete Consensus):** Conferred only when **100% of child test cases** have succeeded with status `passed`.
 
 ### Compact Ledger Representation (`testform.state`)
 
@@ -132,9 +136,9 @@ Feature: Release v2.5.0 Certification Matrix
 
 Just as a `testrun` evaluates its test cases, a `testplan` calculates its overall status by hierarchically aggregating the rollup statuses of all linked `testrun` suites:
 
-- If any referenced `testrun` is `failed`, the `testplan` verdict is **`failed`**.
-- If no run is failed but any run is still `pending`, the plan remains **`pending`**.
-- Only when all referenced `testrun` suites reach `passed`, the `testplan` transitions to **`passed`**.
+- Following the same severity order (`failed` > `ambiguous` > `undefined` > `blocked` > `pending` > `skipped` > `passed`), any unresolved child run surfaces directly on the `testplan` verdict.
+- If no run has higher-severity issues and any run remains `pending`, the plan verdict stays **`pending`**.
+- Only when **all** referenced `testrun` suites reach `passed`, the `testplan` transitions to **`passed`**.
 
 ### State Ledger Representation (`testform.state`)
 
@@ -155,18 +159,95 @@ Just as a `testrun` evaluates its test cases, a `testplan` calculates its overal
 }
 ```
 
-## 4. The `testsuite` Resource
+## 4. The `bug` Resource
 
-The `testsuite` resource dynamically groups test cases based on boolean tag queries (`@smoke`, `@billing`) for execution and orchestration with automated test runners (Playwright, Cypress, Vitest).
+The `bug` resource models defect tracking, execution failures, and issue resolutions linked directly to test runs and test cases.
+
+- **Standard Location:** `tests/bugs/*.bug.feature` (configurable in `main.yml` via `resources.bug.directory`).
+- **Identity Tag Placement:** Directly above each `Scenario:` with `@bg-*` prefix (e.g. `@bg-1` or `@bg-checkout-500`).
+- **Uniqueness Scope:** Unique within that bug specification file.
+- **Test Run Linkage:** The `Feature:` line points to the relative path of the `testrun` file where the defects were detected (e.g. `Feature: testruns/sprint42.run.feature`).
+- **Internal Structure:** Each `Scenario:` represents an individual defect with declarative traceability statements:
+  - `* set target = <testcase>`: Affected test case (`@tc-*` or canonical address).
+  - `* set status = <status>`: Defect resolution status (`open`, `in_progress`, `resolved`, `reopened`, `discarded`, `duplicate`). Also accepts execution aliases (`failed`, `pending`, `passed`).
+  - `* set trace = <stack>`: Error message or stack trace description.
+  - `* set attach = <file>` *(or `* set evidence = ...`)*: Physical path or JSON array of attachment/evidence files (screenshots, recordings, logs, or reports).
+  - Custom fields (`* set <field> = <value>`): Additional attributes defined in `main.yml` (`resources.bug.fields`).
+
+### Attachment Governance Rules (`set attach` / `set evidence`)
+
+To ensure semantic consistency across Test-as-Code specifications, the engine enforces strict scope rules:
+
+| Resource | Background Scope | Scenario / Rule Scope | Engine Governance |
+| :--- | :--- | :--- | :--- |
+| **`testcase`** | ✔ Allowed | ✔ Allowed | Shared attachments for the full feature story or specific to individual scenarios. |
+| **`testrun`** | ✔ Allowed | ✔ Allowed | Run-level artifacts or specific scenario execution evidence. |
+| **`testplan`** | ✔ Allowed | ✖ Prohibited | Only valid in `Background` (plans coordinate runs and do not declare explicit scenarios). |
+| **`bug`** | ✖ **Strictly Prohibited** | ✔ Allowed | Defect attachments belong exclusively to the specific failure scenario. |
+
+### Example
+
+```gherkin
+@bug
+Feature: testruns/sprint42_regression.run.feature
+
+  @bg-1
+  Scenario: Error 500 when processing international credit card payment
+    * set target = tests/features/checkout.case.feature.@tc-pay-01
+    * set status = open
+    * set trace = PaymentGatewayException: Timeout waiting for gateway ACK in 30000ms
+    * set evidence = evidence/checkout_timeout.png
+    * set severity = critical
+    * set priority = high
+
+  @bg-2
+  Scenario: Confirm order button stays disabled after retry
+    * set target = tests/features/checkout.case.feature.@tc-pay-02
+    * set status = resolved
+    * set evidence = evidence/retry_fixed.png
+```
+
+### Defect Lifecycle Statuses
+
+| Status | Meaning | CLI Terminal Display |
+| :--- | :--- | :--- |
+| **`open`** *(or `failed`, `new`)* | Active unresolved defect | <span style="color:#fa5252">● open</span> |
+| **`in_progress`** *(or `pending`)* | Investigation, fix, or retest in progress | <span style="color:#fab005">⧖ in progress</span> |
+| **`resolved`** *(or `passed`, `closed`)* | Verified and closed defect | <span style="color:#12b886">✔ resolved</span> |
+| **`reopened`** | Previously resolved bug that failed retest | <span style="color:#fd7e14">↻ reopened</span> |
+| **`discarded`** *(or `wont_fix`)* | Rejected, not reproducible, or by design | <span style="color:#868e96">⊘ discarded</span> |
+| **`duplicate`** | Redundant report of an existing defect | <span style="color:#be4bdb">⧉ duplicate</span> |
+
+### Ledger State Structure (`testform.state`)
+
+```json
+{
+  "address": "tests/bugs/sprint42.bug.feature.@bg-1",
+  "type": "bug",
+  "status": "open",
+  "attributes": {
+    "title": "Error 500 when processing international credit card payment",
+    "status": "open",
+    "testcase": "tests/features/checkout.case.feature.@tc-pay-01",
+    "testrun": "testruns/sprint42_regression.run.feature",
+    "trace": "PaymentGatewayException: Timeout waiting for gateway ACK in 30000ms",
+    "evidence": ["evidence/checkout_timeout.png"],
+    "metadata": {
+      "severity": "critical",
+      "priority": "high"
+    }
+  }
+}
+```
 
 ## Resource Comparison Matrix
 
 | Resource | File Scope | Identity Tag Placement | Uniqueness | Internal Structure |
 | :--- | :--- | :--- | :--- | :--- |
-| **`testcase`** | 1 file = N test cases | Above each `Scenario:` | Unique within file | Isolated `Scenario` blocks with `Given`, `When`, `Then` |
-| **`testrun`** | 1 file = 1 test run | Above the `Feature:` | Global across repo | `Rule: file.case.feature` + `Scenario: @tc-*` |
-| **`testplan`** | 1 file = 1 test plan | Above the `Feature:` | Global across repo | `Rule: file.run.feature` (no explicit Scenarios) |
-| **`testsuite`**| Logical grouping | In-memory / runtime | Dynamic query | Evaluates scenarios matching boolean tag filter |
+| **`testcase`** | 1 file = N test cases | Above each `Scenario:` (`@tc-*`) | Unique within file | Isolated `Scenario` blocks with `Given`, `When`, `Then` |
+| **`testrun`** | 1 file = 1 test run | Above the `Feature:` (`@tr-*`) | Global across repo | `Rule: file.case.feature` + `Scenario: @tc-*` |
+| **`testplan`** | 1 file = 1 test plan | Above the `Feature:` (`@tp-*`) | Global across repo | `Rule: file.run.feature` (testrun coordination) |
+| **`bug`** | 1 file = N defects | Above each `Scenario:` (`@bg-*`) | Unique within file | `Scenario` with `target`, `status`, `trace`, `evidence` |
 
 ---
 

@@ -146,3 +146,20 @@ If your workspace uses `provider: github` synchronized with GitHub Projects:
 2. Store it as a GitHub Secret in your repository (for example, `TESTFORM_GITHUB_TOKEN`).
 3. Replace `${{ secrets.GITHUB_TOKEN }}` with `${{ secrets.TESTFORM_GITHUB_TOKEN }}` in the `plan` and `apply` steps.
 :::
+
+## Pull Request Workflow with `provider: local`
+
+When a workspace uses `provider: local`, simulated issues are assigned sequential IDs (`local:1`, `local:2`, ...) in `.testform/data.json`, and the reconciled state is recorded in `testform.state`.
+
+If two contributors run `testform apply` on separate branches before opening PRs and commit those JSON files, both branches will allocate colliding IDs and cause **merge conflicts in `testform.state` and `.testform/data.json`**.
+
+To handle Pull Requests cleanly with `provider: local`:
+
+1. **Inside PR branches (before merge):**
+   - Only modify `.feature` files, `main.yml`, or `*.vars.yml`.
+   - Run `testform validate` and `testform plan` only (read-only operations that never mutate `testform.state` or `data.json`).
+   - In the PR workflow, the `plan` step posts the speculative diff for peer review without modifying any JSON state files.
+2. **After merging to `main`:**
+   - **If versioning state in Git (`backend: local`):** run `testform apply -auto-approve` sequentially on `main` (either manually or in the `push` to `main` CI job committing `testform.state` and `.testform/data.json`, while keeping `data.json` unignored in `.gitignore`).
+   - **If running ephemerally:** ignore `testform.state`, `.testform/data.json`, and `.testform/cache/` in `.gitignore`; PRs only track `.feature` + `main.yml`, and CI or local environments rebuild state on demand via `testform apply -auto-approve`.
+3. **For teams handling concurrent PRs:** consider switching to `provider: github` (or `gitlab`) with a [remote backend](../language/backends) supporting distributed state locking (S3, GCS, Azure Blob).

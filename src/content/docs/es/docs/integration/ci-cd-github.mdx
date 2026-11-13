@@ -146,3 +146,20 @@ Si tu configuración utiliza `provider: github` sincronizado con tableros de Git
 2. Guárdalo como un GitHub Secret en tu repositorio (por ejemplo, `TESTFORM_GITHUB_TOKEN`).
 3. Sustituye `${{ secrets.GITHUB_TOKEN }}` por `${{ secrets.TESTFORM_GITHUB_TOKEN }}` en las etapas de `plan` y `apply`.
 :::
+
+## Flujo por Pull Requests con `provider: local`
+
+Cuando el proyecto utiliza `provider: local`, todas las incidencias simuladas se guardan secuencialmente (`local:1`, `local:2`, ...) en `.testform/data.json` y el estado reconciliado se guarda en `testform.state`.
+
+Si dos desarrolladores ejecutan `testform apply` en ramas distintas antes del PR y suben esos archivos JSON, ambos asignarán los mismos IDs incrementales y producirán **conflictos de merge en `testform.state` y `.testform/data.json`**.
+
+Para manejar Pull Requests limpiamente con `provider: local`:
+
+1. **En las ramas de PR (antes del merge):**
+   - Modifica únicamente los archivos `.feature`, `main.yml` o `*.vars.yml`.
+   - Ejecuta solamente `testform validate` y `testform plan` (comandos de solo lectura que no modifican `testform.state` ni `data.json`).
+   - En el pipeline del PR, el paso de `plan` publica el diff para revisión por pares sin mutar ningún archivo JSON.
+2. **Al hacer merge a `main`:**
+   - **Si versionas estado en Git (`backend: local`):** ejecuta `testform apply -auto-approve` únicamente sobre `main` (manualmente o en el job `push` a `main` haciendo commit de `testform.state` y `.testform/data.json`, asegurándote de no ignorar `data.json` en `.gitignore`).
+   - **Si trabajas en modo efímero:** agrega `testform.state`, `.testform/data.json` y `.testform/cache/` a `.gitignore`; cada PR viaja solo con `.feature` + `main.yml` y CI o cada entorno reconstruye el estado cuando lo necesite con `testform apply -auto-approve`.
+3. **Para equipos con múltiples PRs simultáneos:** considera migrar a `provider: github` (o `gitlab`) junto a un [backend remoto](../language/backends) con bloqueo de estado distribuido (S3, GCS, Azure Blob).

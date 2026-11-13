@@ -3,7 +3,7 @@ title: "Recursos Declarativos"
 ---
 
 
-Testform define cuatro tipos de recursos fundamentales para modelar la estrategia de calidad de extremo a extremo: `testcase`, `testrun`, `testplan` y `testsuite`.
+Testform define cuatro tipos de recursos fundamentales para modelar la estrategia de calidad de extremo a extremo: `testcase`, `testrun`, `testplan` y `bug`.
 
 ## 1. El Recurso `testcase`
 
@@ -73,11 +73,15 @@ Feature: Registro de Ejecucion de Regresion Build 412
 
 ### Motor de Veredicto Acumulado (*Rollup Verdict*)
 
-Testform calcula de forma totalmente automática el estado consolidado (`status`) de cada `testrun` evaluando los estados individuales de todos los escenarios contenidos (`testcases`). Este cálculo sigue estrictas reglas de precedencia QA:
+Testform calcula de forma totalmente automática el estado consolidado (`status`) de cada `testrun` evaluando los estados individuales de todos los escenarios contenidos (`testcases`). Este cálculo sigue el orden de severidad Gherkin de Cucumber (más soporte para `blocked`):
 
-1. **`failed` (Prioridad Alta):** Si al menos un caso de prueba tiene resultado `failed`, el `testrun` se califica automáticamente como `failed`.
-2. **`pending` (Prioridad Media):** Si ningún caso ha fallado, pero al menos uno permanece en `pending`, `blocked` o `skipped` (o si la suite no tiene casos registrados), el estado resultante es `pending`.
-3. **`passed` (Consenso Total):** Se otorga únicamente si el **100% de los casos de prueba** han concluido satisfactoriamente con estado `passed`.
+1. **`failed` (Máxima Prioridad):** Si al menos un caso de prueba falló, el `testrun` se califica automáticamente como `failed`.
+2. **`ambiguous`:** Si no hay fallos pero algún caso tiene pasos ambiguos (múltiples definiciones coincidentes), el estado resulta `ambiguous`.
+3. **`undefined`:** Si no hay `failed`/`ambiguous` pero existen pasos sin implementación en Cucumber, el estado resulta `undefined`.
+4. **`blocked`:** Si no aplica lo anterior pero algún caso permanece en `blocked`, el resultado es `blocked`.
+5. **`pending`:** Si al menos un caso permanece en `pending` (o si la suite no tiene casos registrados), el resultado es `pending`.
+6. **`skipped`:** Si todos los casos terminaron entre `passed` y `skipped` (con al menos un `skipped`), el resultado es `skipped`.
+7. **`passed` (Consenso Total):** Se otorga únicamente si el **100% de los casos de prueba** concluyeron con estado `passed`.
 
 ### Persistencia Compacta en el Ledger (`testform.state`)
 
@@ -132,8 +136,8 @@ Feature: Plan de Certificacion Release v2.5.0
 
 Al igual que el `testrun` evalúa sus casos, el `testplan` calcula su estado acumulando jerárquicamente los estados de todos los `testrun` vinculados:
 
-- Si cualquiera de los `testrun` asociados está en estado `failed`, el veredicto del `testplan` será **`failed`**.
-- Si ningún `testrun` está fallido pero alguno continúa en `pending`, el plan permanece en **`pending`**.
+- Siguiendo exactamente la misma precedencia (`failed` > `ambiguous` > `undefined` > `blocked` > `pending` > `skipped` > `passed`), el estado más severo de los `testrun` vinculados se propaga al veredicto del `testplan`.
+- Si ningún `testrun` tiene fallos ni estados bloqueantes pero alguno continúa en `pending`, el plan permanece en **`pending`**.
 - Solo cuando la totalidad de las suites `testrun` vinculadas culminan en `passed`, el `testplan` adquiere el estado **`passed`**.
 
 ### Estructura en el Estado (`testform.state`)
@@ -155,18 +159,95 @@ Al igual que el `testrun` evalúa sus casos, el `testplan` calcula su estado acu
 }
 ```
 
-## 4. El Recurso `testsuite`
+## 4. El Recurso `bug`
 
-El recurso `testsuite` agrupa dinamicamente casos de prueba segun expresiones de tags (`@smoke`, `@billing`) para su despacho y orquestacion con herramientas de automatizacion (Playwright, Cypress, Vitest).
+El recurso `bug` modela la trazabilidad inmutable y el ciclo de vida de los defectos encontrados durante la ejecución de pruebas.
+
+- **Ubicacion Estandar:** `tests/bugs/*.bug.feature` (configurable en `main.yml` bajo `resources.bug.directory`).
+- **Ubicacion de Identidad:** Sobre cada `Scenario:` con prefijo `@bg-*` (ejemplo: `@bg-1` o `@bg-checkout-500`).
+- **Nivel de Unicidad:** Unico dentro del archivo contenedor de bugs.
+- **Relacion con Test Runs:** La linea `Feature:` del archivo apunta a la ruta relativa del `testrun` en el que se originaron o detectaron los defectos (ejemplo: `Feature: testruns/sprint42.run.feature`).
+- **Estructura Interna:** Cada `Scenario:` representa un defecto individual con sus sentencias declarativas de trazabilidad:
+  - `* set target = <testcase>`: Caso de prueba afectado (`@tc-*` o direccion canonical).
+  - `* set status = <estado>`: Estado de resolucion del defecto (`open`, `in_progress`, `resolved`, `reopened`, `discarded`, `duplicate`). Tambien acepta los equivalentes de ejecucion (`failed`, `pending`, `passed`).
+  - `* set trace = <stack>`: Mensaje o traza del error detectado.
+  - `* set attach = <archivo>` *(o `* set evidence = ...`)*: Ruta física o lista JSON de adjuntos/evidencias (captura de pantalla, grabaciones de video, logs o reportes).
+  - Campos personalizados (`* set <campo> = <valor>`): Metadatos adicionales definidos en `main.yml` (`resources.bug.fields`).
+
+### Reglas de Gobernanza de Adjuntos (`set attach` / `set evidence`)
+
+Para garantizar coherencia semántica en la arquitectura Test-as-Code, el motor impone reglas estrictas de ámbito:
+
+| Recurso | Nivel Background | Nivel Scenario / Rule | Comportamiento del Motor |
+| :--- | :--- | :--- | :--- |
+| **`testcase`** | ✔ Permitido | ✔ Permitido | Permite adjuntos compartidos para toda la historia/feature o específicos por caso. |
+| **`testrun`** | ✔ Permitido | ✔ Permitido | Permite artefactos generales de la corrida o evidencias específicas por escenario ejecutado. |
+| **`testplan`** | ✔ Permitido | ✖ Prohibido | Solo aplicable en `Background` (los planes no contienen escenarios individuales). |
+| **`bug`** | ✖ **Estrictamente prohibido** | ✔ Permitido | Los adjuntos pertenecen exclusivamente a la evidencia particular del defecto en el `Scenario`. |
+
+### Ejemplo
+
+```gherkin
+@bug
+Feature: testruns/sprint42_regression.run.feature
+
+  @bg-1
+  Scenario: Error 500 al procesar pago con tarjeta internacional
+    * set target = tests/features/checkout.case.feature.@tc-pay-01
+    * set status = open
+    * set trace = PaymentGatewayException: Timeout waiting for gateway ACK in 30000ms
+    * set evidence = evidence/checkout_timeout.png
+    * set severity = critical
+    * set priority = high
+
+  @bg-2
+  Scenario: Boton de confirmar pedido queda deshabilitado tras reintento
+    * set target = tests/features/checkout.case.feature.@tc-pay-02
+    * set status = resolved
+    * set evidence = evidence/retry_fixed.png
+```
+
+### Ciclo de Vida de los Defectos
+
+| Estado | Significado | Representacion CLI |
+| :--- | :--- | :--- |
+| **`open`** *(o `failed`, `new`)* | Defecto activo y no resuelto | <span style="color:#fa5252">● open</span> |
+| **`in_progress`** *(o `pending`)* | Defecto en investigacion, reparacion o retest | <span style="color:#fab005">⧖ in progress</span> |
+| **`resolved`** *(o `passed`, `closed`)* | Defecto verificado y corregido | <span style="color:#12b886">✔ resolved</span> |
+| **`reopened`** | Defecto previamente resuelto que volvio a manifestarse | <span style="color:#fd7e14">↻ reopened</span> |
+| **`discarded`** *(o `wont_fix`)* | Defecto rechazado, no reproducible o por diseño | <span style="color:#868e96">⊘ discarded</span> |
+| **`duplicate`** | Defecto reportado que duplica otro caso existente | <span style="color:#be4bdb">⧉ duplicate</span> |
+
+### Estructura en el Estado (`testform.state`)
+
+```json
+{
+  "address": "tests/bugs/sprint42.bug.feature.@bg-1",
+  "type": "bug",
+  "status": "open",
+  "attributes": {
+    "title": "Error 500 al procesar pago con tarjeta internacional",
+    "status": "open",
+    "testcase": "tests/features/checkout.case.feature.@tc-pay-01",
+    "testrun": "testruns/sprint42_regression.run.feature",
+    "trace": "PaymentGatewayException: Timeout waiting for gateway ACK in 30000ms",
+    "evidence": ["evidence/checkout_timeout.png"],
+    "metadata": {
+      "severity": "critical",
+      "priority": "high"
+    }
+  }
+}
+```
 
 ## Matriz Comparativa de Recursos
 
 | Recurso | Alcance | Ubicacion de Identidad | Unicidad | Estructura Interna |
 | :--- | :--- | :--- | :--- | :--- |
-| **`testcase`** | 1 archivo = N casos | Sobre cada `Scenario:` | Unica en el archivo | `Scenario` individuales con `Given`, `When`, `Then` |
-| **`testrun`** | 1 archivo = 1 corrida | Sobre el `Feature:` | Global en el repositorio | `Rule: archivo.case.feature` + `Scenario: @tc-*` |
-| **`testplan`** | 1 archivo = 1 plan | Sobre el `Feature:` | Global en el repositorio | `Rule: archivo.run.feature` (sin Scenarios explicitos) |
-| **`testsuite`**| Conjunto logico | En memoria / query | Dinamica por filtro | Resuelve casos segun consulta de tags booleanos |
+| **`testcase`** | 1 archivo = N casos | Sobre cada `Scenario:` (`@tc-*`) | Unica en el archivo | `Scenario` individuales con `Given`, `When`, `Then` |
+| **`testrun`** | 1 archivo = 1 corrida | Sobre el `Feature:` (`@tr-*`) | Global en el repositorio | `Rule: archivo.case.feature` + `Scenario: @tc-*` |
+| **`testplan`** | 1 archivo = 1 plan | Sobre el `Feature:` (`@tp-*`) | Global en el repositorio | `Rule: archivo.run.feature` (coordinacion de runs) |
+| **`bug`** | 1 archivo = N defectos | Sobre cada `Scenario:` (`@bg-*`) | Unica en el archivo | `Scenario` con `set target`, `status`, `trace`, `evidence` |
 
 ---
 

@@ -21,7 +21,7 @@ testform query [options]
 | Flag | Description | Example |
 |---|---|---|
 | `--scope` | Filter by resource type (`testcase`, `testrun`, `testsuite`) | `testform query --scope=testrun` |
-| `--status` | Filter by test execution status (`passed`, `failed`, `skipped`) | `testform query --status=failed` |
+| `--status` | Filter by execution status (`passed`, `failed`, `pending`, `skipped`, `undefined`, `ambiguous`, `blocked`) | `testform query --status=failed` |
 | `--label` | Filter by tag or label | `testform query --label=@smoke` |
 | `--assignee` | Filter by assigned operator | `testform query --assignee=john` |
 | `--milestone` | Filter by release milestone | `testform query --milestone=v1.0` |

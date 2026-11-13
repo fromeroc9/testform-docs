@@ -468,6 +468,11 @@ const t = {
 
 <script is:inline>
   (function () {
+    try {
+      document.documentElement.classList.add('tf-full-width-page');
+      if (document.body) document.body.classList.add('tf-full-width-page');
+    } catch (e) {}
+
     const presets = {
       cases: {
         file: 'tests/todo.case.feature',

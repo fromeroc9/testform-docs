@@ -20,7 +20,7 @@ testform query [opciones]
 | Flag | Descripción | Ejemplo |
 |---|---|---|
 | `--scope` | Filtra por tipo de recurso (`testcase`, `testrun`, `testsuite`) | `testform query --scope=testrun` |
-| `--status` | Filtra por estado de ejecución (`passed`, `failed`, `skipped`) | `testform query --status=failed` |
+| `--status` | Filtra por estado de ejecución (`passed`, `failed`, `pending`, `skipped`, `undefined`, `ambiguous`, `blocked`) | `testform query --status=failed` |
 | `--label` | Filtra por etiqueta o tag Gherkin | `testform query --label=@smoke` |
 | `--assignee` | Filtra por usuario asignado en el proveedor | `testform query --assignee=flavio` |
 | `--milestone` | Filtra por hito o versión de entrega | `testform query --milestone=v1.0` |

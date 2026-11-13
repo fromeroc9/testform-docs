@@ -268,7 +268,7 @@ Los formatos oficiales (`docx`, `xlsx`, `md`) procesan los siguientes marcadores
 | `${date}` | Fecha | Fecha de generación en formato local `DD/MM/YYYY`. |
 | `${var.<nombre>}` | Variable | Valor resuelto desde archivos `*.vars.yml` o `-var="clave=valor"`. |
 | `${total}` | Numérico | Conteo total de casos o ejecuciones en el reporte. |
-| `${passed}`, `${failed}`, `${pending}` | Numérico | Totales agrupados por estado de ejecución. |
+| `${passed}`, `${failed}`, `${pending}`, `${skipped}`, `${undefined}`, `${ambiguous}`, `${blocked}` | Numérico | Totales agrupados por estado de ejecución. |
 | `${tasa_exito}` | Porcentaje | Porcentaje calculado de aprobación (ej. `85%`). |
 | `${report.metrics.<clave>}` | Dinámico | Cualquier métrica personalizada agregada al diccionario `metrics`. |
 | `${table}` o `${report.table}` | Estructura | Marcador posicional donde se inserta la tabla con bordes y cabeceras. |

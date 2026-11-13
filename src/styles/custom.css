@@ -128,3 +128,54 @@ nav.sidebar {
   border: 1px solid var(--sl-color-hairline) !important;
 }
 
+/* ==========================================================================
+   Full-Width Interactive Playground Layout (100% Viewport Expansion)
+   ========================================================================== */
+:root:has(.tf-playground),
+body:has(.tf-playground),
+.tf-full-width-page {
+  --sl-content-width: 100% !important;
+  --sl-text-width: 100% !important;
+}
+
+body:has(.tf-playground) .main-pane,
+.tf-full-width-page .main-pane {
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+body:has(.tf-playground) .content-panel,
+.tf-full-width-page .content-panel {
+  max-width: 100% !important;
+  width: 100% !important;
+  padding-inline: 1.5rem !important;
+}
+
+body:has(.tf-playground) .sl-container,
+.tf-full-width-page .sl-container {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin-inline: 0 !important;
+}
+
+body:has(.tf-playground) .sl-markdown-content,
+.tf-full-width-page .sl-markdown-content {
+  max-width: 100% !important;
+}
+
+body:has(.tf-playground) .right-sidebar-container,
+body:has(.tf-playground) starlight-toc,
+body:has(.tf-playground) aside.right-sidebar,
+.tf-full-width-page .right-sidebar-container,
+.tf-full-width-page starlight-toc,
+.tf-full-width-page aside.right-sidebar {
+  display: none !important;
+}
+
+.tf-playground {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-inline: 0 !important;
+}
+
+

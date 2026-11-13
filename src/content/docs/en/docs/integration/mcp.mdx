@@ -1,0 +1,131 @@
+---
+title: "MCP Server (Model Context Protocol)"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+The **Testform MCP Server** (`@fromeroc9/testform-mcp`) implements the open **Model Context Protocol (MCP)** standard, enabling AI assistants and autonomous coding agents (**Claude Desktop**, **Cursor**, **Antigravity**, **Cline**, **Zed**) to interact natively and deterministically with your **Test-as-Code** specifications.
+
+With the MCP server, your AI agent can inspect the state ledger, plan test executions (`testform plan`), apply reconciled changes (`testform apply`), diagnose failed testruns, author standardized BDD specifications, and ingest evidence files in accordance with project governance policies.
+
+---
+
+## ⚡ Installation & Setup
+
+You can run the server directly via `npx` (recommended) or clone and run it locally.
+
+<Tabs>
+  <TabItem label="Claude Desktop">
+    Add the server configuration to your `claude_desktop_config.json`:
+
+    * **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+    * **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+    * **Linux:** `~/.config/Claude/claude_desktop_config.json`
+
+    ```json
+    {
+      "mcpServers": {
+        "testform": {
+          "command": "npx",
+          "args": ["-y", "@fromeroc9/testform-mcp"]
+        }
+      }
+    }
+    ```
+  </TabItem>
+
+  <TabItem label="Cursor IDE">
+    Create or edit `.cursor/mcp.json` in your workspace root or in your global Cursor settings:
+
+    ```json
+    {
+      "mcpServers": {
+        "testform": {
+          "command": "npx",
+          "args": ["-y", "@fromeroc9/testform-mcp"]
+        }
+      }
+    }
+    ```
+  </TabItem>
+
+  <TabItem label="Antigravity IDE">
+    In your Antigravity IDE configuration or MCP settings file:
+
+    ```json
+    {
+      "mcp_servers": {
+        "testform": {
+          "command": "npx",
+          "args": ["-y", "@fromeroc9/testform-mcp"]
+        }
+      }
+    }
+    ```
+  </TabItem>
+
+  <TabItem label="Local Binary">
+    To run or test directly from the cloned repository source:
+
+    ```bash
+    git clone https://github.com/fromeroc9/testform-mcp.git
+    cd testform-mcp
+    npm install
+    npm run build
+    node dist/index.js
+    ```
+  </TabItem>
+</Tabs>
+
+---
+
+## 🛠️ MCP Tools Catalog
+
+The server exposes structured, JSON-Schema-validated tools ensuring safe, deterministic agent actions:
+
+| Tool | Key Parameters | Description |
+|---|---|---|
+| **`testform_plan`** | `workspaceDir`, `target`, `detailedExitCode`, `json` | Evaluates diffs against the state ledger (`testform.state`) and detects test drift without modifying disk. |
+| **`testform_apply`** | `workspaceDir`, `target`, `autoApprove` | Reconciles declarative specifications and updates the state ledger and remote providers. |
+| **`testform_validate`** | `workspaceDir`, `target`, `json` | Validates Gherkin DSL syntax, identity tag formats (`@tc-*`, `@tr-*`), `main.yml` schema, and policy rules. |
+| **`testform_query`** | `scope` (`testcase`, `testrun`, `testplan`, `bug`), `filter` | Queries resources by tags, priority, or execution status (`status=failed`). |
+| **`testform_show`** | `workspaceDir`, `json` | Inspects the current state ledger, tracked resources, serial number, and outputs. |
+| **`testform_status`** | `workspaceDir` | Returns an aggregate overview of the workspace: file counts, scenarios, locks, and scaffold directories. |
+| **`testform_scaffold`** | `type`, `name`, `title`, `folder`, `target`, `scenarios` | Generates standardized specifications with guaranteed sequential numbering (`@tc-01`, `@tr-01`, etc.). |
+| **`testform_report`** | `type`, `format` (`md`, `json`, `html`, `xlsx`, `docx`), `target`, `out` | Generates modular QA reports across multiple industry formats. |
+| **`testform_attach`** | `filePath`, `targetFeatureFile`, `scenarioName`, `copyToScaffold` | Ingests attachments and evidence respecting governance rules (`scaffold.attach` in `main.yml`). |
+
+---
+
+## 📦 MCP Resources
+
+AI agents can read live project context through standard URI endpoints:
+
+* **`testform://state`** (`application/json`): The parsed `testform.state` ledger containing all tracked resources, engine version, and reconciliation lineage.
+* **`testform://schema`** (`application/json`): Active configuration from `main.yml` (backend, providers, and scaffold folder mappings).
+* **`testform://summary`** (`application/json`): Real-time metrics on test cases, active runs, defects, and coverage.
+
+---
+
+## 💡 MCP Prompts
+
+The server includes pre-engineered prompt workflows guiding AI models toward Test-as-Code best practices:
+
+1. **`generate-test-cases`**: Converts user stories or acceptance criteria into declarative `.case.feature` files with positive, negative, and edge scenarios.
+2. **`diagnose-test-failure`**: Analyzes execution traces from a failed testrun and generates linked `.bug.feature` specifications with explicit `* set target = ...` bindings.
+3. **`create-regression-plan`**: Designs rule-based master `.plan.feature` suites for release verification.
+
+---
+
+## 💬 Natural Language Interaction Examples
+
+Once connected, your AI assistant can be prompted directly:
+
+> *"Evaluate the impact of our current test case changes by running a plan."*  
+> → The agent triggers `testform_plan`.
+
+> *"Create a new test case file for password reset with 3 scenarios."*  
+> → The agent triggers `testform_scaffold` with `type: "testcase"`.
+
+> *"Find all high-severity bugs and generate an Excel QA report."*  
+> → The agent triggers `testform_query` followed by `testform_report`.
