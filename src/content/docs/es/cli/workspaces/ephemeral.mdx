@@ -5,7 +5,7 @@ title: "testform ephemeral (Obsoleto / Absorbido)"
 > [!WARNING]
 > **Comando deprecado y absorbido:** El comando independiente `testform ephemeral` ha sido absorbido e integrado dentro de [`testform workspace`](./workspace).
 > 
-> Toda la gestión de entornos efímeros y sandboxes descartables ahora se realiza a través de `testform workspace new <nombre> --ephemeral [--ttl=<duracion>]`. Este comando se mantiene exclusivamente como alias por retrocompatibilidad para pipelines y scripts heredados.
+> Toda la gestión de entornos efímeros y sandboxes descartables ahora se realiza a través de `testform workspace new <nombre> -ephemeral [-ttl=<duracion>]`. Este comando se mantiene exclusivamente como alias por retrocompatibilidad para pipelines y scripts heredados.
 
 ```bash
 testform ephemeral <subcomando> [opciones] [argumentos]
@@ -15,7 +15,7 @@ testform ephemeral <subcomando> [opciones] [argumentos]
 
 | Comando Anterior | Comando Moderno Equivalente | Acción |
 | :--- | :--- | :--- |
-| `testform ephemeral up <id>` | `testform workspace new <id> --ephemeral` | Crea y activa un sandbox efímero. |
+| `testform ephemeral up <id>` | `testform workspace new <id> -ephemeral` | Crea y activa un sandbox efímero. |
 | `testform ephemeral list` | `testform workspace list` | Muestra todos los workspaces (persistentes y efímeros). |
 | `testform ephemeral show <id>` | `testform workspace show <id>` | Inspecciona metadatos y recursos del sandbox. |
 | `testform ephemeral down <id>` | `testform workspace delete <id>` | Ejecuta teardown de incidencias y elimina el sandbox. |
@@ -32,7 +32,7 @@ Para no romper pipelines existentes de CI/CD, los siguientes comandos continúan
 Aprovisiona y activa un sandbox efímero:
 ```bash
 testform ephemeral up pr-412-sandbox -ttl=2h
-# Equivale a: testform workspace new pr-412-sandbox --ephemeral --ttl=2h
+# Equivale a: testform workspace new pr-412-sandbox -ephemeral -ttl=2h
 ```
 
 ### 2. `testform ephemeral list`

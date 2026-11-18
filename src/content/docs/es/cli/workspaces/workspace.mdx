@@ -11,14 +11,14 @@ El comando `testform workspace` gestiona estados de trabajo aislados (workspaces
 Los workspaces permiten administrar tanto **entornos persistentes** (como `staging`, `production`, `qa-env-1` o `release-2.0`) como **sandboxes efímeros** (para PRs, ramas de automatización o pruebas descartables de QA) utilizando los **mismos archivos de prueba `.feature`**, pero con archivos de estado e incidencias remotas totalmente independientes.
 
 > [!NOTE]
-> Las capacidades que anteriormente pertenecían a `testform ephemeral` ahora están totalmente integradas dentro de `testform workspace` a través del flag `--ephemeral`.
+> Las capacidades que anteriormente pertenecían a `testform ephemeral` ahora están totalmente integradas dentro de `testform workspace` a través del flag `-ephemeral`.
 
 ---
 
 ## Tipos de Workspaces
 
 1. **🏛️ Persistentes (Por defecto):** Entornos de larga duración (`default`, `staging`, `production`). Su estado se conserva de forma indefinida hasta ser eliminado explícitamente.
-2. **🧪 Efímeros (`--ephemeral`):** Sandboxes temporales con ciclo de vida acotado. Permiten ejecutar pruebas aisladas sin contaminar el entorno `default` ni generar incidencias huérfanas en Jira/GitHub, con soporte de tiempo de vida (TTL) y promoción hacia `default`.
+2. **🧪 Efímeros (`-ephemeral`):** Sandboxes temporales con ciclo de vida acotado. Permiten ejecutar pruebas aisladas sin contaminar el entorno `default` ni generar incidencias huérfanas en Jira/GitHub, con soporte de tiempo de vida (TTL) y promoción hacia `default`.
 
 ---
 
@@ -50,15 +50,15 @@ Crea un nuevo workspace vacío y cambia inmediatamente a él:
 $ testform workspace new release-2.0
 
 # Crear un sandbox efímero descartable:
-$ testform workspace new pr-412-sandbox --ephemeral
+$ testform workspace new pr-412-sandbox -ephemeral
 
 # Crear un sandbox efímero con tiempo de vida (TTL) personalizado:
-$ testform workspace new pr-412-sandbox --ephemeral --ttl=2h
+$ testform workspace new pr-412-sandbox -ephemeral -ttl=2h
 ```
 
 **Opciones:**
-- `--ephemeral`, `-e`: Marca el workspace como sandbox temporal descartable.
-- `--ttl=<duración>`: Define el tiempo de vida del sandbox efímero (ejemplos: `30m`, `2h`, `1d`).
+- `-e`, `-ephemeral`: Marca el workspace como sandbox temporal descartable.
+- `-ttl=<duración>`: Define el tiempo de vida del sandbox efímero (ejemplos: `30m`, `2h`, `1d`).
 
 Salida en modo efímero:
 ```text
@@ -119,20 +119,15 @@ Este comando verifica la integridad de los recursos validados, actualiza el `tes
 ---
 
 ### 6. `testform workspace delete <nombre>`
-Elimina un workspace. Si el workspace fue creado con `--ephemeral`, ejecuta automáticamente un **teardown limpio** (`destroy`) para cerrar los tickets/bugs remotos en Jira/GitHub antes de borrar el estado:
+Elimina un workspace. Si el workspace fue creado con `-ephemeral`, ejecuta automáticamente un **teardown limpio** (`destroy`) para cerrar los tickets/bugs remotos en Jira/GitHub antes de borrar el estado:
 
 ```bash
 $ testform workspace delete pr-412-sandbox
-
-🧹 Tearing down ephemeral workspace: pr-412-sandbox...
-✔ Closing remote issues in Jira/GitHub...
-✨ Ephemeral workspace "pr-412-sandbox" is completely destroyed!
-   Remote issues closed and isolated state directory removed. Zero orphans left.
 ```
 
 **Opciones:**
-- `--auto-approve`: Omite la confirmación interactiva para automatización en CI/CD.
-- `--force`: Fuerza la eliminación incluso si el estado local se encuentra dañado.
+- `-a`, `-auto-approve`: Omite la confirmación interactiva para automatización en CI/CD.
+- `-force`: Fuerza la eliminación incluso si el estado local se encuentra dañado.
 
 ---
 
