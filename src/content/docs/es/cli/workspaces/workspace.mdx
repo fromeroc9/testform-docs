@@ -8,58 +8,145 @@ testform workspace <subcomando> [opciones] [argumentos]
 
 El comando `testform workspace` gestiona estados de trabajo aislados (workspaces) dentro del mismo directorio de configuración.
 
-Los workspaces permiten administrar múltiples entornos diferenciados (como `staging`, `production`, `qa-env-1` o `release-2.0`) utilizando los **mismos archivos de prueba `.feature`**, pero con archivos de estado e incidencias remotas totalmente independientes.
+Los workspaces permiten administrar tanto **entornos persistentes** (como `staging`, `production`, `qa-env-1` o `release-2.0`) como **sandboxes efímeros** (para PRs, ramas de automatización o pruebas descartables de QA) utilizando los **mismos archivos de prueba `.feature`**, pero con archivos de estado e incidencias remotas totalmente independientes.
+
+> [!NOTE]
+> Las capacidades que anteriormente pertenecían a `testform ephemeral` ahora están totalmente integradas dentro de `testform workspace` a través del flag `--ephemeral`.
+
+---
+
+## Tipos de Workspaces
+
+1. **🏛️ Persistentes (Por defecto):** Entornos de larga duración (`default`, `staging`, `production`). Su estado se conserva de forma indefinida hasta ser eliminado explícitamente.
+2. **🧪 Efímeros (`--ephemeral`):** Sandboxes temporales con ciclo de vida acotado. Permiten ejecutar pruebas aisladas sin contaminar el entorno `default` ni generar incidencias huérfanas en Jira/GitHub, con soporte de tiempo de vida (TTL) y promoción hacia `default`.
+
+---
 
 ## Subcomandos
 
 ### 1. `testform workspace list`
-Enumera todos los workspaces existentes. Un asterisco `*` indica el workspace activo:
+Enumera todos los workspaces activos mostrando una tabla enriquecida con su tipo, cantidad de recursos rastreados y TTL restante:
+
 ```bash
 $ testform workspace list
-  default
-* staging
-  production
+
+Active Workspaces (3):
+  WORKSPACE            TYPE          RESOURCES    TTL RESTANTE
+  ───────────────────  ────────────  ───────────  ────────────────────
+* default              🏛️ Persistent  24           Infinito (Oficial)
+  pr-412-sandbox       🧪 Ephemeral   8            ⏳ 1h 35m restante
+  staging              🏛️ Persistent  24           Infinito
 ```
 
-### 2. `testform workspace new <nombre>`
-Crea un nuevo workspace vacío y cambia a él:
+El asterisco `*` en verde indica el workspace actualmente activo.
+
+---
+
+### 2. `testform workspace new <nombre> [opciones]`
+Crea un nuevo workspace vacío y cambia inmediatamente a él:
+
 ```bash
+# Crear un workspace persistente estándar:
 $ testform workspace new release-2.0
-Created and switched to workspace "release-2.0"!
 
-You're now on a new, empty workspace. Workspaces isolate their state,
-so if you run "testform plan", Testform will not see any existing "default" resources.
+# Crear un sandbox efímero descartable:
+$ testform workspace new pr-412-sandbox --ephemeral
+
+# Crear un sandbox efímero con tiempo de vida (TTL) personalizado:
+$ testform workspace new pr-412-sandbox --ephemeral --ttl=2h
 ```
+
+**Opciones:**
+- `--ephemeral`, `-e`: Marca el workspace como sandbox temporal descartable.
+- `--ttl=<duración>`: Define el tiempo de vida del sandbox efímero (ejemplos: `30m`, `2h`, `1d`).
+
+Salida en modo efímero:
+```text
+🚀 Initializing ephemeral QA workspace: pr-412-sandbox
+   Isolated state: testform.state.d/pr-412-sandbox/testform.state
+
+✔ Ephemeral workspace "pr-412-sandbox" successfully created and activated!
+   All testform commands will now safely execute in this sandbox.
+```
+
+---
 
 ### 3. `testform workspace select <nombre>`
-Cambia hacia un workspace existente:
+Cambia el contexto hacia un workspace existente (persistente o efímero):
+
 ```bash
-$ testform workspace select production
-Switched to workspace "production".
+$ testform workspace select pr-412-sandbox
+Switched to workspace "pr-412-sandbox".
 ```
 
-### 4. `testform workspace show`
-Muestra el nombre del workspace actualmente activo:
+Una vez seleccionado, todos los comandos de Testform (`plan`, `apply`, `report`, Studio) operan automáticamente sobre ese workspace.
+
+---
+
+### 4. `testform workspace show [nombre]`
+Muestra los metadatos detallados y los recursos administrados en el workspace:
+
 ```bash
-$ testform workspace show
-production
+$ testform workspace show pr-412-sandbox
+
+Workspace: pr-412-sandbox (🧪 Ephemeral)
+Created: 17/11/2026, 23:25:00
+State file: testform.state.d/pr-412-sandbox/testform.state
+Tracked resources: 8
+TTL Remaining: 1h 35m
+
+Resources:
+  - testcase: testcase/autenticacion.case.feature.@tc-01 (#102)
+  - testcase: testcase/autenticacion.case.feature.@tc-02 (#103)
+  - testrun:  testruns/smoke_sprint1.run.feature (@tr-01)
 ```
 
-### 5. `testform workspace delete <nombre>`
-Elimina un workspace. Debe encontrarse totalmente vacío (todos los recursos destruidos previamente) antes de poder borrarse:
+---
+
+### 5. `testform workspace promote <nombre>`
+**Consolida y reconcilia** los cambios probados en un workspace efímero hacia el workspace oficial `default`:
+
 ```bash
-testform workspace delete sprint-38-antiguo
+$ testform workspace promote pr-412-sandbox
+
+🚀 Promoting ephemeral workspace "pr-412-sandbox" into default...
+✔ 8 resources safely reconciled and merged into Official State.
+✨ Workspace "pr-412-sandbox" promoted and cleaned up.
 ```
+
+Este comando verifica la integridad de los recursos validados, actualiza el `testform.state` principal y desmantela el sandbox efímero.
+
+---
+
+### 6. `testform workspace delete <nombre>`
+Elimina un workspace. Si el workspace fue creado con `--ephemeral`, ejecuta automáticamente un **teardown limpio** (`destroy`) para cerrar los tickets/bugs remotos en Jira/GitHub antes de borrar el estado:
+
+```bash
+$ testform workspace delete pr-412-sandbox
+
+🧹 Tearing down ephemeral workspace: pr-412-sandbox...
+✔ Closing remote issues in Jira/GitHub...
+✨ Ephemeral workspace "pr-412-sandbox" is completely destroyed!
+   Remote issues closed and isolated state directory removed. Zero orphans left.
+```
+
+**Opciones:**
+- `--auto-approve`: Omite la confirmación interactiva para automatización en CI/CD.
+- `--force`: Fuerza la eliminación incluso si el estado local se encuentra dañado.
+
+---
 
 ## Aislamiento de Estado en Backends Remotos
 
-Al utilizar un backend remoto (como AWS S3), Testform organiza los estados de los workspaces bajo prefijos separados:
+Al utilizar un backend remoto (como AWS S3, Azure Blob o Google Cloud Storage), Testform organiza los estados de los workspaces bajo prefijos separados:
 - Workspace `default`: `mi-bucket/testform.state`
 - Workspace `staging`: `mi-bucket/env:/staging/testform.state`
-- Workspace `production`: `mi-bucket/env:/production/testform.state`
+- Workspace efímero `pr-412-sandbox`: `mi-bucket/env:/pr-412-sandbox/testform.state`
+
+---
 
 ## Códigos de Salida
 
-- `0`: Comando de workspace ejecutado exitosamente.
-- `1`: El workspace ya existe, no existe o no pudo ser eliminado.
+- `0`: Operación de workspace completada exitosamente.
+- `1`: El workspace ya existe, no existe o falló la operación de reconciliación/eliminación.
 

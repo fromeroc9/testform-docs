@@ -7,8 +7,8 @@ Commands for managing isolated parallel environments, authentication sessions, e
 
 ## Available Commands
 
-- **[`testform workspace`](./workspace):** Manages isolated workspaces with independent state files (`list`, `new`, `select`, `delete`).
+- **[`testform workspace`](./workspace):** Manages isolated workspaces and ephemeral test sandboxes (`list`, `new [--ephemeral]`, `select`, `promote`, `delete`).
 - **[`testform login`](./login):** Interactively logs into and saves API credentials for a remote host.
 - **[`testform logout`](./logout):** Removes locally-stored credentials for a remote provider host.
-- **[`testform ephemeral`](./ephemeral):** Creates, inspects, and destroys isolated ephemeral test sandboxes for CI/CD.
+- **[`testform ephemeral`](./ephemeral):** *(Deprecated)* Legacy compatibility alias merged into `testform workspace`.
 - **[`testform version`](./version):** Displays current Testform version, installed plugins, and checks for upgrades.

@@ -98,8 +98,8 @@ Environments, authentication, and runtime:
 
 | Command | Description |
 | :--- | :--- |
-| [`testform workspace`](./workspaces/workspace) | Manages multiple isolated workspaces (`list`, `new`, `select`, `delete`). |
+| [`testform workspace`](./workspaces/workspace) | Manages isolated workspaces and ephemeral test sandboxes (`list`, `new`, `select`, `promote`, `delete`). |
 | [`testform login`](./workspaces/login) | Obtains and saves API credentials for a remote host. |
 | [`testform logout`](./workspaces/logout) | Removes locally-stored credentials for a remote host. |
-| [`testform ephemeral`](./workspaces/ephemeral) | Manages temporary CI/CD test sandboxes. |
+| [`testform ephemeral`](./workspaces/ephemeral) | *(Deprecated)* Manages temporary test sandboxes (merged into `testform workspace`). |
 | [`testform version`](./workspaces/version) | Displays current Testform version and checks for upgrades. |

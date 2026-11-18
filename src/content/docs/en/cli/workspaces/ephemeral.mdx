@@ -1,34 +1,53 @@
 ---
-title: "testform ephemeral"
+title: "testform ephemeral (Deprecated / Merged)"
 ---
 
+> [!WARNING]
+> **Deprecated & Merged Command:** The standalone `testform ephemeral` command has been merged directly into [`testform workspace`](./workspace).
+> 
+> All ephemeral sandbox management is now performed using `testform workspace new <name> --ephemeral [--ttl=<duration>]`. This command remains available strictly as a backwards-compatibility alias for legacy scripts and CI/CD pipelines.
 
 ```bash
 testform ephemeral <subcommand> [options] [args]
 ```
 
-The `testform ephemeral` command manages disposable, temporary QA test sandboxes. It allows engineers and CI pipelines to spin up isolated test runs, execute suites, collect metrics, and tear down the environment cleanly without polluting production boards.
+## Migration Table to `testform workspace`
 
-## Subcommands
+| Legacy Command | Modern Equivalent | Action |
+| :--- | :--- | :--- |
+| `testform ephemeral up <id>` | `testform workspace new <id> --ephemeral` | Creates and activates an ephemeral sandbox. |
+| `testform ephemeral list` | `testform workspace list` | Displays all workspaces (persistent and ephemeral). |
+| `testform ephemeral show <id>` | `testform workspace show <id>` | Inspects metadata and resources in the sandbox. |
+| `testform ephemeral down <id>` | `testform workspace delete <id>` | Performs remote teardown and deletes the sandbox. |
+| *(Not available in ephemeral)* | `testform workspace select <id>` | Switches active context to an existing sandbox. |
+| *(Not available in ephemeral)* | `testform workspace promote <id>` | Reconciles and merges tested changes into `default`. |
 
-### 1. `testform ephemeral up`
-Provisions an ephemeral test sandbox:
+---
+
+## Backwards Compatibility (Legacy Syntax)
+
+To preserve existing CI/CD automation, the following commands remain supported as direct shortcuts to the workspace engine:
+
+### 1. `testform ephemeral up <id>`
+Provisions and activates an ephemeral sandbox:
 ```bash
-testform ephemeral up -name="pr-412-sandbox" -ttl="2h"
+testform ephemeral up pr-412-sandbox -ttl=2h
+# Equivalent to: testform workspace new pr-412-sandbox --ephemeral --ttl=2h
 ```
 
 ### 2. `testform ephemeral list`
-Lists all currently active ephemeral sandboxes and their remaining time-to-live:
+Lists all active ephemeral sandboxes:
 ```bash
 $ testform ephemeral list
-SANDBOX ID       NAME               CREATED         TTL REMAINING
-eph-9812         pr-412-sandbox     25m ago         1h 35m
+Active Ephemeral Sandboxes (1):
+* pr-412-sandbox     8 resources     ⏳ 1h 35m remaining
 ```
 
-### 3. `testform ephemeral down`
-Tears down and destroys an active ephemeral sandbox:
+### 3. `testform ephemeral down <id>`
+Tears down and cleanly destroys an active ephemeral sandbox:
 ```bash
-testform ephemeral down eph-9812
+testform ephemeral down pr-412-sandbox --auto-approve
+# Equivalent to: testform workspace delete pr-412-sandbox --auto-approve
 ```
 
 ## Exit Codes
