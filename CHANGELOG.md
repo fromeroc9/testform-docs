@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.2] - 2026-11-20
+
+### Added
+
+- **Unified Ephemeral Workspaces Documentation (`cli/workspaces/workspace.mdx`, `cli/workspaces/ephemeral.mdx`):**
+  - Documented complete integration of disposable ephemeral QA sandboxes into `testform workspace` using `-ephemeral` (alias `-e`) and `-ttl=<duration>` (`30m`, `2h`, `1d`).
+  - Documented automated clean teardown workflow (`testform workspace delete <name>`) with `-auto-approve` and `-force`.
+  - Documented `testform workspace promote` for promoting validated ephemeral state into `default` and `testform workspace cleanup` for purging expired sandboxes.
+  - Standardized all documentation examples to single-dash Terraform-style CLI syntax (`-ephemeral`, `-ttl`, `-auto-approve`, `-force`, `-json`).
+  - Documented backwards-compatibility migration table for legacy `testform ephemeral` commands.
+
+---
+
 ## [1.3.1] - 2026-11-13
 
 ### Added
