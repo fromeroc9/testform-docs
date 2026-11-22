@@ -15,7 +15,79 @@ Al igual que en Terraform un provider gestiona la comunicación con la API de un
 
 ---
 
-## 1. Declaración de Providers Requeridos (`required_providers`)
+## 1. Proveedores Nativos Oficiales (Built-in Providers)
+
+Testform incluye **3 proveedores nativos precompilados** en el núcleo de la CLI, listos para usarse sin necesidad de instalar paquetes ni descargar binarios externos:
+
+| Proveedor | Identificador | Plataforma de Destino | Autenticación |
+| :--- | :--- | :--- | :--- |
+| **Local** | `local` | Base de datos local `.testform/data.json` | Cero configuración / 100% Offline |
+| **GitHub** | `github` | GitHub Issues + GitHub Projects (V2) | PAT (`GITHUB_TOKEN`) o GitHub App |
+| **GitLab** | `gitlab` | GitLab Issues + Iteraciones / Labels | Personal/Project Token (`GITLAB_TOKEN`) |
+
+---
+
+### A. Proveedor Local (`provider: local`)
+El proveedor `local` permite gestionar casos de prueba y ciclos de ejecución de forma **100% aislada y offline**, sin requerir conexión a internet, servidores SaaS ni credenciales.
+
+* **Almacenamiento:** Persiste los tickets simulados en `.testform/data.json`.
+* **Configuración en `main.yml`:**
+  ```yaml
+  provider:
+    local: {}
+  ```
+* **Casos de uso ideales:**
+  - Desarrollo local y pruebas unitarias rápidas.
+  - Entornos corporativos restringidos sin acceso a internet o sin permisos para crear issues en GitHub/GitLab.
+  - Proyectos donde la única fuente de verdad deseada es el repositorio Git y el archivo de estado criptográfico `testform.state`.
+
+---
+
+### B. Proveedor GitHub (`provider: github`)
+El proveedor `github` sincroniza automáticamente casos de prueba, suites de ejecución y defectos con **GitHub Issues** y tableros interactivos de **GitHub Projects (V2)**.
+
+* **Configuración en `main.yml`:**
+  ```yaml
+  provider:
+    github:
+      owner: "mi-organizacion"       # Usuario u organización dueña del repositorio
+      repository: "mi-repositorio"   # Nombre del repositorio en GitHub
+      project_id: "PVT_kwDOA12345"   # ID del proyecto GitHub Projects V2 (Opcional)
+      token_env: "GITHUB_TOKEN"      # Variable de entorno con el token (Default: GITHUB_TOKEN)
+  ```
+
+* **Parámetros configurables:**
+  - `owner` *(Requerido)*: Organización o usuario propietario del repositorio.
+  - `repository` *(Requerido)*: Nombre del repositorio en GitHub.
+  - `project_id` *(Opcional)*: ID del proyecto en GitHub Projects (formato `PVT_...`). Permite sincronizar estados visuales (`passed`, `failed`, `blocked`, etc.) directamente en tus tableros Kanban.
+  - `token_env` *(Opcional)*: Nombre de la variable de entorno que contiene el Personal Access Token (por defecto busca `GITHUB_TOKEN`).
+
+* **Requisitos del Repositorio en GitHub:**
+  - **Etiquetas (Labels):** El repositorio debe contar con las etiquetas `testcase`, `testrun`, `testplan`, `testreport` y `bug`.
+  - **Permisos del Token:** Se requiere un PAT con permisos de lectura/escritura sobre `repo` (Issues) y `project` (Projects V2), o usar `testform login` para autenticar vía GitHub App.
+
+---
+
+### C. Proveedor GitLab (`provider: gitlab`)
+El proveedor `gitlab` conecta Testform con **GitLab Issues**, scoped labels y seguimiento de iteraciones.
+
+* **Configuración en `main.yml`:**
+  ```yaml
+  provider:
+    gitlab:
+      host: "https://gitlab.com"     # URL de GitLab (soporta instancias GitLab Self-Managed)
+      project_id: "12345678"         # ID numérico del proyecto o ruta URL-encoded
+      token_env: "GITLAB_TOKEN"      # Variable de entorno con el token (Default: GITLAB_TOKEN)
+  ```
+
+* **Parámetros configurables:**
+  - `host` *(Opcional, default `https://gitlab.com`)*: URL base de tu servidor GitLab (ideal para instancias corporativas on-premise).
+  - `project_id` *(Requerido)*: ID numérico del proyecto en GitLab (ubicado en la página principal del proyecto).
+  - `token_env` *(Opcional, default `GITLAB_TOKEN`)*: Variable de entorno donde reside tu Personal Access Token o Project Access Token con scope `api`.
+
+---
+
+## 2. Declaración de Providers Requeridos (`required_providers`)
 
 Siguiendo el estándar de Terraform, todo proyecto formal declara sus dependencias en el bloque **`testform.required_providers`** dentro de `main.yml`:
 
@@ -60,7 +132,7 @@ Cuando declaras `required_providers`, la CLI de Testform actúa como una lista b
 
 ---
 
-## 2. Todas las Formas de Descargar y Consumir un Provider
+## 3. Todas las Formas de Descargar y Consumir un Provider
 
 Testform soporta 4 métodos de resolución y descarga:
 
@@ -109,7 +181,7 @@ testform:
 
 ---
 
-## 3. Las 3 Formas de Crear un Provider Propio
+## 4. Las 3 Formas de Crear un Provider Propio
 
 Cualquier provider en Testform es simplemente una clase que implementa la interfaz **`IProvider`**. Tienes 3 alternativas para crearlo, de menor a mayor complejidad:
 
@@ -252,7 +324,7 @@ Ideal para: **Publicar providers en repositorios de artefactos privados (GitLab 
 
 ---
 
-## 4. Generador Automático de Plantillas (`testform providers scaffold`)
+## 5. Generador Automático de Plantillas (`testform providers scaffold`)
 
 Para que no tengas que escribir un provider desde cero ni adivinar los nombres de los métodos o tipos, Testform incluye un generador automático que soporta **ambas modalidades**:
 
@@ -306,7 +378,7 @@ Y ya puedes referenciarlo en cualquier `main.yml` de tu empresa.
 
 ---
 
-## 5. Especificación Completa de la API (`IProvider` Contract Reference)
+## 6. Especificación Completa de la API (`IProvider` Contract Reference)
 
 Testform soporta **dos modelos de implementación** para un provider:
 1. **Modo Issue-Based (Recomendado para QA):** Para plataformas basadas en tickets/incidencias (GitLab, Jira, GitHub, Azure DevOps).

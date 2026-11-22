@@ -15,7 +15,79 @@ Just as in Terraform a provider manages communication with cloud APIs (AWS, Azur
 
 ---
 
-## 1. Declaring Required Providers (`required_providers`)
+## 1. Built-in Official Providers
+
+Testform includes **3 pre-compiled native providers** directly built into the core CLI, ready to use out-of-the-box without installing external binaries:
+
+| Provider | Identifier | Target Platform | Authentication |
+| :--- | :--- | :--- | :--- |
+| **Local** | `local` | Local database `.testform/data.json` | Zero configuration / 100% Offline |
+| **GitHub** | `github` | GitHub Issues + GitHub Projects (V2) | PAT (`GITHUB_TOKEN`) or GitHub App |
+| **GitLab** | `gitlab` | GitLab Issues + Iterations / Labels | Personal/Project Token (`GITLAB_TOKEN`) |
+
+---
+
+### A. Local Provider (`provider: local`)
+The `local` provider enables isolated and **100% offline** test specification management without requiring internet connectivity, SaaS servers, or credentials.
+
+* **Storage:** Persists simulated issues and execution states into `.testform/data.json`.
+* **Configuration in `main.yml`:**
+  ```yaml
+  provider:
+    local: {}
+  ```
+* **Ideal use cases:**
+  - Fast local development and unit testing.
+  - Air-gapped corporate environments without external network access or issue-creation permissions.
+  - Projects where Git and `testform.state` are the sole desired source of truth.
+
+---
+
+### B. GitHub Provider (`provider: github`)
+The `github` provider synchronizes test cases, test runs, plans, and defects directly with **GitHub Issues** and visual boards in **GitHub Projects (V2)**.
+
+* **Configuration in `main.yml`:**
+  ```yaml
+  provider:
+    github:
+      owner: "my-org"                # Repository owner or organization
+      repository: "my-repo"          # GitHub repository name
+      project_id: "PVT_kwDOA12345"   # GitHub Projects V2 node ID (Optional)
+      token_env: "GITHUB_TOKEN"      # Token environment variable (Default: GITHUB_TOKEN)
+  ```
+
+* **Configuration parameters:**
+  - `owner` *(Required)*: Repository owner username or organization name.
+  - `repository` *(Required)*: Name of the target GitHub repository.
+  - `project_id` *(Optional)*: GitHub Projects V2 node ID (`PVT_...`). Syncs visual statuses (`passed`, `failed`, `blocked`, etc.) directly into Kanban boards.
+  - `token_env` *(Optional)*: Environment variable containing the Personal Access Token (defaults to `GITHUB_TOKEN`).
+
+* **GitHub Repository Requirements:**
+  - **Labels:** The repository requires the labels `testcase`, `testrun`, `testplan`, `testreport`, and `bug`.
+  - **Token Scopes:** Requires a PAT with read/write access to `repo` (Issues) and `project` (Projects V2), or run `testform login` to authenticate with a GitHub App.
+
+---
+
+### C. GitLab Provider (`provider: gitlab`)
+The `gitlab` provider connects Testform with **GitLab Issues**, scoped labels, and milestone/iteration tracking.
+
+* **Configuration in `main.yml`:**
+  ```yaml
+  provider:
+    gitlab:
+      host: "https://gitlab.com"     # GitLab instance URL (supports self-managed GitLab)
+      project_id: "12345678"         # Numeric project ID or URL-encoded path
+      token_env: "GITLAB_TOKEN"      # Token environment variable (Default: GITLAB_TOKEN)
+  ```
+
+* **Configuration parameters:**
+  - `host` *(Optional, default `https://gitlab.com`)*: Base URL of your GitLab instance (ideal for on-premise self-managed GitLab).
+  - `project_id` *(Required)*: Numeric project ID in GitLab.
+  - `token_env` *(Optional, default `GITLAB_TOKEN`)*: Environment variable holding your Personal or Project Access Token with `api` scope.
+
+---
+
+## 2. Declaring Required Providers (`required_providers`)
 
 Following the Terraform standard, every formal project declares its provider dependencies inside the **`testform.required_providers`** block in `main.yml`:
 
@@ -60,7 +132,7 @@ When `required_providers` is declared, the Testform CLI enforces strict whitelis
 
 ---
 
-## 2. All Ways to Download and Consume a Provider
+## 3. All Ways to Download and Consume a Provider
 
 Testform supports 4 resolution and download strategies:
 
@@ -109,7 +181,7 @@ testform:
 
 ---
 
-## 3. The 3 Ways to Create Your Own Provider
+## 4. The 3 Ways to Create Your Own Provider
 
 Any provider in Testform is simply a TypeScript/JavaScript class implementing the **`IProvider`** interface. You have 3 options ranging from minimal to enterprise-grade:
 
@@ -251,7 +323,7 @@ Ideal for: **Publishing providers to private registries (GitLab Package Registry
 
 ---
 
-## 4. Automatic Template Generator (`testform providers scaffold`)
+## 5. Automatic Template Generator (`testform providers scaffold`)
 
 To ensure developers never have to write a provider from scratch or guess method signatures, Testform includes an automatic generator supporting **both modalities**:
 
@@ -305,7 +377,7 @@ And reference it immediately across any `main.yml` in your organization.
 
 ---
 
-## 5. Full API Specification (`IProvider` Contract Reference)
+## 6. Full API Specification (`IProvider` Contract Reference)
 
 Testform supports **two implementation models** for a provider:
 1. **Issue-Based Mode (Recommended for QA):** For platforms tracking test cases and runs as tickets/issues (GitLab, Jira, GitHub, Azure DevOps).
@@ -313,7 +385,7 @@ Testform supports **two implementation models** for a provider:
 
 ---
 
-### 5.1. Mode 1: Issue-Based Approach
+### 6.1. Mode 1: Issue-Based Approach
 
 Ideal for 90% of QA integrations. Implements high-level methods to manage test cases and runs as remote tickets:
 
