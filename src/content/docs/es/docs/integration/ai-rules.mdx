@@ -22,15 +22,18 @@ Copia el contenido correspondiente en la raíz de tu repositorio según el asist
     # Testform AI Directives (.cursorrules)
     - Declarative Test-as-Code paradigm (reconciled against testform.state).
     - Scope primitives:
-      * @testcase in *.case.feature: scenarios require @tc-* identity and Given/When/Then steps. No arbitrary tags on Feature: line.
-      * @testrun @tr-* in *.run.feature: execution suites using '* set status = <passed|failed|pending|blocked|skipped|undefined|ambiguous>' and '* set duration = "X.Xs"'. Do NOT use Given/When/Then in testruns.
+      * @testcase in *.case.feature: scenarios require @tc-* identity and Given/When/Then steps. Zero '* set' marks (use standard steps or '* field <name> = <val>' for contract metadata).
+      * @testrun @tr-* in *.run.feature: execution suites with Rule: or direct canonical scenario addresses. Suite execution marks in Background: ('* set duration = "X.Xs"', '* set attach = "..."', '* set trace = "..."'). Suite status is autocalculated (never manual set status in Background). Scenarios strictly declare '* set status = <passed|failed|pending|blocked|skipped|undefined|ambiguous>'.
       * @testplan @tp-* in *.plan.feature: master suites grouped with Rule: blocks. Attachments allowed ONLY in Background.
-      * @bug in *.bug.feature: defect scenarios tagged @bg-* with '* set target = <testcase.id>' and '* set severity = <critical|high|medium|low>'. Attachments allowed ONLY in Scenario.
+      * @bug in *.bug.feature: defect scenarios tagged @bg-* under Rule: <path.case.feature> using '@bg-01 @depends_on(@tc-01)' or '@bg-01 @tc-01'. Background allows optional '* set run = ...'. Scenarios declare '* set status = <open|in_progress|resolved|reopened|discarded|duplicate>', '* set attach = ...', '* set trace = ...', and contract fields via '* field <name> = <val>'.
     - Attachment Governance:
       * Follow scaffold.attach directory in main.yml.
-      * * set attach = "attachments/..." is allowed in Background and Scenario for testcase and testrun.
-      * * set attach in testplan is STRICTLY Background only.
-      * * set attach in bug is STRICTLY Scenario only (forbidden in Background).
+      * * set is strictly FORBIDDEN in testcase specifications.
+      * * set attach in testrun is strictly Background only.
+      * * set attach in testplan is strictly Background only.
+      * * set attach in bug is strictly Scenario only (forbidden in Background).
+    - Contract Governance:
+      * If a field has source: "tag" in main.yml (e.g. priority), it MUST be an @tag. Never declare it as '* field priority = ...' or '* set priority = ...'.
     ```
   </TabItem>
 
@@ -47,14 +50,16 @@ Copia el contenido correspondiente en la raíz de tu repositorio según el asist
     - Query resources: `testform query testcase "priority=high"`
 
     ## Gherkin Specifications
-    - Test Cases (*.case.feature): Feature has @testcase. Each scenario has sequential @tc-01, @tc-02 and Given/When/Then steps.
-    - Test Runs (*.run.feature): Feature has @testrun @tr-01. Scenarios contain '* set status = passed|failed|pending'.
+    - Test Cases (*.case.feature): Feature has @testcase. Each scenario has sequential @tc-01, @tc-02 and Given/When/Then steps. ZERO '* set' steps allowed.
+    - Test Runs (*.run.feature): Feature has @testrun @tr-01. Background has '* set duration', '* set attach', '* set trace' (status is autocalculated). Scenarios contain '* set status = passed|failed|pending'.
     - Test Plans (*.plan.feature): Feature has @testplan @tp-01. Group testruns using Rule: blocks.
-    - Bugs (*.bug.feature): Feature has @bug. Scenarios have @bg-01 with '* set target = <testcase>' and '* set status = open'.
+    - Bugs (*.bug.feature): Feature has @bug. Background has optional '* set run = ...'. Group under Rule: <case.feature> with '@bg-01 @depends_on(@tc-01)' or '@bg-01 @tc-01'. Scenarios declare '* set status = open|in_progress...', '* set attach', '* set trace', and '* field severity = ...'.
 
     ## Attachment Rules
-    - Bugs: Attachments ONLY inside Scenario.
+    - Test Cases: ZERO attachments via 'set attach' (prohibited).
+    - Test Runs: Attachments ONLY inside Background.
     - Test Plans: Attachments ONLY inside Background.
+    - Bugs: Attachments ONLY inside Scenario.
     ```
   </TabItem>
 
@@ -80,43 +85,50 @@ Copia el contenido correspondiente en la raíz de tu repositorio según el asist
 * **Restricción de Tags en Feature**: **Prohibido** colocar tags funcionales libres (como `@smoke`, `@regression`) en la línea `Feature:`. Solo se permite `@testcase` y opcionalmente `@ns(nombre)`. Todos los demás tags van en cada `Scenario:`.
 * **Identidad Secuencial**: Cada escenario debe tener una etiqueta `@tc-*` (`@tc-01`, `@tc-02`).
 * **Estructura BDD Obligatoria**: Cada escenario **debe** incluir al menos un paso `Given`, `When` y `Then`.
+* **Cero `* set`**: **Estrictamente prohibido** cualquier paso `* set` (incluyendo `attach`). Para metadatos de contrato utiliza `* field <nombre> = <valor>`.
 
 ### 2. Corridas de Prueba (`*.run.feature`)
 * **Cabecera**: Debe declarar `@testrun @tr-01` en la línea `Feature:`.
-* **Estados de Ejecución Cucumber**: `passed`, `failed`, `pending`, `blocked`, `skipped`, `undefined`, `ambiguous`.
-* **Directivas**: Usa `* set status = ...` y opcionalmente `* set duration = "1.5s"`.
+* **Soporte de Estructuras**: Admite con `Rule: <path.case.feature>` (`Scenario: @tc-01`) o sin `Rule:` usando dirección canónica (`Scenario: tests/features/login.case.feature.@tc-01`).
+* **Background**: Admite marcas de ejecución de suite (`* set duration = "1m 20s"`, `* set attach = "..."`, `* set trace = "..."`). **Prohibido declarar `set status` en Background** (el estado de la suite se autocalcula automáticamente a partir de sus escenarios).
+* **Escenarios**: Declaran estrictamente `* set status = <passed|failed|pending|blocked|skipped|undefined|ambiguous>`.
 * **Anti-patrón**: **NO** uses pasos `Given`, `When`, `Then` dentro de un `@testrun`. Las corridas son orquestaciones de resultados, no definiciones de comportamiento.
 
 ### 3. Planes Maestros (`*.plan.feature`)
 * **Cabecera**: Debe declarar `@testplan @tp-01` en la línea `Feature:`.
 * **Estructura**: Agrupa las suites y corridas mediante bloques `Rule:`.
+* **Adjuntos**: Únicamente permitidos en `Background:` (`* set attach = ...`). El estado del plan es autocalculado (*rollup*).
 * **Integridad**: Un mismo `@testrun` no debe asignarse a más de un plan maestro.
 
 ### 4. Defectos y Bugs (`*.bug.feature`)
 * **Cabecera**: Debe iniciar con `@bug`.
-* **Escenario**: Cada defecto es un `Scenario:` con etiqueta `@bg-*` (`@bg-01`).
-* **Trazabilidad**: Debe incluir obligatoriamente el enlace al caso o corrida que falló:  
-  `* set target = tests/login.case.feature.@tc-02`
-* **Metadatos**: `* set severity = high` y `* set status = open`.
+* **Background**: Permite opcionalmente `* set run = testruns/...run.feature` para vincular con la corrida ejecutada (opcional en exploratorias).
+* **Trazabilidad Defecto $\rightarrow$ Testcase**:
+  * Bajo `Rule: <path.case.feature>`, vincular con `@bg-01 @depends_on(@tc-01)` o `@bg-01 @tc-01`.
+  * Sin `Rule:`, usar dirección canónica `@bg-01 @depends_on("path.case.feature.@tc-01")` o defecto exploratorio `@bg-02`.
+* **Escenario**: Declara `* set status = open | in_progress | resolved | reopened | discarded | duplicate`, `* set attach = ...`, y `* set trace = ...`. Los campos de gobernanza se declaran con `* field <nombre> = <valor>`.
 
 ---
 
 ## 📎 Matriz de Gobernanza de Adjuntos (`* set attach`)
 
-La directiva `* set attach = "attachments/..."` (o `* set evidence = "..."`) sigue reglas de ubicación estrictas validadas por la política `attach-governance`:
+La directiva `* set attach = "attachments/..."` sigue reglas de ubicación estrictas validadas por la política `attach-governance`:
 
 | Recurso | ¿Permitido en `Background:`? | ¿Permitido en `Scenario:`? | Motivo de la Regla |
 |---|:---:|:---:|---|
-| **`testcase`** | ✅ **SÍ** | ✅ **SÍ** | `Background` para mockups de la historia; `Scenario` para capturas del caso específico. |
-| **`testrun`** | ✅ **SÍ** | ✅ **SÍ** | `Background` para logs del ambiente; `Scenario` para capturas de ejecución. |
-| **`testplan`** | ✅ **SÍ** | ❌ **PROHIBIDO** | Los criterios de release son globales del plan. |
+| **`testcase`** | ❌ **PROHIBIDO** | ❌ **PROHIBIDO** | `* set` está prohibido en testcases; los casos son especificaciones puras de comportamiento BDD. |
+| **`testrun`** | ✅ **SÍ** | ❌ **PROHIBIDO** | `Background` para logs y artefactos del ambiente (`exec.log`). Los escenarios solo declaran status. |
+| **`testplan`** | ✅ **SÍ** | ❌ **PROHIBIDO** | Los criterios de release y documentación son globales del plan maestro. |
 | **`bug`** | ❌ **PROHIBIDO** | ✅ **SÍ** | Las evidencias de un bug deben pertenecer al defecto puntual, nunca a precondiciones globales. |
 
 ---
 
 ## 🚫 Anti-Patrones que la IA Debe Evitar
 
-1. ❌ **No inventar pasos `Given/When/Then` en `@testrun` o `@testplan`**: Esos archivos usan asignación de estados y referencias.
-2. ❌ **No colocar adjuntos en `Background:` de archivos `@bug`**: El validador emitirá un error bloqueante.
-3. ❌ **No omitir `Given/When/Then` en `*.case.feature`**: Toda especificación de caso de prueba requiere la estructura BDD completa.
-4. ❌ **No duplicar números de identidad**: Siempre inspecciona el proyecto para asignar el siguiente número correlativo (`@tc-03` si ya existen `@tc-01` y `@tc-02`).
+1. ❌ **No usar `* set` en `*.case.feature`**: Los casos de prueba no llevan ninguna sentencia `set`. Usa `* field` para gobernanza.
+2. ❌ **No definir como `* field` campos con `source: "tag"` en `main.yml`**: Campos como `priority` configurados con `source: "tag"` deben declararse como etiquetas `@tag` (ej. `@medium`).
+3. ❌ **No declarar `* set status` en `Background:` de un `@testrun`**: El estado de la suite es autocalculado por el motor.
+4. ❌ **No inventar pasos `Given/When/Then` en `@testrun` o `@testplan`**: Esos archivos usan asignación de estados y referencias.
+5. ❌ **No colocar adjuntos en `Background:` de archivos `@bug`**: El validador emitirá un error bloqueante.
+6. ❌ **No omitir `Given/When/Then` en `*.case.feature`**: Toda especificación de caso de prueba requiere la estructura BDD completa.
+7. ❌ **No duplicar números de identidad**: Siempre inspecciona el proyecto para asignar el siguiente número correlativo (`@tc-03` si ya existen `@tc-01` y `@tc-02`).

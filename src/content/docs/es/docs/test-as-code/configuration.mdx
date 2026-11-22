@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Especificación de main.yml"
 ---
 
@@ -207,9 +207,12 @@ resource:
 
 En Testform, los campos personalizados se declaran dentro de `scopes.<scope>.fields` o `scopes.global.fields`. Se configuran utilizando las siguientes propiedades esenciales:
 
-- **`source` (Origen de Extracción):** Especifica de dónde extrae Testform el valor del campo:
-  - `tag`: El valor se extrae de las etiquetas del escenario o feature (ejemplo: `@high` -> campo `priority` con valor `"@high"`).
-  - `step`: El valor se define mediante un paso Gherkin con la directiva `* field <nombre> = <valor>` (ejemplo: `* field module = auth`).
+- **`source` (Origen de Extracción y Reglas de Gobernanza):** Especifica de dónde extrae Testform el valor del campo:
+  - `tag`: El valor se extrae exclusivamente de las etiquetas del escenario o feature (ejemplo: `@high` -> campo `priority` con valor `"@high"`).
+    :::note[Regla de Gobernanza Estricta]
+    Si un campo se declara con `source: "tag"`, está **estrictamente prohibido** declararlo como paso (`* field <nombre> = ...` o `* set <nombre> = ...`). El motor de políticas emitirá el error bloqueante `tag-field-as-step`.
+    :::
+  - `step`: El valor se define mediante un paso Gherkin con la directiva `* field <nombre> = <valor>` (ejemplo: `* field module = auth`, `* field severity = @major`). Los campos de metadatos nunca deben usar `* set`.
 - **`enum` (Valores Permitidos):** Lista cerrada de valores permitidos para el campo (ejemplo: `["@low", "@medium", "@high"]`).
 - **`required` (Obligatoriedad):** Booleano que exige que el escenario declare el campo (o tenga un valor por defecto). Si falta, `testform validate` reporta una infracción.
 - **`default` (Valor Predeterminado):** Valor que se asigna automáticamente cuando el escenario no lo declara explícitamente.

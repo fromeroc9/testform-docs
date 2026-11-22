@@ -47,7 +47,22 @@ The `testrun` resource captures an immutable historical execution of a test set 
 - **Standard Location:** `tests/runs/*.run.feature`
 - **Identity Tag Placement:** Above the `Feature:` with `@tr-*` prefix (e.g. `@tr-regression-build-412`). **1 `.run.feature` file = 1 complete execution run**.
 - **Uniqueness Scope:** Globally unique across the entire repository.
-- **Internal Structure:** Uses `Rule:` blocks targeting `.case.feature` files and `Scenario:` selectors matching included test cases.
+- **Supported Structure Modes (With or Without `Rule:`):**
+  - **With `Rule:`:** Groups cases under the target feature file and declares scenarios with their local tag:
+    ```gherkin
+    Rule: orders.case.feature
+
+      Scenario: @tc-cancel-001
+        * set status = passed
+    ```
+  - **Without `Rule:` (Direct Canonical / Logical Address):** Declares the full canonical address directly in the scenario header:
+    ```gherkin
+    Scenario: tests/features/orders.case.feature.@tc-cancel-001
+      * set status = passed
+    ```
+- **Execution Marks (`Background:` vs `Scenario:`):**
+  - In `Background:`: Declares suite-level execution marks such as `* set duration = "1m 20s"`, `* set attach = "attachments/runs/exec.log"`, or `* set trace = ...`. *Suite status is automatically autocalculated from member scenarios (manually setting status in Background is strictly prohibited).*
+  - In `Scenario:`: Declares only the scenario verdict: `* set status = passed | failed | skipped | blocked | pending`.
 
 ### Example
 
@@ -58,17 +73,19 @@ Feature: Regression Test Run Build 412
   Triggered By: GitHub Actions (#8912)
 
   Background:
+    * set duration = 1m 20s
+    * set attach = "attachments/runs/build-412.log"
     * field description = "Critical purchase flow validation"
 
   Rule: orders.case.feature
 
-  Scenario: @tc-cancel-001
-    * set status = passed
+    Scenario: @tc-cancel-001
+      * set status = passed
 
   Rule: auth.case.feature
 
-  Scenario: @tc-login-001
-    * set status = failed
+    Scenario: @tc-login-001
+      * set status = failed
 ```
 
 ### Rollup Verdict Engine
@@ -161,50 +178,60 @@ Just as a `testrun` evaluates its test cases, a `testplan` calculates its overal
 
 ## 4. The `bug` Resource
 
-The `bug` resource models defect tracking, execution failures, and issue resolutions linked directly to test runs and test cases.
+The `bug` resource models defect tracking, execution failures, and issue resolutions linked directly to test runs or exploratory QA sessions.
 
 - **Standard Location:** `tests/bugs/*.bug.feature` (configurable in `main.yml` via `resources.bug.directory`).
-- **Identity Tag Placement:** Directly above each `Scenario:` with `@bg-*` prefix (e.g. `@bg-1` or `@bg-checkout-500`).
+- **Identity Tag Placement:** Directly above each `Scenario:` with `@bg-*` prefix (e.g. `@bg-01` or `@bg-checkout-500`).
 - **Uniqueness Scope:** Unique within that bug specification file.
-- **Test Run Linkage:** The `Feature:` line points to the relative path of the `testrun` file where the defects were detected (e.g. `Feature: testruns/sprint42.run.feature`).
-- **Internal Structure:** Each `Scenario:` represents an individual defect with declarative traceability statements:
-  - `* set target = <testcase>`: Affected test case (`@tc-*` or canonical address).
-  - `* set status = <status>`: Defect resolution status (`open`, `in_progress`, `resolved`, `reopened`, `discarded`, `duplicate`). Also accepts execution aliases (`failed`, `pending`, `passed`).
+- **Optional Test Run Linkage (`Background:`):**
+  - Can optionally specify `* set run = testruns/sprint42.run.feature` in `Background:` to link defects to the run that produced them. For exploratory or ad-hoc bugs, `Background:` may be omitted.
+- **Defect-to-Testcase Traceability (Two Supported Forms):**
+  - **Form 1 (with `@depends_on`):** `@bg-01 @depends_on(@tc-01)` under `Rule: <path.case.feature>` (quotes are optional).
+  - **Form 2 (side-by-side tags):** `@bg-01 @tc-01` under `Rule: <path.case.feature>`.
+  - **Without `Rule:`:** Supports full logical address `@bg-01 @depends_on("path/to.case.feature.@tc-01")` or exploratory defects `@bg-02` without testcase target.
+- **Defect Lifecycle Marks & Evidence in `Scenario:`:**
+  - `* set status = <status>`: Defect resolution status (`open`, `in_progress`, `resolved`, `reopened`, `discarded`, `duplicate`).
   - `* set trace = <stack>`: Error message or stack trace description.
-  - `* set attach = <file>` *(or `* set evidence = ...`)*: Physical path or JSON array of attachment/evidence files (screenshots, recordings, logs, or reports).
-  - Custom fields (`* set <field> = <value>`): Additional attributes defined in `main.yml` (`resources.bug.fields`).
+  - `* set attach = <file>`: Screenshot, video recording, or defect evidence path.
+  - Contract governance fields: Declared via `* field <name> = <value>` (e.g. `* field severity = @critical`, `* field bug_type = functional`). Fields with `source: "tag"` are declared as `@tag` labels.
 
-### Attachment Governance Rules (`set attach` / `set evidence`)
+### Attachment Governance Rules (`* set attach`)
 
 To ensure semantic consistency across Test-as-Code specifications, the engine enforces strict scope rules:
 
-| Resource | Background Scope | Scenario / Rule Scope | Engine Governance |
-| :--- | :--- | :--- | :--- |
-| **`testcase`** | ✔ Allowed | ✔ Allowed | Shared attachments for the full feature story or specific to individual scenarios. |
-| **`testrun`** | ✔ Allowed | ✔ Allowed | Run-level artifacts or specific scenario execution evidence. |
-| **`testplan`** | ✔ Allowed | ✖ Prohibited | Only valid in `Background` (plans coordinate runs and do not declare explicit scenarios). |
-| **`bug`** | ✖ **Strictly Prohibited** | ✔ Allowed | Defect attachments belong exclusively to the specific failure scenario. |
+| Resource | Background Scope | Scenario Scope | Engine Governance |
+| :--- | :---: | :---: | :--- |
+| **`testcase`** | ✖ **Prohibited** | ✖ **Prohibited** | `* set` is not permitted in testcases. Testcases are pure BDD behavioral specifications. |
+| **`testrun`** | ✔ **Allowed** | ✖ **Prohibited** | Run-level artifacts (`exec.log`). Scenarios only declare `* set status`. |
+| **`testplan`** | ✔ **Allowed** | ✖ **Prohibited** | Plan-wide acceptance documentation or certification criteria. |
+| **`bug`** | ✖ **Prohibited** | ✔ **Allowed** | Defect evidence belongs exclusively to the specific failure scenario. |
 
 ### Example
 
 ```gherkin
-@bug
-Feature: testruns/sprint42_regression.run.feature
+@bug @medium
+Feature: Defects found in Checkout
 
-  @bg-1
-  Scenario: Error 500 when processing international credit card payment
-    * set target = tests/features/checkout.case.feature.@tc-pay-01
-    * set status = open
-    * set trace = PaymentGatewayException: Timeout waiting for gateway ACK in 30000ms
-    * set evidence = evidence/checkout_timeout.png
-    * set severity = critical
-    * set priority = high
+  Background:
+    * set run = testruns/sprint42_regression.run.feature
+    * field project = CheckoutApp
 
-  @bg-2
-  Scenario: Confirm order button stays disabled after retry
-    * set target = tests/features/checkout.case.feature.@tc-pay-02
-    * set status = resolved
-    * set evidence = evidence/retry_fixed.png
+  Rule: tests/features/checkout.case.feature
+
+    @bg-01 @depends_on(@tc-pay-01)
+    Scenario: Error 500 when processing international credit card payment
+      * set status = open
+      * set trace = PaymentGatewayException: Timeout waiting for gateway ACK in 30000ms
+      * set attach = "attachments/bugs/checkout_timeout.png"
+      * field severity = @critical
+      * field bug_type = functional
+
+    @bg-02 @tc-pay-02
+    Scenario: Confirm order button stays disabled after retry
+      * set status = resolved
+      * set attach = "attachments/bugs/retry_fixed.png"
+      * field severity = @minor
+      * field bug_type = functional
 ```
 
 ### Defect Lifecycle Statuses

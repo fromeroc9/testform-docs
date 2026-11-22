@@ -112,7 +112,7 @@ AI agents can read live project context through standard URI endpoints:
 The server includes pre-engineered prompt workflows guiding AI models toward Test-as-Code best practices:
 
 1. **`generate-test-cases`**: Converts user stories or acceptance criteria into declarative `.case.feature` files with positive, negative, and edge scenarios.
-2. **`diagnose-test-failure`**: Analyzes execution traces from a failed testrun and generates linked `.bug.feature` specifications with explicit `* set target = ...` bindings.
+2. **`diagnose-test-failure`**: Analyzes execution traces from a failed testrun and generates linked `.bug.feature` specifications under `Rule: <case.feature>` with `@depends_on(@tc-01)` or `@tc-01` bindings.
 3. **`create-regression-plan`**: Designs rule-based master `.plan.feature` suites for release verification.
 
 ---

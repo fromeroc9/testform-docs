@@ -47,7 +47,22 @@ El recurso `testrun` captura la ejecucion historica e inmutable de un conjunto d
 - **Ubicacion Estandar:** `tests/runs/*.run.feature`
 - **Ubicacion de Identidad:** Sobre el `Feature:` con prefijo `@tr-*` (ejemplo: `@tr-regression-build-412`). **1 archivo `.run.feature` = 1 ejecucion completa**.
 - **Nivel de Unicidad:** Globalmente unico en todo el repositorio.
-- **Estructura Interna:** Utiliza bloques `Rule:` para apuntar a archivos `.case.feature` y bloques `Scenario:` para seleccionar los tags de los casos incluidos.
+- **Soporte de Estructuras (Con o Sin `Rule:`):**
+  - **Con `Rule:`:** Agrupa casos bajo el archivo feature objetivo y declara escenarios con su tag local:
+    ```gherkin
+    Rule: orders.case.feature
+
+      Scenario: @tc-cancel-001
+        * set status = passed
+    ```
+  - **Sin `Rule:` (Dirección Canónica / Lógica Directa):** Declara la dirección canónica completa directamente en el encabezado del escenario:
+    ```gherkin
+    Scenario: tests/features/orders.case.feature.@tc-cancel-001
+      * set status = passed
+    ```
+- **Marcas de Ejecución (`Background:` vs `Scenario:`):**
+  - En `Background:`: Se declaran marcas de suite como `* set duration = "1m 20s"`, `* set attach = "attachments/runs/exec.log"` o `* set trace = ...`. *El estado general de la suite se autocalcula automáticamente a partir de los escenarios (está prohibido declararlo manualmente con `set status`).*
+  - En `Scenario:`: Únicamente se declara el veredicto del caso: `* set status = passed | failed | skipped | blocked | pending`.
 
 ### Ejemplo
 
@@ -58,17 +73,19 @@ Feature: Registro de Ejecucion de Regresion Build 412
   Ejecutor: GitHub Actions (#8912)
 
   Background:
+    * set duration = 1m 20s
+    * set attach = "attachments/runs/build-412.log"
     * field descripcion = "Validacion de flujos criticos de compras"
 
   Rule: orders.case.feature
 
-  Scenario: @tc-cancel-001
-    * set status = passed
+    Scenario: @tc-cancel-001
+      * set status = passed
 
   Rule: auth.case.feature
 
-  Scenario: @tc-login-001
-    * set status = failed
+    Scenario: @tc-login-001
+      * set status = failed
 ```
 
 ### Motor de Veredicto Acumulado (*Rollup Verdict*)
@@ -161,50 +178,60 @@ Al igual que el `testrun` evalúa sus casos, el `testplan` calcula su estado acu
 
 ## 4. El Recurso `bug`
 
-El recurso `bug` modela la trazabilidad inmutable y el ciclo de vida de los defectos encontrados durante la ejecución de pruebas.
+El recurso `bug` modela la trazabilidad inmutable y el ciclo de vida de los defectos encontrados durante la ejecución de pruebas o sesiones exploratorias.
 
-- **Ubicacion Estandar:** `tests/bugs/*.bug.feature` (configurable en `main.yml` bajo `resources.bug.directory`).
-- **Ubicacion de Identidad:** Sobre cada `Scenario:` con prefijo `@bg-*` (ejemplo: `@bg-1` o `@bg-checkout-500`).
-- **Nivel de Unicidad:** Unico dentro del archivo contenedor de bugs.
-- **Relacion con Test Runs:** La linea `Feature:` del archivo apunta a la ruta relativa del `testrun` en el que se originaron o detectaron los defectos (ejemplo: `Feature: testruns/sprint42.run.feature`).
-- **Estructura Interna:** Cada `Scenario:` representa un defecto individual con sus sentencias declarativas de trazabilidad:
-  - `* set target = <testcase>`: Caso de prueba afectado (`@tc-*` o direccion canonical).
-  - `* set status = <estado>`: Estado de resolucion del defecto (`open`, `in_progress`, `resolved`, `reopened`, `discarded`, `duplicate`). Tambien acepta los equivalentes de ejecucion (`failed`, `pending`, `passed`).
+- **Ubicación Estándar:** `tests/bugs/*.bug.feature` (configurable en `main.yml` bajo `resources.bug.directory`).
+- **Ubicación de Identidad:** Sobre cada `Scenario:` con prefijo `@bg-*` (ejemplo: `@bg-01` o `@bg-checkout-500`).
+- **Nivel de Unicidad:** Único dentro del archivo contenedor de bugs.
+- **Vínculo Opcional con Test Runs (`Background:`):**
+  - Puede incluir opcionalmente `* set run = testruns/sprint42.run.feature` en el `Background:` para vincular los defectos con la corrida que los originó. En pruebas exploratorias o ad-hoc, el `Background` puede omitirse.
+- **Trazabilidad Defecto $\rightarrow$ Caso de Prueba (Dos Formas Soportadas):**
+  - **Forma 1 (con `@depends_on`):** `@bg-01 @depends_on(@tc-01)` bajo `Rule: <path.case.feature>` (las comillas son opcionales).
+  - **Forma 2 (tags lado a lado):** `@bg-01 @tc-01` bajo `Rule: <path.case.feature>`.
+  - **Sin `Rule:`:** Admite dirección lógica completa `@bg-01 @depends_on("path/to.case.feature.@tc-01")` o defectos puramente exploratorios `@bg-02` sin target asignado.
+- **Marcas de Ciclo de Vida y Evidencias en `Scenario:`:**
+  - `* set status = <estado>`: Estado del defecto (`open`, `in_progress`, `resolved`, `reopened`, `discarded`, `duplicate`).
   - `* set trace = <stack>`: Mensaje o traza del error detectado.
-  - `* set attach = <archivo>` *(o `* set evidence = ...`)*: Ruta física o lista JSON de adjuntos/evidencias (captura de pantalla, grabaciones de video, logs o reportes).
-  - Campos personalizados (`* set <campo> = <valor>`): Metadatos adicionales definidos en `main.yml` (`resources.bug.fields`).
+  - `* set attach = <archivo>`: Ruta del adjunto/captura de pantalla o evidencia del defecto.
+  - Campos de gobernanza de contrato: Se declaran mediante `* field <nombre> = <valor>` (ejemplo: `* field severity = @major`, `* field bug_type = functional`). Si un campo tiene `source: "tag"`, se declara como etiqueta `@tag`.
 
-### Reglas de Gobernanza de Adjuntos (`set attach` / `set evidence`)
+### Reglas de Gobernanza de Adjuntos (`* set attach`)
 
 Para garantizar coherencia semántica en la arquitectura Test-as-Code, el motor impone reglas estrictas de ámbito:
 
-| Recurso | Nivel Background | Nivel Scenario / Rule | Comportamiento del Motor |
-| :--- | :--- | :--- | :--- |
-| **`testcase`** | ✔ Permitido | ✔ Permitido | Permite adjuntos compartidos para toda la historia/feature o específicos por caso. |
-| **`testrun`** | ✔ Permitido | ✔ Permitido | Permite artefactos generales de la corrida o evidencias específicas por escenario ejecutado. |
-| **`testplan`** | ✔ Permitido | ✖ Prohibido | Solo aplicable en `Background` (los planes no contienen escenarios individuales). |
-| **`bug`** | ✖ **Estrictamente prohibido** | ✔ Permitido | Los adjuntos pertenecen exclusivamente a la evidencia particular del defecto en el `Scenario`. |
+| Recurso | Nivel Background | Nivel Scenario | Comportamiento del Motor |
+| :--- | :---: | :---: | :--- |
+| **`testcase`** | ✖ **Prohibido** | ✖ **Prohibido** | `* set` no está permitido en casos de prueba. Los casos son especificaciones BDD puras de comportamiento. |
+| **`testrun`** | ✔ **Permitido** | ✖ **Prohibido** | Artefactos generales de la corrida (`exec.log`). Los escenarios solo declaran `* set status`. |
+| **`testplan`** | ✔ **Permitido** | ✖ **Prohibido** | Documentación o matrices globales del plan de certificación. |
+| **`bug`** | ✖ **Prohibido** | ✔ **Permitido** | Las evidencias pertenecen exclusivamente al escenario del defecto puntual. |
 
 ### Ejemplo
 
 ```gherkin
-@bug
-Feature: testruns/sprint42_regression.run.feature
+@bug @medium
+Feature: Defectos encontrados en Checkout
 
-  @bg-1
-  Scenario: Error 500 al procesar pago con tarjeta internacional
-    * set target = tests/features/checkout.case.feature.@tc-pay-01
-    * set status = open
-    * set trace = PaymentGatewayException: Timeout waiting for gateway ACK in 30000ms
-    * set evidence = evidence/checkout_timeout.png
-    * set severity = critical
-    * set priority = high
+  Background:
+    * set run = testruns/sprint42_regression.run.feature
+    * field project = CheckoutApp
 
-  @bg-2
-  Scenario: Boton de confirmar pedido queda deshabilitado tras reintento
-    * set target = tests/features/checkout.case.feature.@tc-pay-02
-    * set status = resolved
-    * set evidence = evidence/retry_fixed.png
+  Rule: tests/features/checkout.case.feature
+
+    @bg-01 @depends_on(@tc-pay-01)
+    Scenario: Error 500 al procesar pago con tarjeta internacional
+      * set status = open
+      * set trace = PaymentGatewayException: Timeout waiting for gateway ACK in 30000ms
+      * set attach = "attachments/bugs/checkout_timeout.png"
+      * field severity = @critical
+      * field bug_type = functional
+
+    @bg-02 @tc-pay-02
+    Scenario: Boton de confirmar pedido queda deshabilitado tras reintento
+      * set status = resolved
+      * set attach = "attachments/bugs/retry_fixed.png"
+      * field severity = @minor
+      * field bug_type = functional
 ```
 
 ### Ciclo de Vida de los Defectos

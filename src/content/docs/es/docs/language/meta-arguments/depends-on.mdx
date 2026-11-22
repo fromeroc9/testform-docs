@@ -21,6 +21,34 @@ Scenario: Finalización exitosa de orden de compra
 
 También es válido declarar `@depends_on("auth/login.feature.@login_success", "inventory/cart.feature.@add_item")` o tags `@depends_on(...)` repetidos.
 
+### Sintaxis sin Comillas y Ámbito por Regla
+
+Las referencias directas admiten notación sin comillas obligatorias tanto para IDs locales como etiquetas:
+
+```gherkin
+@depends_on(@tc-01)
+@depends_on(tc-01)
+@depends_on("auth/login.case.feature.@tc-01")
+```
+
+---
+
+## Trazabilidad Defecto $\rightarrow$ Testcase en `@bug`
+
+En especificaciones de defectos (`*.bug.feature`), `@depends_on` se utiliza para enlazar automáticamente el bug con el caso de prueba fallido bajo un bloque `Rule:`:
+
+```gherkin
+Rule: tests/features/checkout.case.feature
+
+  @bg-01 @depends_on(@tc-01)
+  Scenario: Error 500 al procesar pago con tarjeta internacional
+    * set status = open
+    * set attach = "attachments/bugs/error.png"
+    * field severity = @critical
+```
+
+El motor resuelve automáticamente el enlace hacia el escenario `@tc-01` definido dentro del archivo `Rule:`, habilitando navegación **Go-to-Definition (F12)** y previsualizaciones **Hover** directas en VS Code. También se admite la forma abreviada `@bg-01 @tc-01`.
+
 ---
 
 ## Orden de Ejecución Topológico (DAG)

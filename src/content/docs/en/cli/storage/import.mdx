@@ -62,11 +62,11 @@ testform import junit.xml -target=tests/sprint_12.run.feature
 
 Testform matches each scenario by its `@tc-*` target tag and updates or injects `* set` statements:
 ```gherkin
-@tr-01
+Background:
+  * set duration = 1.14s
+
 Scenario: tests/auth/login.case.feature.@tc-01
   * set status = passed
-  * set duration = 1.14s
-  * set target = tests/auth/login.case.feature.@tc-01
 ```
 
 ---

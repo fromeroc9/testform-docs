@@ -22,6 +22,34 @@ Scenario: User completes checkout successfully
 
 You can also write `@depends_on("target1", "target2")` or use multiple separate `@depends_on(...)` tags.
 
+### Unquoted Syntax & Rule-Scoped Targeting
+
+Direct references support unquoted syntax for both local tags and identifiers:
+
+```gherkin
+@depends_on(@tc-01)
+@depends_on(tc-01)
+@depends_on("auth/login.case.feature.@tc-01")
+```
+
+---
+
+## Defect $\rightarrow$ Testcase Traceability in `@bug`
+
+In defect specifications (`*.bug.feature`), `@depends_on` links the bug scenario directly to its target test case under an enclosing `Rule:`:
+
+```gherkin
+Rule: tests/features/checkout.case.feature
+
+  @bg-01 @depends_on(@tc-01)
+  Scenario: Error 500 when processing international credit card payment
+    * set status = open
+    * set attach = "attachments/bugs/error.png"
+    * field severity = @critical
+```
+
+The engine automatically resolves the reference against the `@tc-01` scenario inside the `Rule:` file, enabling instant **Go-to-Definition (F12)** and **Hover** previews in VS Code. The shorthand side-by-side syntax `@bg-01 @tc-01` is also fully supported.
+
 ---
 
 ## Topological DAG Ordering

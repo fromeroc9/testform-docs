@@ -207,9 +207,12 @@ resource:
 
 In Testform, custom fields are declared within `scopes.<scope>.fields` or `scopes.global.fields`. They are configured using the following core properties:
 
-- **`source` (Extraction Origin):** Instructs Testform where to read the field value from:
-  - `tag`: Extracted from scenario or feature tags (e.g., `@high` -> field `priority` gets `"@high"`).
-  - `step`: Defined via a Gherkin step using the `* field <name> = <value>` directive (e.g., `* field module = auth`).
+- **`source` (Extraction Origin & Governance Rules):** Instructs Testform where to read the field value from:
+  - `tag`: Extracted exclusively from scenario or feature tags (e.g., `@high` -> field `priority` gets `"@high"`).
+    :::note[Strict Governance Rule]
+    If a field is declared with `source: "tag"`, it is **strictly forbidden** to declare it as a step (`* field <name> = ...` or `* set <name> = ...`). The policy engine will raise a blocking `tag-field-as-step` error.
+    :::
+  - `step`: Defined via a Gherkin step using the `* field <name> = <value>` directive (e.g., `* field module = auth`, `* field severity = @major`). Metadata fields must never use `* set`.
 - **`enum` (Allowed Values):** Closed list of valid values for the field (e.g., `["@low", "@medium", "@high"]`).
 - **`required` (Mandatory):** Boolean flag requiring the scenario to provide a value (or have a default). If missing, `testform validate` raises a policy violation.
 - **`default` (Default Value):** Value automatically assigned when not explicitly provided in the scenario.

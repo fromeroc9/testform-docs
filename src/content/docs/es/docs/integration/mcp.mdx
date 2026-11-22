@@ -112,7 +112,7 @@ Los agentes pueden leer el contexto del proyecto a través de URIs estándar:
 El servidor incluye prompts preconfigurados que guían al modelo de IA hacia las mejores prácticas de Test-as-Code:
 
 1. **`generate-test-cases`**: Transforma historias de usuario o criterios de aceptación en archivos `.case.feature` con estructura declarativa, pasos `Given/When/Then` y etiquetas secuenciales.
-2. **`diagnose-test-failure`**: Analiza trazas de fallo de un testrun y genera automáticamente el archivo `.bug.feature` con enlace explícito `* set target = ...`.
+2. **`diagnose-test-failure`**: Analiza trazas de fallo de un testrun y genera automáticamente el archivo `.bug.feature` con enlace explícito al caso de prueba (`Rule: <case.feature>` con `@depends_on(@tc-01)` o `@tc-01`).
 3. **`create-regression-plan`**: Diseña un plan maestro `.plan.feature` estructurado por reglas para un sprint o versión de release.
 
 ---

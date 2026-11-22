@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.3] - 2026-11-22
+
+### Added
+
+- **Strict Separation of `* set` vs `* field` vs `@tag` (`docs/test-as-code/resources.mdx`, `docs/integration/ai-rules.mdx`):**
+  - Updated Declarative Resources guide with the strict mark vs field vs tag governance model.
+  - Documented prohibition of `* set` in `testcase` specifications.
+  - Documented `testrun` execution suites with `Rule:` (`Scenario: @tc-01`) and direct canonical addresses without `Rule:` (`Scenario: testcase/path.case.feature.@tc-01`), suite-level marks in `Background:` (`duration`, `attach`, `trace`), and autocalculated suite status.
+  - Documented `bug` specifications with `Background: * set run = ...` (optional), grouped under `Rule: <path.case.feature>`, with dual defect traceability forms (`@bg-01 @depends_on(@tc-01)` or `@bg-01 @tc-01`), and scenario lifecycle marks.
+  - Updated Attachment Governance matrix across all 4 primitives.
+- **Contract Field Source Governance (`docs/test-as-code/configuration.mdx`):**
+  - Documented distinction between `source: "tag"` (strictly declared as `@tag`, prohibited as step) and `source: "step"` (declared via `* field <name> = <val>`).
+- **Defect Traceability & Unquoted `@depends_on` (`docs/language/meta-arguments/depends-on.mdx`, `docs/guides/depends-on.mdx`):**
+  - Documented unquoted syntax `@depends_on(@tc-01)` and cross-file rule-scoped testcase resolution for defects.
+
+---
+
 ## [1.3.2] - 2026-11-20
 
 ### Added

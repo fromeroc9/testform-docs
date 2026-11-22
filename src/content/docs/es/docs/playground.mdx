@@ -22,12 +22,12 @@ Selecciona la plantilla **Casos de Prueba**. Cada escenario actúa como un recur
 ### 2. Registro de Resultados con `* set`
 Selecciona la plantilla **Ejecución de Prueba**. Observa cómo los resultados de pruebas, duraciones, evidencias y trazas de error se registran usando la asignación declarativa:
 ```gherkin
-@tr-01
+Background:
+  * set duration = 1.25s
+  * set attach = "attachments/runs/todo.log"
+
 Scenario: tests/todo.case.feature.@tc-01
   * set status = passed
-  * set target = tests/todo.case.feature.@tc-01
-  * set duration = 1.25s
-  * set evidence = "evidence/todo-created.png"
 ```
 
 ### 3. Detección de Drift
