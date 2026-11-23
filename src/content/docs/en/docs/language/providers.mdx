@@ -27,19 +27,22 @@ Testform includes **3 pre-compiled native providers** directly built into the co
 
 ---
 
-### A. Local Provider (`provider: local`)
-The `local` provider enables isolated and **100% offline** test specification management without requiring internet connectivity, SaaS servers, or credentials.
+### A. Git-Native Local Provider (`provider: local`)
+The `local` provider is a **Git-Native provider** that enables sovereign and **100% offline** test specification management, persisting the test database directly inside your Git repository without requiring SaaS servers or credentials.
 
-* **Storage:** Persists simulated issues and execution states into `.testform/data.json`.
+* **Storage:** Persists records in `.testform/data.json`, fully versionable via Git Pull Requests.
 * **Configuration in `main.yml`:**
   ```yaml
   provider:
-    local: {}
+    local:
+      schema: gitlab   # Optional: adopts the data schema of 'gitlab', 'github', or 'native' (default)
   ```
+* **Interchangeable Schemas (`schema`):**
+  Work in Git-Native mode using the schema and formatting conventions of any provider (`schema: gitlab` for scoped labels and GitLab markdown, or `schema: github`), allowing you to prepare and validate suites locally before connecting them to remote cloud providers.
 * **Ideal use cases:**
-  - Fast local development and unit testing.
+  - Teams managing Testing-as-Code workflows purely via Git Pull Requests.
   - Air-gapped corporate environments without external network access or issue-creation permissions.
-  - Projects where Git and `testform.state` are the sole desired source of truth.
+  - Offline development with zero network latency and no external API rate limits.
 
 ---
 

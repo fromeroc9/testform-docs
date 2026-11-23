@@ -27,19 +27,22 @@ Testform incluye **3 proveedores nativos precompilados** en el núcleo de la CLI
 
 ---
 
-### A. Proveedor Local (`provider: local`)
-El proveedor `local` permite gestionar casos de prueba y ciclos de ejecución de forma **100% aislada y offline**, sin requerir conexión a internet, servidores SaaS ni credenciales.
+### A. Proveedor Local Git-Native (`provider: local`)
+El proveedor `local` es un **proveedor Git-Native** que permite gestionar casos de prueba y ciclos de ejecución de forma **100% soberana, aislada y offline**, persistiendo la base de datos de pruebas directamente en tu repositorio Git sin requerir servicios SaaS ni credenciales de red.
 
-* **Almacenamiento:** Persiste los tickets simulados en `.testform/data.json`.
+* **Almacenamiento:** Persiste los tickets en `.testform/data.json` versionable en Git vía Pull Requests.
 * **Configuración en `main.yml`:**
   ```yaml
   provider:
-    local: {}
+    local:
+      schema: gitlab   # Opcional: adopta el esquema de datos de 'gitlab', 'github' o 'native' (por defecto)
   ```
+* **Esquemas intercambiables (`schema`):**
+  Puedes trabajar en modo Git-Native utilizando el esquema de formato y etiquetas de cualquier proveedor (`schema: gitlab` para scoped labels y formato GitLab, o `schema: github`), permitiendo validar y preparar pruebas localmente antes de conectarlas a servidores remotos.
 * **Casos de uso ideales:**
-  - Desarrollo local y pruebas unitarias rápidas.
-  - Entornos corporativos restringidos sin acceso a internet o sin permisos para crear issues en GitHub/GitLab.
-  - Proyectos donde la única fuente de verdad deseada es el repositorio Git y el archivo de estado criptográfico `testform.state`.
+  - Equipos que gestionan su Testing-as-Code exclusivamente mediante Pull Requests en Git.
+  - Entornos corporativos o redes aisladas (air-gapped) sin permisos para crear issues en GitHub/GitLab.
+  - Desarrollo offline y pruebas locales instantáneas sin latencia de red ni límites de API.
 
 ---
 
