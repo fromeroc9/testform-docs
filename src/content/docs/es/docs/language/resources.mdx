@@ -14,6 +14,27 @@ En Testform, los **Recursos** son el bloque de construcción fundamental del tes
 
 ---
 
+## Contrato de Recursos: `attributes` vs `state`
+
+Testform desacopla limpiamente el contrato de cada recurso en dos fases complementarias, garantizando un motor 100% agnóstico (sea un issue de GitHub/GitLab, un contenedor Docker o una máquina virtual):
+
+1. **`attributes` (Estado Deseado Declarativo):**
+   Representa la intención declarativa que se envía a las APIs del proveedor remoto durante `apply`:
+   - Campos base: `title`, `body`, `labels`, `assignees`, `milestone`, `state`.
+   - **`metadata`**: Diccionario canónico de campos personalizados y metadatos (`priority`, `severity`, `component`, etc.). El proveedor traduce automáticamente estos campos a sus entidades nativas (ej. GitHub Projects V2 fields).
+
+2. **`state` (Datos de Ejecución y Operación en Runtime):**
+   Datos de ejecución interna calculados dinámicamente:
+   - `status`: Veredicto calculado (`passed`, `failed`, `pending`, etc.).
+   - `duration`: Tiempo de ejecución medido.
+   - `trace`: Traza de error de ejecuciones fallidas.
+   - `attach`: Rutas de evidencias y capturas adjuntas.
+   - `testcases` / `testruns`: Mapas de estado de casos y corridas vinculadas.
+
+No existe duplicidad entre `custom_fields` y `metadata`; `metadata` es el estándar unificado dentro de `attributes`.
+
+---
+
 ## Tipos Canónicos de Recursos
 
 Testform define internamente plantillas declarativas para los recursos de gestión de calidad:

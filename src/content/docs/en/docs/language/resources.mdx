@@ -14,6 +14,27 @@ In Testform, **Resources** are the primary building block of your test suites. W
 
 ---
 
+## Resource Contract: `attributes` vs `state`
+
+Testform cleanly decouples each resource contract into two complementary phases, guaranteeing a 100% agnostic engine (whether managing a GitHub/GitLab issue, Docker container, or cloud VM):
+
+1. **`attributes` (Declarative Desired State):**
+   Represents the declarative intent sent to the provider APIs during `apply`:
+   - Base fields: `title`, `body`, `labels`, `assignees`, `milestone`, `state`.
+   - **`metadata`**: Canonical dictionary of custom fields and metadata (`priority`, `severity`, `component`, etc.). The provider automatically maps these to native entities (such as GitHub Projects V2 custom fields).
+
+2. **`state` (Runtime Execution & Operational Data):**
+   Dynamically computed execution data:
+   - `status`: Rollup verdict (`passed`, `failed`, `pending`, etc.).
+   - `duration`: Measured execution duration.
+   - `trace`: Stack trace and error output for failed executions.
+   - `attach`: Relative paths to screenshots and attachments.
+   - `testcases` / `testruns`: Status maps of linked cases and runs.
+
+There is zero duplication between `custom_fields` and `metadata`; `metadata` is the unified standard under `attributes`.
+
+---
+
 ## Canonical Resource Types
 
 Testform includes built-in declarative templates for quality management entities:
