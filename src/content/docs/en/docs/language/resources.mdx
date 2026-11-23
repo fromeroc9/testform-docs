@@ -16,22 +16,19 @@ In Testform, **Resources** are the primary building block of your test suites. W
 
 ## Resource Contract: `attributes` vs `state`
 
-Testform cleanly decouples each resource contract into two complementary phases, guaranteeing a 100% agnostic engine (whether managing a GitHub/GitLab issue, Docker container, or cloud VM):
+Testform decouples each resource contract into two complementary phases, guaranteeing a 100% agnostic and extensible engine (whether managing a GitHub/GitLab issue, Docker container, cloud VM, or custom entity):
 
 1. **`attributes` (Declarative Desired State):**
-   Represents the declarative intent sent to the provider APIs during `apply`:
-   - Base fields: `title`, `body`, `labels`, `assignees`, `milestone`, `state`.
-   - **`metadata`**: Canonical dictionary of custom fields and metadata (`priority`, `severity`, `component`, etc.). The provider automatically maps these to native entities (such as GitHub Projects V2 custom fields).
+   Represents the declarative intent defined by the user that is sent to the remote provider APIs during `apply`:
+   - In canonical testing resources: `title`, `body`, `labels`, `assignees`, `milestone`, `state`, and **`metadata`** (unified dictionary of custom fields like `priority`, `severity`, `component`, etc.).
+   - In custom resources: any configuration attribute required by the target API (e.g. `image`, `ports`, `instance_type`, etc.).
 
-2. **`state` (Runtime Execution & Operational Data):**
-   Dynamically computed execution data:
-   - `status`: Rollup verdict (`passed`, `failed`, `pending`, etc.).
-   - `duration`: Measured execution duration.
-   - `trace`: Stack trace and error output for failed executions.
-   - `attach`: Relative paths to screenshots and attachments.
-   - `testcases` / `testruns`: Status maps of linked cases and runs.
+2. **`state` (Runtime Execution & Local Operational Data):**
+   **The author of the resource defines what data is computed and saved in the local ledger (`testform.state`)**. Unlike `attributes` (which travels to the remote API), `state` stores observed runtime information, metrics, or execution results monitored locally:
+   - **In custom resources:** The user freely defines what to track in the template `registerResource({ state: { ... } })` (e.g. `container_id`, `assigned_ip`, `startup_time`).
+   - **In canonical testing resources (`testcase`, `testrun`, `bug`):** Testform provides default extractor functions that capture execution data produced by test runners or by scenario `* set` instructions (`status`, `duration`, `trace`, `attach`, maps of `testcases` / `testruns`).
 
-There is zero duplication between `custom_fields` and `metadata`; `metadata` is the unified standard under `attributes`.
+There is zero duplication between `custom_fields` and `metadata`; `metadata` is the unified standard under `attributes` for custom declarative fields, while `state` stores the operational and execution data defined in the template.
 
 ---
 
