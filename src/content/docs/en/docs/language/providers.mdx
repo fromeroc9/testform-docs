@@ -66,6 +66,28 @@ The `github` provider synchronizes test cases, test runs, plans, and defects dir
   - **Labels:** The repository requires the labels `testcase`, `testrun`, `testplan`, `testreport`, and `bug`.
   - **Token Scopes:** Requires a PAT with read/write access to `repo` (Issues) and `project` (Projects V2), or run `testform login` to authenticate with a GitHub App.
 
+* **GitHub Projects (V2) `Status` Field Configuration:**
+  When syncing resources with GitHub Projects via `project_id`, the **Single Select** column named **`Status`** must be configured with all status options across the three test lifecycle scopes (`testcase`, `testrun`/`testplan`, and `bug`):
+
+  | Option in GitHub Projects | Scope | Description | Suggested Color |
+  | :--- | :--- | :--- | :--- |
+  | **`Done`** | `testcase` | Test case approved, specified, and ready. | Purple |
+  | **`Passed`** | `testrun` / `testplan` | All scenarios in the test run or plan executed successfully. | Green |
+  | **`Failed`** | `testrun` / `testplan` | One or more scenarios failed assertions or expectations. | Red |
+  | **`Blocked`** | `testrun` / `testplan` | Execution blocked by an environment issue or dependency. | Yellow / Gold |
+  | **`Pending`** | `testrun` / `testplan` | Execution planned or waiting for automated execution. | Blue |
+  | **`Skipped`** | `testrun` / `testplan` | Scenario omitted due to tags, filters, or earlier failure. | Gray |
+  | **`Ambiguous`** | `testrun` / `testplan` | Steps matched multiple conflicting step definitions (glue code). | Orange |
+  | **`Open`** | `bug` | Newly filed defect pending triage or review. | Blue |
+  | **`In Progress`** | `bug` | Defect currently under investigation or remediation. | Purple |
+  | **`Resolved`** | `bug` | Defect patched and ready for verification / retest. | Green |
+  | **`Closed`** | `bug` | Defect verified, closed, or marked as completed. | Pink / Red |
+
+  :::tip
+  **Semantic Tolerance & Automatic Fallback**  
+  Testform incorporates semantic tolerance: if an advanced status (such as `Ambiguous` or `Blocked`) is not yet present on your board, Testform falls back to `Pending` or `Failed` without failing `testform apply`. However, for comprehensive Kanban visibility, configuring all 11 options is strongly recommended.
+  :::
+
 ---
 
 ### C. GitLab Provider (`provider: gitlab`)

@@ -269,6 +269,12 @@ provider:
 
 El token puede suministrarse de forma segura mediante la variable de entorno `GITHUB_TOKEN` o la variable personalizada indicada en `token_env`.
 
+#### Opciones de Estado en GitHub Projects (`Status`)
+Para tableros Kanban en GitHub Projects V2 sincronizados con Testform, la columna Single Select **`Status`** debe incluir los siguientes 11 valores para cubrir todas las fases de testing:
+- **Casos de prueba (`testcase`):** `Done`
+- **Ciclos de prueba (`testrun` / `testplan`):** `Passed`, `Failed`, `Blocked`, `Pending`, `Skipped`, `Ambiguous`
+- **Defectos (`bug`):** `Open`, `In Progress`, `Resolved`, `Closed`
+
 ### Proveedor GitLab (`provider.gitlab`)
 
 Permite sincronizar recursos con incidencias en proyectos de GitLab:

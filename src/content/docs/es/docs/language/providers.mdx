@@ -66,6 +66,28 @@ El proveedor `github` sincroniza automáticamente casos de prueba, suites de eje
   - **Etiquetas (Labels):** El repositorio debe contar con las etiquetas `testcase`, `testrun`, `testplan`, `testreport` y `bug`.
   - **Permisos del Token:** Se requiere un PAT con permisos de lectura/escritura sobre `repo` (Issues) y `project` (Projects V2), o usar `testform login` para autenticar vía GitHub App.
 
+* **Configuración del Campo `Status` en GitHub Projects (V2):**
+  Al sincronizar tus recursos con un proyecto de GitHub Projects mediante `project_id`, la columna de tipo **Single Select** llamada **`Status`** debe contar con todas las opciones de estado correspondientes a los tres ciclos de vida (`testcase`, `testrun`/`testplan` y `bug`):
+
+  | Opción en GitHub Projects | Alcance (Scope) | Descripción | Color Sugerido |
+  | :--- | :--- | :--- | :--- |
+  | **`Done`** | `testcase` | El caso de prueba está aprobado, especificado y listo. | Morado (`Purple`) |
+  | **`Passed`** | `testrun` / `testplan` | Todos los escenarios del testrun o plan pasaron exitosamente. | Verde (`Green`) |
+  | **`Failed`** | `testrun` / `testplan` | Uno o más escenarios de prueba fallaron sus aserciones. | Rojo (`Red`) |
+  | **`Blocked`** | `testrun` / `testplan` | Ejecución bloqueada por caída de entorno o dependencia. | Amarillo / Oro (`Yellow`) |
+  | **`Pending`** | `testrun` / `testplan` | Ejecución planificada o pendiente de ejecución. | Azul (`Blue`) |
+  | **`Skipped`** | `testrun` / `testplan` | Escenario omitido por filtros, tags o fallos previos. | Gris (`Gray`) |
+  | **`Ambiguous`** | `testrun` / `testplan` | Pasos con definiciones ambiguas (múltiples coincidencias de glue code). | Naranja (`Orange`) |
+  | **`Open`** | `bug` | Defecto nuevo reportado y pendiente de triaje. | Azul (`Blue`) |
+  | **`In Progress`** | `bug` | Defecto en fase de investigación o desarrollo activo. | Morado (`Purple`) |
+  | **`Resolved`** | `bug` | Defecto corregido, listo para retest o verificación. | Verde (`Green`) |
+  | **`Closed`** | `bug` | Defecto verificado y cerrado definitivamente. | Rosa / Rojo (`Pink/Red`) |
+
+  :::tip
+  **Tolerancia Semántica y Fallback Automático**  
+  Testform incluye tolerancia semántica: si alguna opción avanzada (como `Ambiguous` o `Blocked`) no ha sido agregada a tu tablero, el motor realiza un fallback hacia `Pending` o `Failed` sin interrumpir `testform apply`. No obstante, para mantener una visibilidad fidedigna de calidad en tus tableros Kanban, se recomienda configurar las 11 opciones listadas arriba.
+  :::
+
 ---
 
 ### C. Proveedor GitLab (`provider: gitlab`)
