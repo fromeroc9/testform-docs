@@ -65,7 +65,7 @@ Y uno o más recursos tienen `prevent_destroy: true`, Testform aborta inmediatam
 ```
 Error: Instance cannot be destroyed
 
-  Resource github_testcase.auth/login.case.feature.@tc-1 has lifecycle.prevent_destroy set, but the plan calls for this resource to be destroyed. To avoid this error and continue with the plan, either disable lifecycle.prevent_destroy or target other resources.
+  Resource github.testcase.auth/login.case.feature.@tc-1 has lifecycle.prevent_destroy set, but the plan calls for this resource to be destroyed. To avoid this error and continue with the plan, either disable lifecycle.prevent_destroy or target other resources.
 ```
 
 Para proceder con la destrucción de otros recursos sin afectar al recurso protegido, se debe usar la bandera `-target`:

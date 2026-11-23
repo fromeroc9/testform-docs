@@ -97,18 +97,21 @@ $ testform providers schema
 
 Provider Schema: fromeroc9/github
 ──────────────────────────────────────────────────
-Resource: github_testcase
+Resource: testcase
   - identity: string (required)
   - title: string (optional)
   - labels: list of string (optional)
   - assignees: list of string (optional)
   - custom_fields: map of string (optional)
-Resource: github_testrun
+Resource: testrun
   - identity: string (required)
   - rules: list of rule
-Resource: github_testplan
+Resource: testplan
   - identity: string (required)
   - runs: list of testrun
+Resource: bug
+  - identity: string (required)
+  - target: string (required)
 ```
 
 #### Modo JSON (`-json`):
@@ -125,9 +128,10 @@ $ testform providers schema -json
     "registry.testform.io/fromeroc9/github": {
       "provider": { ... },
       "resource_schemas": {
-        "github_testcase": { ... },
-        "github_testrun": { ... },
-        "github_testplan": { ... }
+        "testcase": { ... },
+        "testrun": { ... },
+        "testplan": { ... },
+        "bug": { ... }
       }
     }
   }
@@ -184,8 +188,10 @@ $ testform providers resource
 
 REGISTERED RESOURCE TEMPLATES
 ────────────────────────────────────────
-  • github_testcase
-  • github_testrun
+  • testcase
+  • testrun
+  • testplan
+  • bug
   • register-pokemon             [lifecycle hooks]
 ```
 

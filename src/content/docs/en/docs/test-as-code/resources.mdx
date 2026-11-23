@@ -107,7 +107,7 @@ To minimize state file footprint and ensure universal compatibility across provi
 ```json
 {
   "address": "tests/runs/regression.run.feature.@tr-regression-build-412",
-  "type": "github_testrun",
+  "type": "testrun",
   "status": "failed",
   "attributes": {
     "title": "Regression Test Run Build 412",
@@ -162,7 +162,7 @@ Just as a `testrun` evaluates its test cases, a `testplan` calculates its overal
 ```json
 {
   "address": "tests/plans/release.plan.feature.@tp-release-v250",
-  "type": "github_testplan",
+  "type": "testplan",
   "status": "failed",
   "attributes": {
     "title": "Release v2.5.0 Certification Matrix",
@@ -278,9 +278,36 @@ Feature: Defects found in Checkout
 
 ---
 
- Custom Resources
+## Terraform-Compliant Resource Addressing & Provider Parity
+In `testform plan`, `testform apply`, and `testform refresh`:
+- **Action Comment Line:** Follows the Terraform convention showing the active provider prefix (`# <provider>.<resource_type>.<name> will be created/updated/destroyed`), for example:
+  ```text
+    # github.testcase.auth.case.feature.@tc-01 will be created
+    # gitlab.testrun.checkout.run.feature will be updated in-place
+    # local.bug.payment_gateway.bug.feature.@bg-01 will be created
+  ```
+- **Agnostic Resource Block Declaration:** Stays **100% provider-agnostic**, using pure canonical domain types (`+ resource "testcase" "..." { ... }`).
 
-Beyond native resources (`github_testcase`, `github_testrun`, `github_testplan`), Testform allows defining **custom resource templates** to map Gherkin scenarios to external APIs (Jira, Zephyr, Azure DevOps, or proprietary QA backends).
+## Visual Verdict Banners & Native GitHub Auto-Close
+For issue-tracking providers (GitHub, GitLab):
+- **GFM Markdown Banners:** `testrun` and `testplan` embed an execution verdict header directly into the Issue description:
+  ```markdown
+  > ### 🟢 PASSED • Execution Verdict
+  > Passed: 12 | Failed: 0 | Blocked: 0 | Skipped: 1 | Total: 13
+  ```
+- **Task Checklist Synchronization:** Test cases render with task checkboxes (`- [x] #101 - **passed**`, `- [ ] #102 - **failed**`).
+- **Native Lifecycle (Auto-Close):** When the overall rollup verdict evaluates to `passed`, the remote Issue is automatically closed (`state: 'closed'`, `state_reason: 'completed'`). If any failure, blocker, or pending test exists, the Issue is maintained or reopened in `state: 'open'`.
+
+## Dynamic Project Status Synchronization (Zero Hardcoded Fields)
+- Testform **does not assume** fixed project column names.
+- If you declare a status column in `main.yml` (e.g. `Status` or `status`), the engine discovers the exact casing declared by the user and synchronizes the rollup verdict into that column.
+- If unconfigured, no synthetic field is injected into `custom_fields`.
+
+---
+
+## Custom Resources
+
+Beyond native resources (`testcase`, `testrun`, `testplan`, `bug`), Testform allows defining **custom resource templates** to map Gherkin scenarios to external APIs (Jira, Zephyr, Azure DevOps, or proprietary QA backends).
 
 ### Auto-Discovery by Convention
 

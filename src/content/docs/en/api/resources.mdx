@@ -24,7 +24,7 @@ A resource definition is cleanly separated into 3 decoupled areas:
 
 ```typescript
 export interface ResourceTemplate {
-  /** Unique resource type name (e.g., 'register-pokemon', 'github_testcase', 'jira_issue') */
+  /** Unique resource type name (e.g., 'register-pokemon', 'testcase', 'jira_issue') */
   type: string;
 
   /**
@@ -41,7 +41,9 @@ export interface ResourceTemplate {
   lifecycle?: ResourceLifecycleHooks;
 
   /**
-   * Internal attributes persisted directly into the cryptographic state ledger (testform.state).
+   * Internal attributes persisted directly into the cryptographic state ledger (testform.state)
+   * and displayed in `testform plan`. Follows the "Set-First" principle: root level contains only
+   * runtime execution marks (`* set`) while contract fields live inside `metadata = { ... }`.
    */
   state?: Record<string, ((scenario: ParserScenario, context?: any) => any) | any>;
 
@@ -136,14 +138,14 @@ testform providers resource scaffold <name>
 
 ## Overriding Existing Resources
 
-You can override any built-in resource (such as `github_testcase`) to customize extracted attributes or append lifecycle hooks:
+You can override any canonical resource (such as `testcase`) to customize extracted attributes or append lifecycle hooks:
 
 ```typescript
 // .testform/resources/custom-testcase.ts
 import { registerResource } from '@fromeroc9/testform@beta';
 
 registerResource({
-  type: 'github_testcase',
+  type: 'testcase',
   attributes: (scenario) => ({
     title: `[QA] ${scenario.name}`,
     body: '```gherkin\n' + scenario.steps.map(s => `${s.keyword}${s.text}`).join('\n') + '\n```',
@@ -168,7 +170,7 @@ import { resource } from '@fromeroc9/testform@beta';
 
 // Inspect all registered types
 const types = resource.getRegisteredTypes();
-// ['github_testcase', 'github_testrun', 'testcase', 'register-pokemon', ...]
+// ['testcase', 'testrun', 'testplan', 'bug', 'register-pokemon', ...]
 
 // Evaluate canonical attributes
 const attrs = resource.evaluateAttributes('register-pokemon', scenario);

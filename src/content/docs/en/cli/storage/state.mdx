@@ -15,17 +15,17 @@ The `testform state` command provides advanced state inspection and mutation sub
 Lists all resources currently tracked in the state file:
 ```bash
 $ testform state list
-github_testcase.login_case_feature__1
-github_testcase.checkout_case_feature__2
-github_testrun.sprint_42_regression
+testcase.login_case_feature__1
+testcase.checkout_case_feature__2
+testrun.sprint_42_regression
 ```
 
 ### 2. `testform state show <address>`
 Shows the detailed attributes of a single resource in state:
 ```bash
-$ testform state show github_testcase.login_case_feature__1
-# github_testcase.login_case_feature__1:
-resource "github_testcase" "login_case_feature__1" {
+$ testform state show testcase.login_case_feature__1
+# testcase.login_case_feature__1:
+resource "testcase" "login_case_feature__1" {
     id        = 104
     title     = "Valid credentials allow login"
     labels    = ["auth", "smoke"]
@@ -38,7 +38,7 @@ resource "github_testcase" "login_case_feature__1" {
 Removes one or more resource instances from the state file **without deleting the remote issue**. 
 This tells Testform to forget tracking the resource.
 ```bash
-testform state rm github_testcase.old_deprecated_test
+testform state rm testcase.old_deprecated_test
 ```
 
 ### 4. `testform state mv <source> <destination>`

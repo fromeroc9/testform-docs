@@ -70,12 +70,26 @@ Scenario: Solicitud de webhook con payload JSON
   Then el servidor debe responder con HTTP 200
 ```
 
-## Directivas Especiales de Testform
+## Directivas Especiales del Motor
 
-Testform introduce directivas a traves de tags especiales para controlar el comportamiento del motor:
+Testform introduce directivas a nivel de sintaxis que el motor y el parser interpretan directamente:
 
-- `@ignore`: Excluye el escenario o archivo de la planificacion y conciliacion.
-- `@flaky`: Marca un escenario como inestable para reportes y filtros de suite.
-- `@manual`: Indica que el caso de prueba esta disenado exclusivamente para ejecucion humana.
-- `@module(path)`: Importa un modulo reutilizable de pasos Gherkin compartidos.
+- `@ns(namespace)` / `@namespace(namespace)`: Asigna un espacio de nombres lógico explícito para desambiguar la dirección canónica de archivos `.feature` que comparten el mismo nombre base en diferentes directorios (por ejemplo, `testcase/Magento/cart.case.feature` con `@ns(magento)` vs `testcase/OpenCart/cart.case.feature` con `@ns(opencart)`).
+- `@module(path)`: Importa un módulo reutilizable de pasos Gherkin compartidos desde otra ubicación o biblioteca.
+- `@depends_on(...)`: Meta-argumento de dependencias que define el orden de ejecución en el grafo acíclico dirigido (DAG) y vincula defectos a casos de prueba objetivo (`@depends_on(@tc-01)`).
+- **Prefijos de Identidad y Scope:** `@tc-*` (caso de prueba), `@tr-*` (test run), `@tp-*` (plan de prueba), `@bg-*` (defecto).
+
+## Tags de Convención y Filtros CLI
+
+Cualquier otra etiqueta en tus escenarios (como `@smoke`, `@regression`, `@manual`, `@flaky` o `@wip`) es tratada como una **etiqueta estándar de Gherkin**. El motor no las procesa de manera automática, sino que se utilizan como criterios de selección y filtrado en los comandos del CLI:
+
+- **Filtrado en comandos de especificación:**
+  ```bash
+  testform spec testrun -include=@smoke -exclude=@manual
+  ```
+- **Campos de contrato (`source: "tag"`):** Si defines un campo en `main.yml` (por ejemplo, `priority: enum: ["@low", "@medium", "@high"]`), el parser valida que el escenario contenga una de las etiquetas del contrato.
+- **Consultas con `query`:**
+  ```bash
+  testform query "tags contains 'flaky'"
+  ```
 

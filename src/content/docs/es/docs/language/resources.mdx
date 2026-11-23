@@ -20,9 +20,10 @@ Testform define internamente plantillas declarativas para los recursos de gesti�
 
 | Recurso | Propósito | Formato / Ubicación |
 |---|---|---|
-| **`github_testcase`** | Especificación unitaria de prueba individual | `Scenario:` en archivos `*.case.feature` |
-| **`github_testrun`** | Ejecución inmutable de pruebas contra un build | `*.run.feature` |
-| **`github_testplan`** | Plan de orquestación y alcance de pruebas | `*.plan.feature` |
+| **`testcase`** | Especificación unitaria de prueba individual | `Scenario:` en archivos `*.case.feature` |
+| **`testrun`** | Ejecución inmutable de pruebas contra un build | `*.run.feature` |
+| **`testplan`** | Plan de orquestación y alcance de pruebas | `*.plan.feature` |
+| **`bug`** | Reporte estructurado y trazabilidad de defectos | `*.bug.feature` |
 | **Custom Resources** | Recursos personalizados para Jira, TestRail, etc. | Definidos mediante `registerResource()` |
 
 ---
@@ -47,7 +48,7 @@ Los campos declarados se fusionan automáticamente con los campos nativos del re
 
 ## 2. Modificación de Recursos ya Declarados por el Usuario (`registerResource`)
 
-Los recursos predefinidos en `resource.ts` (`github_testcase`, `github_testrun`, etc.) **no son cajas negras cerradas**. Cualquier equipo puede modificar o sobreescribir los atributos, el ciclo de vida o los datos de estado generados utilizando `registerResource()`.
+Los recursos canónicos (`testcase`, `testrun`, etc.) **no son cajas negras cerradas**. Cualquier equipo puede modificar o sobreescribir los atributos, el ciclo de vida o los datos de estado generados utilizando `registerResource()`.
 
 Las definiciones del usuario toman precedencia automática sobre las plantillas del sistema, preservando los campos no modificados:
 
@@ -56,9 +57,9 @@ Las definiciones del usuario toman precedencia automática sobre las plantillas 
 ```typescript
 import { registerResource } from '@fromeroc9/testform@beta';
 
-// Sobreescribir el recurso ya declarado github_testcase
+// Sobreescribir el recurso canónico testcase
 registerResource({
-    type: 'github_testcase',
+    type: 'testcase',
     attributes: (s) => ({
         // Personalizamos el título con un prefijo corporativo
         title: `[QA-CORE] ${s.name}`,
@@ -83,7 +84,7 @@ registerResource({
 const { registerResource } = require('@fromeroc9/testform@beta');
 
 registerResource({
-    type: 'github_testcase',
+    type: 'testcase',
     attributes: (s) => ({
         title: `[QA-CORE] ${s.name}`,
         body: `## Caso: ${s.name}\n\n` + s.steps.map(st => `${st.keyword}${st.text}`).join('\n')

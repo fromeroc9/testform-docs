@@ -24,7 +24,7 @@ Un recurso se compone de 3 áreas limpias y desacopladas:
 
 ```typescript
 export interface ResourceTemplate {
-  /** Tipo único del recurso (ej. 'register-pokemon', 'github_testcase', 'jira_issue') */
+  /** Tipo único del recurso (ej. 'register-pokemon', 'testcase', 'jira_issue') */
   type: string;
 
   /**
@@ -137,14 +137,14 @@ testform providers resource scaffold <nombre>
 
 ## Sobreescribir Recursos Existentes
 
-Puede sobreescribir cualquier recurso existente (como `github_testcase`) para personalizar atributos o añadir hooks:
+Puede sobreescribir cualquier recurso canónico (como `testcase`) para personalizar atributos o añadir hooks:
 
 ```typescript
 // .testform/resources/custom-testcase.ts
 import { registerResource } from '@fromeroc9/testform@beta';
 
 registerResource({
-  type: 'github_testcase',
+  type: 'testcase',
   attributes: (scenario) => ({
     title: `[QA] ${scenario.name}`,
     body: '```gherkin\n' + scenario.steps.map(s => `${s.keyword}${s.text}`).join('\n') + '\n```',
@@ -169,7 +169,7 @@ import { resource } from '@fromeroc9/testform@beta';
 
 // Consultar todos los tipos registrados
 const types = resource.getRegisteredTypes();
-// ['github_testcase', 'github_testrun', 'testcase', 'register-pokemon', ...]
+// ['testcase', 'testrun', 'testplan', 'bug', 'register-pokemon', ...]
 
 // Evaluar atributos de un recurso
 const attrs = resource.evaluateAttributes('register-pokemon', scenario);

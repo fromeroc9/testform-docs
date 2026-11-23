@@ -11,7 +11,7 @@ El recurso `testcase` representa una especificacion de prueba individual. En Tes
 
 - **Ubicacion Estandar:** `tests/features/*.case.feature`
 - **Ubicacion de Identidad:** Directamente sobre el `Scenario:` con prefijo `@tc-*` (ejemplo: `@tc-cancel-001` o `@tc-cancel-order`).
-- **Nivel de Unicidad:** Unico dentro del mismo archivo `.case.feature`. La direccion completa en el ledger es `ruta/archivo.case.feature.@tc-cancel-001` (o con namespace de provider: `github_testcase.ruta/archivo.case.feature.@tc-cancel-001`).
+- **Nivel de Unicidad:** Unico dentro del mismo archivo `.case.feature`. La direccion completa en el ledger es `ruta/archivo.case.feature.@tc-cancel-001` (o con namespace de provider: `github.testcase.ruta/archivo.case.feature.@tc-cancel-001`).
 - **Ciclo de Vida:** `draft` -> `active` -> `deprecated` -> `archived`
 
 ### Ejemplo de Archivo con Multiples Casos
@@ -107,7 +107,7 @@ Para garantizar un tamaño mínimo del archivo de estado y compatibilidad univer
 ```json
 {
   "address": "tests/runs/regression.run.feature.@tr-regression-build-412",
-  "type": "github_testrun",
+  "type": "testrun",
   "status": "failed",
   "attributes": {
     "title": "Registro de Ejecucion de Regresion Build 412",
@@ -162,7 +162,7 @@ Al igual que el `testrun` evalúa sus casos, el `testplan` calcula su estado acu
 ```json
 {
   "address": "tests/plans/release.plan.feature.@tp-release-v250",
-  "type": "github_testplan",
+  "type": "testplan",
   "status": "failed",
   "attributes": {
     "title": "Plan de Certificacion Release v2.5.0",
@@ -258,7 +258,7 @@ Feature: Defectos encontrados en Checkout
     "testcase": "tests/features/checkout.case.feature.@tc-pay-01",
     "testrun": "testruns/sprint42_regression.run.feature",
     "trace": "PaymentGatewayException: Timeout waiting for gateway ACK in 30000ms",
-    "evidence": ["evidence/checkout_timeout.png"],
+    "attach": ["attachments/bugs/checkout_timeout.png"],
     "metadata": {
       "severity": "critical",
       "priority": "high"
@@ -274,13 +274,69 @@ Feature: Defectos encontrados en Checkout
 | **`testcase`** | 1 archivo = N casos | Sobre cada `Scenario:` (`@tc-*`) | Unica en el archivo | `Scenario` individuales con `Given`, `When`, `Then` |
 | **`testrun`** | 1 archivo = 1 corrida | Sobre el `Feature:` (`@tr-*`) | Global en el repositorio | `Rule: archivo.case.feature` + `Scenario: @tc-*` |
 | **`testplan`** | 1 archivo = 1 plan | Sobre el `Feature:` (`@tp-*`) | Global en el repositorio | `Rule: archivo.run.feature` (coordinacion de runs) |
-| **`bug`** | 1 archivo = N defectos | Sobre cada `Scenario:` (`@bg-*`) | Unica en el archivo | `Scenario` con `set target`, `status`, `trace`, `evidence` |
+| **`bug`** | 1 archivo = N defectos | Sobre cada `Scenario:` (`@bg-*`) | Unica en el archivo | `Scenario` con `set status`, `trace`, `attach`, `target` |
 
 ---
 
- Recursos Personalizados (*Custom Resources*)
+## Principio Set-First (Primera Plana) y Separación de Metadata
 
-Además de los recursos nativos (`github_testcase`, `github_testrun`, `github_testplan`), Testform permite registrar **plantillas de recursos personalizadas** para mapear escenarios Gherkin hacia cualquier API externa (Jira, Zephyr, Azure DevOps, o servicios propietarios).
+Para mantener la claridad y coherencia con herramientas de Infrastructure-as-Code (Terraform):
+
+### 1. Primera Plana (Atributos Raíz) vs `metadata`
+- **Atributos Raíz ("Primera Plana"):** Están reservados **estrictamente** para marcas de ejecución / ciclo de vida (`* set`) o relaciones directas entre recursos:
+  - `testcase`: Especificación pura sin marcas de ejecución (0 `* set`). No expone `status` en primera plana.
+  - `testrun`: `status` (rollup de ejecución), `duration`, `attach`, `trace`, `testcases = { ... }`.
+  - `testplan`: `status` (rollup del plan), `attach`, `testruns = { ... }`.
+  - `bug`: `status` (por defecto `'open'`), `trace`, `attach`, `testcase`, `testrun`.
+- **Bloque `metadata = { ... }`:** Contiene todos los campos de contrato de negocio definidos en `main.yml` (declarados con `* field` o etiquetas `@tag`), como `project`, `module`, `assignees`, `priority`, etc.
+
+### 2. Aislamiento en Memoria (`s.custom.set` vs `s.custom.fields`)
+El parser de Testform separa en dos estructuras independientes:
+- `s.custom.set`: Almacena exclusivamente las marcas de ejecución del engine (`status`, `duration`, `attach`, `trace`, `run`, `target`).
+- `s.custom.fields`: Almacena exclusivamente los campos contractuales de negocio.
+- **Sin colisiones:** Si un equipo define un campo de negocio llamado `status` o `Status` en `main.yml` (por ejemplo, el estado de Jira: "Done", "In Review", "To Do"), viajará limpiamente dentro de `metadata = { "Status" = "Done" }` sin sobreescribir ni interferir con el veredicto de ejecución (`+ status = "passed"`).
+
+### 3. Salida de Plan HashiCorp-Grade
+- **Orden determinista A-Z:** `testform plan` agrupa primero por scope lógico (`testcase` ➔ `testrun` ➔ `testplan` ➔ `bug`) y ordena alfabéticamente de la A a la Z por dirección canónica.
+- **Alineación tabular:** En mapas (`metadata`, `testcases`, `testruns`), las claves se ordenan alfabéticamente y se alinean con columnas `=` para máxima legibilidad.
+
+### 4. Desacoplamiento de Providers en Generación de Contenido
+El Core de Testform no impone sintaxis de Markdown; cada provider es responsable de transformar los pasos Gherkin al formato que su API remota requiere:
+- **GitHub / GitLab Provider:** Genera bloques Markdown ` ```gherkin ... ``` ` a través de `buildGitHubTestcaseBody(s)`.
+- **Jira Provider:** Formatea en ADF o `{code:gherkin}`.
+- **Azure DevOps Provider:** Formatea en HTML `<pre><code>`.
+- **Xray / TestRail Provider:** Mapea pasos en campos tabulares estructurados.
+
+### 5. Convención de Direccionamiento Estilo Terraform y Paridad con Providers
+En la ejecución de `testform plan`, `testform apply` y `testform refresh`:
+- **Comentario de Acción:** Muestra el prefijo del proveedor activo (`# <provider>.<resource_type>.<name> will be created/updated/destroyed`), por ejemplo:
+  ```text
+    # github.testcase.auth.case.feature.@tc-01 will be created
+    # gitlab.testrun.checkout.run.feature will be updated in-place
+    # local.bug.payment_gateway.bug.feature.@bg-01 will be created
+  ```
+- **Declaración del Bloque de Recurso:** Es **100% agnóstica**, utilizando el tipo canónico de dominio sin prefijos propietarios (`+ resource "testcase" "..." { ... }`).
+
+### 6. Banners Visuales de Veredicto y Cierre Automático Nativo
+Para proveedores con seguimiento de tareas e issues (GitHub, GitLab):
+- **Banners Markdown GFM:** Los `testrun` y `testplan` incrustan un encabezado de veredicto con resumen métrico directamente en la descripción del Issue:
+  ```markdown
+  > ### 🟢 PASSED • Execution Verdict
+  > Passed: 12 | Failed: 0 | Blocked: 0 | Skipped: 1 | Total: 13
+  ```
+- **Sincronización de Checklist:** Las tareas se renderizan con checkboxes interactivos (`- [x] #101 - **passed**`, `- [ ] #102 - **failed**`).
+- **Ciclo de Vida Nativo (Auto-Close):** Cuando el veredicto acumulado (*rollup*) evalúa a `passed`, el Issue remoto se cierra automáticamente (`state: 'closed'`, `state_reason: 'completed'`). Si existen fallos, bloqueos o pruebas pendientes, el Issue se mantiene o se reabre en `state: 'open'`.
+
+### 7. Sincronización Dinámica de Columnas de Proyecto (Sin Campos en Duro)
+- Testform **no asume** nombres de campos fijos en tus tableros de proyecto.
+- Si en tu configuración (`main.yml`) declaras un campo de estado (ejemplo: `Status` o `status`), el motor detecta la clave exacta respetando el casing del usuario y le asigna el veredicto rollup.
+- Si no configuras ninguna columna de estado, no se inyecta ningún campo artificial en `custom_fields`.
+
+---
+
+## Recursos Personalizados (*Custom Resources*)
+
+Además de los recursos nativos (`testcase`, `testrun`, `testplan`, `bug`), Testform permite registrar **plantillas de recursos personalizadas** para mapear escenarios Gherkin hacia cualquier API externa (Jira, Zephyr, Azure DevOps, o servicios propietarios).
 
 ### Carga Automática por Convención
 

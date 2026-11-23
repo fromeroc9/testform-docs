@@ -20,9 +20,10 @@ Testform includes built-in declarative templates for quality management entities
 
 | Resource | Purpose | Format / Location |
 |---|---|---|
-| **`github_testcase`** | Individual test specification | `Scenario:` in `*.case.feature` |
-| **`github_testrun`** | Immutable test execution tracking | `*.run.feature` |
-| **`github_testplan`** | Orchestration and execution schedule | `*.plan.feature` |
+| **`testcase`** | Individual test specification | `Scenario:` in `*.case.feature` |
+| **`testrun`** | Immutable test execution tracking | `*.run.feature` |
+| **`testplan`** | Orchestration and execution schedule | `*.plan.feature` |
+| **`bug`** | Structured defect tracking and traceability | `*.bug.feature` |
 | **Custom Resources** | Custom resources for Jira, TestRail, etc. | Registered via `registerResource()` |
 
 ---
@@ -47,7 +48,7 @@ Declared fields automatically merge with the resource's native fields at runtime
 
 ## 2. Modifying Declared Resources (`registerResource`)
 
-Built-in resources (`github_testcase`, `github_testrun`, etc.) **are not closed black boxes**. Any team can modify or override attributes, lifecycle orchestration hooks, or state persistence using `registerResource()`.
+Canonical resources (`testcase`, `testrun`, etc.) **are not closed black boxes**. Any team can modify or override attributes, lifecycle orchestration hooks, or state persistence using `registerResource()`.
 
 User definitions automatically take precedence over system templates, preserving unmentioned fields:
 
@@ -56,9 +57,9 @@ User definitions automatically take precedence over system templates, preserving
 ```typescript
 import { registerResource } from '@fromeroc9/testform@beta';
 
-// Customize the built-in github_testcase resource
+// Customize the canonical testcase resource
 registerResource({
-    type: 'github_testcase',
+    type: 'testcase',
     attributes: (s) => ({
         // Prefix test title with team tag
         title: `[QA-CORE] ${s.name}`,
@@ -83,7 +84,7 @@ registerResource({
 const { registerResource } = require('@fromeroc9/testform@beta');
 
 registerResource({
-    type: 'github_testcase',
+    type: 'testcase',
     attributes: (s) => ({
         title: `[QA-CORE] ${s.name}`,
         body: `## Test Case: ${s.name}\n\n` + s.steps.map(st => `${st.keyword}${st.text}`).join('\n')
