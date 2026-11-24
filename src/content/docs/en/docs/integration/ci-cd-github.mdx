@@ -7,8 +7,8 @@ Automate test case validation and state reconciliation on every Pull Request and
 
 ## Recommended GitOps Lifecycle
 
-1. **Pull Requests:** Executes `testform validate` and `testform plan`. The generated speculative diff is posted directly as a comment on the PR, and a binary plan file is generated.
-2. **Merge to Main:** Executes `testform apply tfplan.bin` (or `-auto-approve`) to atomically commit and push approved test specifications to remote platforms.
+1. **Pull Requests:** Executes `testform init -lock=false`, `testform validate`, and `testform plan -lock=false`. The generated speculative diff is posted directly as a comment on the PR without writing locks or mutating remote state.
+2. **Merge to Main:** Executes `testform init` and `testform apply -auto-approve` (or a saved plan file) to atomically apply approved changes to remote platforms and update the state backend.
 
 ## Standard Workflow Manifest (.github/workflows/testform.yml)
 
@@ -19,12 +19,14 @@ on:
   pull_request:
     paths:
       - 'tests/**'
+      - 'testcase/**'
       - 'main.yml'
   push:
     branches:
       - main
     paths:
       - 'tests/**'
+      - 'testcase/**'
       - 'main.yml'
 
 jobs:
@@ -48,6 +50,18 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Initialize Testform (Read-Only on PR)
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.TESTFORM_STATE_TOKEN || secrets.GITHUB_TOKEN }}
+        run: npx testform init -lock=false
+
+      - name: Initialize Testform (Merge to Main)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.TESTFORM_STATE_TOKEN || secrets.GITHUB_TOKEN }}
+        run: npx testform init
+
       - name: Validate Syntax & Policies
         run: npx testform validate
 
@@ -55,9 +69,9 @@ jobs:
         if: github.event_name == 'pull_request'
         id: plan
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TESTFORM_STATE_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
-          npx testform plan -no-color > plan.txt
+          npx testform plan -lock=false -no-color > plan.txt
           echo "PLAN<<EOF" >> $GITHUB_ENV
           cat plan.txt >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
@@ -80,7 +94,7 @@ jobs:
       - name: Apply Approved Changes (Merge to Main)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TESTFORM_STATE_TOKEN || secrets.GITHUB_TOKEN }}
         run: npx testform apply -auto-approve
 ```
 
@@ -111,10 +125,12 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
-      - name: Run Testform Plan with Binary Output
+      - name: Initialize & Run Testform Plan with Binary Output
         env:
           TESTFORM_GITHUB_TOKEN: ${{ secrets.TESTFORM_GITHUB_TOKEN }}
-        run: npx testform plan -out=tfplan.bin -detailed-exitcode || exit_code=$?
+        run: |
+          npx testform init -lock=false
+          npx testform plan -lock=false -out=tfplan.bin -detailed-exitcode || exit_code=$?
       - name: Upload Execution Plan
         uses: actions/upload-artifact@v4
         with:
@@ -132,11 +148,29 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
-      - name: Apply Direct
+      - name: Initialize & Apply Direct
         env:
           TESTFORM_GITHUB_TOKEN: ${{ secrets.TESTFORM_GITHUB_TOKEN }}
-        run: npx testform apply -auto-approve
+        run: |
+          npx testform init
+          npx testform apply -auto-approve
 ```
+
+## CI/CD Architecture with Protected Branches & `github` Backend
+
+In teams where QA engineers **only push `.feature` specification changes** via Pull Requests against a protected `main` branch (*Branch Protection Rules*), QA contributors do not need direct push permissions to `main` or write permissions on the remote state:
+
+1. **QA commits only `.feature` files:** Contributors create a feature branch, update Gherkin scenarios, and open a Pull Request to `main`.
+2. **Pull Request check (read-only):** The PR workflow runs `testform init -lock=false` and `testform plan -lock=false` to post the diff on the PR **without writing `.lock` commits to the state branch**.
+3. **Merge to `main` (controlled apply):** Once approved and merged into `main`, the push workflow runs `testform init` and `testform apply -auto-approve` using a CI secret (e.g., `secrets.TESTFORM_STATE_TOKEN`) authorized to write to the state backend.
+
+### Avoiding Branch Protection Blocks with `backend.github`
+
+Because `backend.github` persists `testform.state` and `<path>.lock` by pushing commits via the GitHub Contents API:
+
+- **Option A — Dedicated state repository (Recommended):** Point `backend.github.repository` to a separate state repository (e.g. `"my-org/testform-state"`). Your QA project's `main` branch keeps strict protection rules intact while CI writes state exclusively to the state repository.
+- **Option B — Unprotected state branch in the same repo:** Keep `branch: "testform-state"` (default) instead of `main`, leaving `main` protected for code and restricting `testform-state` writes to the CI service token.
+- **Option C — Branch Protection bypass list:** If the state branch itself must remain protected, add your CI GitHub App or bot account to *Allow specified actors to bypass required pull requests*.
 
 :::caution[Important: GitHub Actions Token & GitHub Projects V2]
 The default token generated automatically by GitHub Actions (`secrets.GITHUB_TOKEN`) has permissions limited to the current repository and **cannot mutate organization or user-level GitHub Projects (Projects V2)** boards.

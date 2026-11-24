@@ -9,7 +9,7 @@ testform [global options] plan [options]
 
 The `testform plan` command creates an execution plan. It evaluates your local `.feature` files against the current state file (`testform.state`) and remote infrastructure, calculating the exact set of actions required to bring remote issues into alignment with local code.
 
-It is a **speculative, read-only operation** that does not make any mutations to remote resources.
+It is a **speculative, read-only operation** that does not make any mutations to remote resources. When using a [remote backend](/testform-docs/en/docs/language/backends/), ensure `testform init` has been executed first.
 
 ## Command Options
 
@@ -19,6 +19,8 @@ It is a **speculative, read-only operation** that does not make any mutations to
 | `-destroy` | `false` | Generates a plan to destroy all managed resources rather than applying updates. |
 | `-refresh=false` | `true` | Skips checking the remote API for out-of-band drift prior to planning. |
 | `-target=address` | — | Limits planning to a single resource identity (e.g. `login.case.feature.@tc-1`). May be specified multiple times. |
+| `-lock=false` | `true` | Disables acquiring a state lock during planning (recommended in read-only PR previews with backends such as `github`). |
+| `-lock-timeout=0s` | `0s` | Duration to wait/retry if the state is locked by another process. |
 | `-json` | `false` | Emits the plan in JSON format. |
 | `-detailed-exitcode` | `false` | Returns detailed exit codes (`0` = empty plan, `2` = changes present). |
 | `-watch`, `--watch` | `false` | Runs plan in continuous watch mode, monitoring `.feature` files and recomputing diffs in milliseconds via incremental AST cache. |

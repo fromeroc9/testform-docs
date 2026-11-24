@@ -1,28 +1,133 @@
 ---
 title: "Backends y Almacenamiento de Estado"
+description: "Configuración de backends en main.yml, inicialización obligatoria con testform init, credenciales y proveedores de estado remoto alineados con Terraform Language."
 ---
 
-Un **Backend** en Testform define dónde y cómo se almacena el archivo de estado (`testform.state`), y cómo se gestionan los bloqueos de concurrencia (`state lock`) para evitar colisiones entre pipelines de CI/CD e ingenieros.
+Un **Backend** en Testform define dónde y cómo se almacena el archivo de estado (`testform.state`) y cómo se gestionan los bloqueos de concurrencia (*state locking*) para evitar colisiones entre pipelines de CI/CD e ingenieros.
 
-Siguiendo el diseño idiomático de Testform y Terraform, la configuración se define en **modo diccionario**, donde la clave raíz especifica directamente el tipo de backend (sin campos `type:` redundantes).
+Al igual que en la especificación de [Terraform Language Backends](https://developer.hashicorp.com/terraform/language/backend), si no declaras un backend explícito, Testform utiliza por defecto el backend **`local`**, que guarda el archivo de estado en el directorio de trabajo actual.
 
 ---
 
- 1. Backend REST / HTTP Nativo (`http` o `rest`)
+## El Bloque `backend` en `main.yml`
+
+Siguiendo el diseño idiomático de Testform y Terraform, el backend se declara dentro de la sección `testform:` de `main.yml` en **modo diccionario**, donde la clave raíz identifica directamente al tipo de backend (sin campos `type:` redundantes):
+
+```yaml
+# main.yml
+testform:
+  required_version: ">= 1.0.0"
+  backend:
+    github:
+      repository: "mi-organizacion/testform-state"
+      branch: "testform-state"
+      path: "production.testform.state"
+```
+
+> [!NOTE]
+> Testform también acepta `backend:` en el nivel raíz de `main.yml` por compatibilidad, aunque se recomienda declararlo dentro de `testform.backend` para mantener paridad directa con el bloque `terraform { backend "..." {} }`.
+
+### Reglas y Limitaciones del Bloque `backend`
+
+Siguiendo el contrato de Terraform:
+
+- **Un único backend:** Una configuración solo puede declarar **un bloque `backend`**.
+- **Sin expresiones ni variables de entrada:** Al igual que en Terraform, el bloque `backend` se evalúa **antes** que `variable`, `locals` y `data` para poder cargar el estado inicial. Por ello, los argumentos estructurales del backend (`bucket`, `repository`, `branch`, `region`) deben ser valores literales o suministrarse mediante [configuración parcial (`-backend-config`)](/testform-docs/es/cli/workflow/init/).
+- **Inicialización obligatoria en backends remotos:** Cuando configuras cualquier backend distinto de `local` (`github`, `s3`, `azurerm`, `gcs`, `oci`, `http`/`rest`, `custom`), es **obligatorio ejecutar `testform init`** antes de correr `plan`, `apply`, `refresh`, `destroy` o comandos `state`. Si falta la inicialización en `.testform/cache/backend.json`, Testform detiene la ejecución con:
+  ```text
+  Error: Backend initialization required: please run "testform init"
+  ```
+
+---
+
+## Inicialización, Cambios y Migración
+
+Cada vez que agregas un backend remoto, clonas un repositorio por primera vez o modificas el bloque `backend` en `main.yml`, debes inicializar el directorio de trabajo:
+
+```bash
+testform init
+```
+
+Testform guarda un registro de la configuración activa en `.testform/cache/backend.json` (directorio que **no debe subirse a Git**). Si cambias de tipo de backend o modificas parámetros estructurales (como `repository`, `bucket`, `branch`, `path` o `key`), el siguiente comando detectará la discrepancia (`Error: Backend configuration changed`) y te pedirá elegir cómo proceder:
+
+- **`testform init -migrate-state`**: Copia el estado existente desde el backend anterior hacia el nuevo backend configurado.
+- **`testform init -reconfigure`**: Descarta la configuración en caché y configura el nuevo backend sin migrar el estado anterior.
+
+### Credenciales y Seguridad
+
+Al igual que recomienda Terraform, **no escribas tokens ni secretos directamente en `main.yml`**:
+
+- Configura solo el nombre de la variable de entorno (por ejemplo `token_env: "GITHUB_TOKEN"`) o utiliza variables estándar del proveedor cloud (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AZURE_STORAGE_CONNECTION_STRING`, `GOOGLE_APPLICATION_CREDENTIALS`).
+- En desarrollo local, puedes autenticarte de forma persistente mediante `testform login <hostname>`, que guarda el token en `~/.testform.d/credentials.json` fuera del repositorio.
+- En CI/CD, puedes omitir parámetros sensibles o por entorno en `main.yml` e inyectarlos al inicializar con `-backend-config="clave=valor"`. Ten en cuenta que `.testform/cache/backend.json` almacena en disco los overrides pasados por CLI (excluyendo claves de credenciales como `token_env` o `token` en la comparación de igualdad).
+
+---
+
+## 1. GitHub como Backend Remoto (`github`)
+
+Almacena el ledger de estado y su archivo de bloqueo directamente en una rama de un repositorio de GitHub mediante la API REST de GitHub, sin requerir buckets ni infraestructura cloud externa:
+
+```yaml
+# main.yml
+testform:
+  required_version: ">= 1.0.0"
+  backend:
+    github:
+      repository: "mi-organizacion/testform-state" # Acepta "owner/repo" o solo "repo" junto a owner
+      branch: "testform-state"                     # Rama dedicada al estado (default: testform-state)
+      path: "qa/testform.state"                    # Ruta del archivo de estado (default: testform.state)
+      token_env: "GITHUB_TOKEN"                    # Variable de entorno con el PAT (default: GITHUB_TOKEN)
+```
+
+### Parámetros del Backend GitHub
+
+| Parámetro | Requerido | Por defecto | Descripción |
+| :--- | :--- | :--- | :--- |
+| `owner` | Condicional | `provider.github.owner` o prefijo de `repository` | Usuario u organización propietaria del repositorio de estado. No es necesario si `repository` incluye el formato `"owner/repo"`. |
+| `repository` (o `repo`) | Condicional | `provider.github.repository` | Nombre del repositorio destino o ruta completa `"owner/repo"`. Puede ser un **repositorio separado exclusivo para estados** (recomendado) o el mismo repositorio del proyecto. |
+| `branch` | No | `"testform-state"` | Rama de Git donde se leerán y grabarán el estado y el bloqueo (`.lock`). |
+| `path` | No | `"testform.state"` | Ruta del archivo dentro de la rama. En workspaces distintos de `default`, se guarda en `env/<workspace>/<path>`. |
+| `token_env` (o `tokenEnv`) | No | `"GITHUB_TOKEN"` (o el de `provider.github`) | Nombre de la variable de entorno que contiene el Personal Access Token o token de GitHub App. |
+
+### Resolución de Credenciales y Repositorios Vacíos
+
+- **Orden de búsqueda de token:** Testform busca credenciales en el siguiente orden:
+  1. Archivo global `~/.testform.d/credentials.json` (generado por `testform login github.com`).
+  2. La variable de entorno indicada en `token_env`.
+  3. Respaldo automático en `GITHUB_TOKEN` o `GH_TOKEN`.
+  Si ningún token está presente, falla con el diagnóstico `GitHub token not found` indicando la variable esperada según `token_env`.
+- **Repositorios nuevos o vacíos:** Puedes apuntar `backend.github` a un repositorio de GitHub recién creado y completamente vacío (`0` commits). Al inicializar o escribir el primer estado, Testform detecta automáticamente que el repositorio está vacío (`HTTP 409/404`), crea un `README.md` inicial en la rama base (`main`) y crea la rama configurada en `branch`.
+- **Bloqueo distribuido:** Antes de mutar el estado, crea atómicamente el archivo `<path>.lock` en la rama `branch` usando la GitHub Contents API (`PUT` sin SHA previo) y lo elimina al finalizar (`DELETE`).
+
+:::caution[Ramas Protegidas y Branch Protection en GitHub]
+El backend `github` escribe los archivos de estado y bloqueo haciendo commits directos sobre la rama configurada en `branch` mediante la API de GitHub.
+
+Si `branch` apunta a una rama con **reglas de protección** (*Require a pull request before merging*, *Restrict who can push*), los pipelines o usuarios sin permisos de escritura directa no podrán adquirir el lock ni actualizar el estado.
+
+**Estrategias recomendadas en producción:**
+1. **Rama dedicada sin bloqueo por PR o repositorio separado de estado (Recomendado):** Configura un repositorio exclusivo de estado (ej. `org/testform-state`) o usa la rama dedicada `branch: "testform-state"` separada de `main`, restringiendo el acceso de escritura solo al bot/CI de QA.
+2. **Lista de bypass en Branch Protection:** Si usas una rama protegida, agrega la GitHub App o cuenta bot del token de CI a *Allow specified actors to bypass required pull requests*.
+3. **Pull Requests de solo lectura para QA:** Si los ingenieros QA solo editan archivos `.feature` en ramas de PR sin acceso a la rama de estado, ejecuta en el workflow del PR `testform init -lock=false` y `testform plan -lock=false`, reservando `testform apply -auto-approve` únicamente para el pipeline tras hacer merge a `main`. Consulta la guía de [GitHub Actions Pipeline](/testform-docs/es/docs/integration/ci-cd-github/).
+:::
+
+---
+
+## 2. Backend REST / HTTP Nativo (`http` o `rest`)
 
 Permite almacenar el estado en cualquier API REST remota o servicio web HTTP compatible con el protocolo estándar de Terraform:
 
 ```yaml
 # main.yml
-backend:
-  http: # o 'rest'
-    address: "https://api.empresa.com/v1/states/testform.state"
-    lock_address: "https://api.empresa.com/v1/states/testform.state/lock"
-    unlock_address: "https://api.empresa.com/v1/states/testform.state/unlock"
-    headers:
-      Authorization: "Bearer ${env.STATE_API_TOKEN}"
-      Content-Type: "application/json"
-    update_method: "POST" # 'POST' o 'PUT' (por defecto POST)
+testform:
+  backend:
+    http: # o 'rest'
+      address: "https://api.empresa.com/v1/states/testform.state"
+      lock_address: "https://api.empresa.com/v1/states/testform.state/lock"
+      unlock_address: "https://api.empresa.com/v1/states/testform.state/unlock"
+      headers:
+        Authorization: "Bearer ${env.STATE_API_TOKEN}"
+        Content-Type: "application/json"
+      update_method: "POST" # 'POST' o 'PUT' (por defecto POST)
 ```
 
 ### Opciones del Backend HTTP
@@ -32,6 +137,9 @@ backend:
 | `address` | `string` | **Requerido.** URL para operaciones de lectura (`GET`) y escritura (`POST`/`PUT`) del estado. |
 | `lock_address` | `string` | URL para adquirir el bloqueo de estado mediante petición `POST`. |
 | `unlock_address` | `string` | URL para liberar el bloqueo mediante petición `DELETE`. |
+| `lock_method` | `string` | Método HTTP para bloquear (por defecto `POST`). |
+| `unlock_method` | `string` | Método HTTP para desbloquear (por defecto `DELETE`). |
+| `update_method` | `string` | Método HTTP para guardar el estado (`POST` o `PUT`, por defecto `POST`). |
 | `headers` | `map` | Cabeceras HTTP personalizadas (autenticación `Bearer`, tokens, metadatos). |
 | `username` / `password` | `string` | Credenciales para autenticación HTTP Basic automática. |
 
@@ -44,23 +152,42 @@ address: "https://api.empresa.com/v1/workspaces/{workspace}/state"
 
 ---
 
- 2. Custom Backend (`custom`)
+## 3. AWS S3 y Almacenamiento Compatible (`s3`, MinIO, R2, Ceph, OCI)
 
-Si tu infraestructura requiere almacenamiento propietario, conexiones directas a bases de datos, Vault corporativo o firmas criptográficas personalizadas, puedes implementar tu propio backend:
+Soporta AWS S3 nativo, DynamoDB para *state locking*, OCI Object Storage (`oci` o `s3` con `namespace`) y cualquier almacenamiento compatible con S3:
 
 ```yaml
 # main.yml
-backend:
-  custom:
-    source: ".testform/backends/vault-backend.js" # o paquete npm "@org/custom-backend"
-    # El resto de propiedades son libres y se entregan al constructor:
-    endpoint: "https://vault.internal.com"
-    tokenEnv: "VAULT_TOKEN"
+testform:
+  backend:
+    s3:
+      bucket: "empresa-qa-states"
+      key: "core/testform.state"
+      region: "us-east-1"
+      endpoint: "https://minio.internal.com:9000" # Endpoint custom para MinIO/R2
+      force_path_style: true                      # Requerido para MinIO, Ceph u OCI
+      dynamodb_table: "testform-locks"            # Tabla opcional para state locking
 ```
 
-### Implementación del Custom Backend
+Para configuraciones detalladas de **AWS S3**, **OCI Object Storage (`oci`)**, **Azure Blob Storage (`azurerm`)** y **Google Cloud Storage (`gcs`)**, consulta la guía de [Backends Multi-Cloud](/testform-docs/es/docs/guides/multi-cloud-backends/).
 
-Solo necesitas crear una clase que cumpla la interfaz de almacenamiento:
+---
+
+## 4. Custom Backend (`custom`)
+
+Si tu infraestructura requiere almacenamiento propietario, conexiones directas a bases de datos, Vault corporativo o firmas criptográficas personalizadas, puedes implementar tu propio backend con la interfaz [`IBackend`](/testform-docs/es/api/backends/):
+
+```yaml
+# main.yml
+testform:
+  backend:
+    custom:
+      source: ".testform/backends/vault-backend.js" # o paquete npm "@org/custom-backend"
+      endpoint: "https://vault.internal.com"
+      tokenEnv: "VAULT_TOKEN"
+```
+
+### Implementación Mínima de un Custom Backend
 
 ```javascript
 // .testform/backends/vault-backend.js
@@ -101,57 +228,25 @@ module.exports = VaultBackend;
 
 ---
 
- 3. GitHub como Bucket de Estado Nativo
+## 5. Backend Local (`local`)
 
-Almacena el estado directamente en una rama Git de tu repositorio sin requerir infraestructura externa:
-
-```yaml
-# main.yml
-backend:
-  github:
-    owner: "fromeroc9"
-    repository: "testform"
-    branch: "testform-state"          # Rama que actúa como bucket
-    path: "production.testform.state" # Ruta del objeto de estado
-    token_env: "GITHUB_TOKEN"
-```
-
----
-
- 4. AWS S3 y Almacenamiento Compatible (MinIO, Cloudflare R2, Ceph, OCI)
-
-Soporta AWS S3 nativo y cualquier servicio compatible con la API de S3:
+Almacena el estado en el disco local (`./testform.state`), predeterminado cuando no se especifica ningún backend en `main.yml`:
 
 ```yaml
 # main.yml
-backend:
-  s3:
-    bucket: "empresa-qa-states"
-    key: "core/testform.state"
-    region: "us-east-1"
-    endpoint: "https://minio.internal.com:9000" # Endpoint custom para MinIO/R2
-    force_path_style: true                      # Requerido para MinIO o Ceph
-    dynamodb_table: "testform-locks"            # Tabla opcional para state locking
+testform:
+  backend:
+    local:
+      path: "./testform.state"
 ```
+
+También soporta la forma abreviada escalar `backend: local` cuando se declara en la raíz o dentro de `testform:`.
 
 ---
 
- 5. Backend Local
+## State Locking y Desbloqueo Forzado
 
-Almacena el estado en el disco local (predeterminado en desarrollo):
-
-```yaml
-# main.yml
-backend:
-  local:
-    path: "./testform.state"
-```
-
----
-
- State Locking y Desbloqueo Forzado
-
-Cuando se ejecutan operaciones concurrentes, Testform adquiere automáticamente un bloqueo:
+Cuando se ejecutan operaciones contra backends que soportan bloqueo distribuido (`github`, `s3` con `dynamodb_table`, `azurerm`, `gcs`, `http`), Testform adquiere automáticamente un bloqueo antes de continuar:
 
 ```bash
 $ testform apply
@@ -160,8 +255,12 @@ Acquiring state lock on backend... [OK]
 Releasing state lock... [OK]
 ```
 
-Si un pipeline de CI/CD se detiene abruptamente y el bloqueo queda huérfano:
-
-```bash
-testform force-unlock <LOCK-ID>
-```
+- En ejecuciones de **solo lectura** (por ejemplo previews en Pull Requests donde no deseas escribir archivos `.lock` en el backend), puedes pasar `-lock=false`:
+  ```bash
+  testform init -lock=false
+  testform plan -lock=false
+  ```
+- Si un pipeline de CI/CD se detiene abruptamente y el bloqueo queda huérfano, libéralo manualmente con:
+  ```bash
+  testform force-unlock <LOCK-ID>
+  ```

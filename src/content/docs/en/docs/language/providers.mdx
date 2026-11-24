@@ -649,6 +649,37 @@ export default class PokedexProvider {
 
 ---
 
+### 5.4. Relationship and Dependency Management in Handlers (`context`)
+
+When a provider needs to establish relational or hierarchical associations between resources (e.g. linking testcases as sub-issues to a test run in GitLab/Jira, grouping runs under a test plan, or in infrastructure providers wiring containers to virtual networks), it manages them directly within its own `create` or `update` handler using the `context` argument:
+
+```typescript
+resources: {
+  testplan: {
+    create: async (data, context) => {
+      // 1. Create the primary resource
+      const result = await this.createIssue(data);
+
+      // 2. Resolve and associate dependencies using context state ledger
+      if (context?.scenario?.custom?.testruns && context?.state) {
+        const runs = context.state.getResources('testrun');
+        for (const run of runs) {
+          await this.addSubIssue(result.id, run.attributes.issueNumber);
+        }
+      }
+      return result;
+    }
+  }
+}
+```
+
+* **Terraform Parity:** `testform apply` remains a pure, uniform CRUD loop (`create`, `read`, `update`, `delete`) without intermediate vendor hooks or side effects.
+* **Provider Autonomy:** Each provider encapsulates its domain relations atomically.
+* **Hierarchical Parity:** Plans (`testplan`) link hierarchically to test runs (`testrun`), while test runs (`testrun`) report test case details (`testcase`) in their Markdown verdict table without redundant issue links.
+* **Automatic Evidence Uploads:** Remote providers like GitLab and GitHub automatically upload screenshot attachments to their native uploads API/CDN and rewrite relative paths into permanent remote URLs in the ticket description.
+
+---
+
 ## 6. Lifecycle and CLI Commands
 
 ### Initialization (`testform init`)

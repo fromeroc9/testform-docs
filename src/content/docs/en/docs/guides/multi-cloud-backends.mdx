@@ -1,43 +1,49 @@
 ---
 title: "Multi-Cloud Backends"
+description: "Configure remote Testform state storage on OCI, AWS S3, Azure Blob Storage, and Google Cloud Storage using dictionary mode."
 ---
 
+Configure secure remote state storage for `testform.state` in your enterprise cloud of choice inside `main.yml` using **dictionary mode** under `testform.backend`.
 
-Configure secure, remote state storage for `testform.state` in your enterprise cloud of choice.
+> [!IMPORTANT]
+> Any remote backend requires running `testform init` before executing `plan`, `apply`, `refresh`, or `destroy`. See [Backends & State Storage](/testform-docs/en/docs/language/backends/) for full `backend` block rules and credential practices.
 
 ## 1. Oracle Cloud Infrastructure (OCI Object Storage)
 
-OCI Object Storage stores your state file in a cloud bucket utilizing conditional ETags for atomic writes:
+OCI Object Storage stores your state ledger in an S3-compatible bucket using your tenancy `namespace` endpoint:
 
 ```yaml
-version: "1.0"
-
-backend:
-  type: "oci"
-  namespace: "my-tenancy-namespace"
-  bucket: "testform-state"
-  object_name: "production/testform.state"
-  tenancy_id: "ocid1.tenancy.oc1..aaaaaaaaxxxxx"
-  user_id: "ocid1.user.oc1..aaaaaaaayyyyy"
-  fingerprint: "20:3b:97:13:55:1c:..."
-  private_key_path: "~/.oci/oci_api_key.pem"
-  region: "us-ashburn-1"
+# main.yml
+testform:
+  required_version: ">= 1.0.0"
+  backend:
+    oci:
+      namespace: "my-tenancy-namespace"
+      bucket: "testform-state"
+      key: "production/testform.state"
+      region: "us-ashburn-1"
 ```
+
+Required OCI S3-compatible environment variables (Customer Secret Keys):
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_REGION`
 
 ## 2. Amazon Web Services (AWS S3 + DynamoDB)
 
-Combines an S3 bucket for state storage with a DynamoDB table for distributed mutex locking:
+Combines an S3 bucket for state storage with an optional DynamoDB table for distributed mutex locking:
 
 ```yaml
-version: "1.0"
-
-backend:
-  type: "s3"
-  bucket: "company-testform-tfstate"
-  key: "core/testform.state"
-  region: "us-east-1"
-  dynamodb_table: "testform-locks"
-  encrypt: true
+# main.yml
+testform:
+  required_version: ">= 1.0.0"
+  backend:
+    s3:
+      bucket: "company-testform-tfstate"
+      key: "core/testform.state"
+      region: "us-east-1"
+      dynamodb_table: "testform-locks"
+      encrypt: true
 ```
 
 Required environment variables:
@@ -45,39 +51,38 @@ Required environment variables:
 - `AWS_SECRET_ACCESS_KEY`
 - `AWS_REGION`
 
-## 3. Microsoft Azure Blob Storage
+## 3. Microsoft Azure Blob Storage (`azurerm`)
 
-Stores the state in Azure Blob Storage utilizing native blob leases for mutual exclusion:
+Stores state in Azure Blob Storage utilizing native blob leases for mutual exclusion:
 
 ```yaml
-version: "1.0"
-
-backend:
-  type: "azure"
-  storage_account: "companytestform"
-  container: "tfstate"
-  blob_name: "qa/testform.state"
+# main.yml
+testform:
+  required_version: ">= 1.0.0"
+  backend:
+    azurerm:
+      resource_group_name: "rg-testform-qa"
+      storage_account_name: "companytestform"
+      container_name: "tfstate"
+      key: "qa/testform.state"
 ```
 
-Required environment variables:
-- `ARM_CLIENT_ID`
-- `ARM_CLIENT_SECRET`
-- `ARM_SUBSCRIPTION_ID`
-- `ARM_TENANT_ID`
+Required environment variable:
+- `AZURE_STORAGE_CONNECTION_STRING` (or pass `connection_string` via `-backend-config` without committing secrets to Git).
 
-## 4. Google Cloud Storage (GCS)
+## 4. Google Cloud Storage (`gcs`)
 
-Utilizes GCS object generation preconditions to prevent concurrent updates:
+Utilizes GCS object generation preconditions (`ifGenerationMatch: 0` on `<state>.tflock`) to prevent concurrent updates:
 
 ```yaml
-version: "1.0"
-
-backend:
-  type: "gcs"
-  bucket: "company-testform-state"
-  prefix: "qa-environments"
+# main.yml
+testform:
+  required_version: ">= 1.0.0"
+  backend:
+    gcs:
+      bucket: "company-testform-state"
+      prefix: "qa-environments"
 ```
 
 Required environment variable:
 - `GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json`
-

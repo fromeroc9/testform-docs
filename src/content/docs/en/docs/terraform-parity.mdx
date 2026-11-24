@@ -108,9 +108,9 @@ Each evaluated item examines four dimensions:
 - **Applies to Testform?:** **Yes (High priority)**. Essential for compliance and security in CI/CD.
 
 ### 9. Backends
-- **Testform Status:** `Implemented` (Native dictionary mode for `local`, `http`/`rest`, `s3`, `azurerm`, `gcs`, `oci`, `github`, and `custom` backends).
-- **Terraform Purpose:** Store state files in shared remote storage (S3, GCS, Azure Blob, HTTP, Terraform Cloud) with distributed locking.
-- **Comparison / Gap:** Complete parity. Testform provides native HTTP/REST backends with dedicated lock/unlock endpoints, standard cloud providers (S3/Azure/GCS/OCI) with environment credential resolution and custom endpoint override (e.g. MinIO/LocalStack), and custom backends (`backend.custom:`) dynamically loaded from JavaScript/TypeScript classes via `source`. All configured in clean dictionary syntax without requiring `type:`.
+- **Testform Status:** `Implemented` (Native dictionary mode under `testform.backend` or root `backend:` for `local`, `http`/`rest`, `s3`, `azurerm`, `gcs`, `oci`, `github`, and `custom` backends).
+- **Terraform Purpose:** Store state files in shared remote storage (S3, GCS, Azure Blob, HTTP, Terraform Cloud) with distributed locking and mandatory initialization (`terraform init`).
+- **Comparison / Gap:** Complete parity. Testform enforces mandatory `testform init` before running commands against any remote backend (`Backend initialization required` and `Backend configuration changed` with `-migrate-state` / `-reconfigure`), supports the `github` backend with `"owner/repo"` parsing, automatic initialization of empty repos, fallback from `provider.github`, and credential resolution (`credentials.json`, `token_env`, `GITHUB_TOKEN`, `GH_TOKEN`), plus HTTP/REST, S3/OCI/Azure/GCS, and `backend.custom` without requiring `type:`.
 - **Applies to Testform?:** **100% Implemented**. Vital for synchronizing test state and locking across parallel CI/CD runners (GitHub Actions, Jenkins, GitLab CI).
 
 ### 10. Search and Import

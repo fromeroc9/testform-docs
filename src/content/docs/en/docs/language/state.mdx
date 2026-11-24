@@ -152,15 +152,20 @@ What happens if two files share the exact same basename across different folders
 
 ---
 
-## Distributed State Locking (`testform.state.lock`)
+## Distributed State Locking & Remote Backends
 
-To prevent race conditions and state corruption when multiple engineers or parallel CI/CD runners access the same repository, Testform enforces **atomic state locking**:
+Just as in [Terraform State](https://developer.hashicorp.com/terraform/language/state), where and how state is stored depends on your configured [backend](./backends):
 
-1. Before starting a plan or execution, Testform acquires an exclusive lock (`testform.state.lock`).
-2. The lock records process ID (PID), user, hostname, and timestamp.
-3. If another process attempts to access the locked state:
+- **`local` backend (default):** Persists state on the local filesystem (`./testform.state`) and creates `./testform.state.lock` during mutating operations.
+- **Remote backends (`github`, `s3`, `azurerm`, `gcs`, `oci`, `http`, `custom`):** Store shared state for team and CI/CD collaboration and require running **`testform init`** before executing `plan`, `apply`, `refresh`, or `destroy`.
+
+To prevent race conditions and state corruption when multiple engineers or parallel CI/CD runners access the same workspace, Testform enforces **distributed state locking**:
+
+1. Before running locked operations (`apply`, `destroy`, or `plan`), Testform acquires a mutex in the active backend (e.g. `<path>.lock` on the `github` backend branch, a DynamoDB item in `s3`, a blob lease in `azurerm`, or `.tflock` in `gcs`).
+2. The lock record captures the unique lock UUID, operation type, OS user/hostname (`who`), and UTC timestamp.
+3. If another process attempts to access the locked state, Testform halts with diagnostic lock info:
 ```text
-[ERROR] Error acquiring the state lock:
+Error acquiring the state lock:
   Lock Info:
     ID:        a9b8c7-lock
     Path:      testform.state
@@ -168,6 +173,9 @@ To prevent race conditions and state corruption when multiple engineers or paral
     Who:       runner-1@ci-node-4
     Created:   2026-10-24 17:15:00 UTC
 ```
+
+> [!TIP]
+> In Pull Request pipelines or read-only checks where you want to preview diffs without writing `.lock` artifacts to the remote backend (for example, when QA contributors only push `.feature` changes and state writes are restricted), pass `-lock=false` via `testform init -lock=false` and `testform plan -lock=false`. To recover from an orphaned lock after a runner crash, use `testform force-unlock <LOCK_ID>`.
 
 ---
 

@@ -650,6 +650,37 @@ export default class PokedexProvider {
 
 ---
 
+### 5.4. Gestión de Relaciones y Dependencias en el Manejador (`context`)
+
+Cuando un proveedor necesita gestionar dependencias o relaciones entre recursos (por ejemplo: vincular casos de prueba como sub-issues de una ejecución en GitLab/Jira, agrupar ejecuciones en planes de prueba, o en infraestructura conectar contenedores a redes virtuales), lo gestiona directamente dentro de su propio `create` o `update` mediante el parámetro `context`:
+
+```typescript
+resources: {
+  testplan: {
+    create: async (data, context) => {
+      // 1. Crear el recurso principal
+      const result = await this.createIssue(data);
+
+      // 2. Resolver y vincular dependencias usando el state ledger del contexto
+      if (context?.scenario?.custom?.testruns && context?.state) {
+        const runs = context.state.getResources('testrun');
+        for (const run of runs) {
+          await this.addSubIssue(result.id, run.attributes.issueNumber);
+        }
+      }
+      return result;
+    }
+  }
+}
+```
+
+* **Paridad con Terraform:** `testform apply` permanece 100% como un bucle CRUD estándar (`create`, `read`, `update`, `delete`). No requiere pasos extra ni acoplamientos en el motor del CLI.
+* **Autonomía del Provider:** Cada proveedor modela sus propias relaciones de forma atómica y encapsulada.
+* **Jerarquía Homogénea:** Los planes (`testplan`) vinculan jerárquicamente a sus ejecuciones (`testrun`), mientras que las ejecuciones (`testrun`) reportan el veredicto y detalle de los casos de prueba (`testcase`) dentro de su tabla Markdown sin enlaces redundantes.
+* **Subida Automática de Evidencias:** Proveedores remotos como GitLab y GitHub suben automáticamente capturas de pantalla y evidencias adjuntas (mediante la API de uploads/CDN) y sustituyen las rutas relativas en el cuerpo del ticket por las URLs remotas.
+
+---
+
 ## 6. Ciclo de Vida y Comandos de la CLI
 
 ### Inicialización (`testform init`)

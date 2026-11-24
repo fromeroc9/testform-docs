@@ -33,6 +33,19 @@ Testform cannot proceed without risk of state corruption.
 Wait for the previous operation to complete.
 ```
 
+## Disabling Locking for Read-Only Previews (`-lock=false`)
+
+In Pull Request pipelines that only run `testform plan` to preview changes (especially when the backend writes a lock marker such as `backend.github` and the PR job uses read-only credentials), you can explicitly disable state locking:
+
+```bash
+testform init -lock=false
+testform plan -lock=false
+```
+
+:::caution
+Never pass `-lock=false` during `testform apply` or `testform destroy` across concurrent runners, as concurrent writes can corrupt the state file.
+:::
+
 ## Safe Force Unlock (testform force-unlock)
 
 If a CI/CD job is abruptly cancelled by a runner timeout or SIGKILL, the distributed lock may remain orphaned.

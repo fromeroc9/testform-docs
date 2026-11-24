@@ -107,9 +107,9 @@ Cada punto analizado evalúa cuatro dimensiones:
 - **¿Aplica a Testform?:** **Sí (Alta prioridad)**. Seguridad y cumplimiento regulatorio en reportes CI/CD.
 
 ### 9. Backends
-- **Estado en Testform:** `Implementado` (Modo diccionario nativo para `local`, `http`/`rest`, `s3`, `azurerm`, `gcs`, `oci`, `github` y backends `custom`).
-- **Motivo en Terraform:** Almacenar el archivo de estado en almacenamiento remoto compartido (S3, Azure Blob, GCS, HTTP, Terraform Cloud) con bloqueo concurrente.
-- **Comparado / Faltante (Gap):** Paridad completa. Testform soporta backend HTTP/REST nativo con endpoints dedicados para lock/unlock, proveedores Cloud estándar en S3/Azure/GCS/OCI con credenciales de entorno y endpoint personalizado (ej. MinIO/LocalStack), y backends dinámicos `backend.custom:` vía clases JavaScript/TypeScript cargadas desde `source`. Todo configurado como diccionario en `main.yml` sin directivas `type:`.
+- **Estado en Testform:** `Implementado` (Modo diccionario nativo bajo `testform.backend` o `backend:` raíz para `local`, `http`/`rest`, `s3`, `azurerm`, `gcs`, `oci`, `github` y backends `custom`).
+- **Motivo en Terraform:** Almacenar el archivo de estado en almacenamiento remoto compartido (S3, Azure Blob, GCS, HTTP, Terraform Cloud) con bloqueo concurrente e inicialización obligatoria (`terraform init`).
+- **Comparado / Faltante (Gap):** Paridad completa. Testform exige `testform init` obligatorio antes de operar sobre cualquier backend remoto (`Backend initialization required` y `Backend configuration changed` con `-migrate-state` / `-reconfigure`), soporta backend `github` con formato `"owner/repo"`, auto-inicialización de repositorios vacíos, herencia desde `provider.github` y resolución de credenciales (`credentials.json`, `token_env`, `GITHUB_TOKEN`, `GH_TOKEN`), además de HTTP/REST, S3/OCI/Azure/GCS y `backend.custom` sin directivas `type:`.
 - **¿Aplica a Testform?:** **Implementado al 100%**. Esencial para sincronizar estado y bloqueos concurrentes en pipelines distribuidos de CI/CD (GitHub Actions, Jenkins, GitLab CI).
 
 ### 10. Search and Import

@@ -64,8 +64,11 @@ Directivas avanzadas que alteran la orquestación:
 Búsqueda y filtrado de recursos en el estado con `testform query` e incorporación de incidencias remotas con `testform import`.
 
 ### 10. [State](./state)
-El ledger de conciliación (`testform.state`), el bloqueo concurrente (`testform.state.lock`) y la detección de deriva (drift).
+El ledger de conciliación (`testform.state`), el bloqueo concurrente y la detección de deriva (drift).
 
-### 11. [Test and Validate](./validate)
+### 11. [Backends](./backends)
+Almacenamiento local o remoto (`github`, `s3`, `azurerm`, `gcs`, `oci`, `http`, `custom`), inicialización obligatoria con `testform init` y migración de estado.
+
+### 12. [Test and Validate](./validate)
 Verificación estática con `testform validate` e inspección previa con `testform plan` antes de ejecutar.
 

@@ -177,11 +177,42 @@ Testform continuously tracks the active backend configuration inside `.testform/
 - `-migrate-state`: Reads the existing state from the old backend and transfers it to the new remote backend.
 - `-reconfigure`: Overwrites the active configuration with the new settings without attempting state migration.
 
+## Mandatory Initialization for Remote Backends
+
+Just like Terraform, whenever `main.yml` configures any remote backend (`github`, `s3`, `azurerm`, `gcs`, `oci`, `http`, or `custom`), operational commands (`plan`, `apply`, `refresh`, `destroy`, and `state`) enforce that the working directory has been initialized against `.testform/cache/backend.json`.
+
+If you clone a repository and run `testform plan` or `testform apply` directly without running `testform init` first, Testform halts execution:
+
+```text
+╷
+│ Error: Backend initialization required: please run "testform init"
+│
+│ Run "testform init" to initialize the backend with the new configuration.
+╵
+```
+
 ## Required Attribute Validation
 
-If the backend configuration lacks mandatory parameters, Testform enforces provider requirements:
+If the backend configuration lacks mandatory parameters or credentials, Testform enforces provider requirements:
 
-- **Interactive prompts:** If `key` is omitted, Testform prompts interactively on the terminal:
+- **Missing repository or token (`github` backend):**
+  - If `owner` or `repository` is missing (and not inherited from `provider.github`):
+    ```text
+    ╷
+    │ Error: Missing repository configuration
+    │
+    │ The GitHub backend requires 'owner' and 'repository' (or 'repo').
+    ╵
+    ```
+  - If no token is found in `~/.testform.d/credentials.json` or the variable specified in `token_env` (default `GITHUB_TOKEN`):
+    ```text
+    ╷
+    │ Error: GitHub token not found
+    │
+    │ Environment variable "GITHUB_TOKEN" is not set.
+    ╵
+    ```
+- **Interactive prompts (`s3`):** If `key` is omitted, Testform prompts interactively on the terminal:
   ```text
   key
     The path to the state file inside the bucket

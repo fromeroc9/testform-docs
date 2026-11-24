@@ -151,15 +151,20 @@ Testform opera de manera bidireccional y transparente con ambas identidades en t
 
 ---
 
-## Bloqueo de Estado Concurrente (`testform.state.lock`)
+## Bloqueo de Estado Concurrente y Backend Remoto
 
-Para prevenir condiciones de carrera y corrupción cuando múltiples miembros del equipo o pipelines de CI/CD ejecutan pruebas simultáneamente, Testform implementa **bloqueo atómico de estado**:
+Al igual que en [Terraform State](https://developer.hashicorp.com/terraform/language/state), el almacenamiento físico del archivo de estado depende del [backend configurado](./backends):
 
-1. Antes de iniciar cualquier plan o aplicación, Testform adquiere un lock (`testform.state.lock`).
-2. El archivo de bloqueo registra el ID del proceso (PID), usuario, hostname y timestamp.
-3. Si otro proceso intenta acceder al estado mientras está bloqueado:
+- **Backend `local` (por defecto):** Guarda el estado en disco local (`./testform.state`) y crea `./testform.state.lock` durante operaciones mutativas.
+- **Backends remotos (`github`, `s3`, `azurerm`, `gcs`, `oci`, `http`, `custom`):** Almacenan el estado de forma compartida para equipos y CI/CD, y requieren ejecutar **`testform init`** antes de operar con `plan`, `apply`, `refresh` o `destroy`.
+
+Para prevenir condiciones de carrera y corrupción cuando múltiples miembros del equipo o pipelines de CI/CD ejecutan pruebas simultáneamente, Testform implementa **bloqueo distribuido de estado** (*State Locking*):
+
+1. Antes de iniciar operaciones con bloqueo activo (`apply`, `destroy` o `plan`), Testform adquiere un mutex en el backend configurado (por ejemplo, `<path>.lock` en la rama del backend `github`, registro en DynamoDB en `s3`, lease en `azurerm`, o `.tflock` en `gcs`).
+2. El registro de bloqueo almacena el ID único (UUID), operación, usuario/hostname (`who`) y marca temporal UTC.
+3. Si otro proceso intenta acceder al estado mientras está bloqueado, Testform aborta con el detalle del lock:
 ```text
-[ERROR] Error acquiring the state lock:
+Error acquiring the state lock:
   Lock Info:
     ID:        a9b8c7-lock
     Path:      testform.state
@@ -167,6 +172,9 @@ Para prevenir condiciones de carrera y corrupción cuando múltiples miembros de
     Who:       runner-1@ci-node-4
     Created:   2026-10-24 17:15:00 UTC
 ```
+
+> [!TIP]
+> En pipelines de Pull Request o entornos donde quieras validar cambios en **modo solo lectura** sin escribir archivos `.lock` en el backend remoto (por ejemplo, cuando QA solo sube archivos `.feature` y la rama de estado está protegida), utiliza `-lock=false` en `testform init -lock=false` y `testform plan -lock=false`. Si un bloqueo queda huérfano tras una caída abrupta, libéralo con `testform force-unlock <LOCK_ID>`.
 
 ---
 

@@ -32,7 +32,8 @@ validate:
 plan:
   stage: plan
   script:
-    - npx testform plan -out=testform.plan.bin
+    - npx testform init -lock=false
+    - npx testform plan -lock=false -out=testform.plan.bin
   artifacts:
     name: "testform-plan-$CI_COMMIT_SHORT_SHA"
     paths:
@@ -44,6 +45,7 @@ plan:
 apply:
   stage: apply
   script:
+    - npx testform init
     - npx testform apply -auto-approve
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

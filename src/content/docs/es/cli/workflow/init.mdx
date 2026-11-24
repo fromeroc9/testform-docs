@@ -176,11 +176,42 @@ Testform realiza un seguimiento continuo de la configuración activa del backend
 - `-migrate-state`: Lee el estado actual desde el backend previo y lo migra hacia el nuevo destino remoto.
 - `-reconfigure`: Descarta el backend previo y guarda la nueva configuración sin intentar transferir datos de estado existentes.
 
+## Inicialización Obligatoria en Backends Remotos
+
+Al igual que en Terraform, cuando `main.yml` configura cualquier backend remoto (`github`, `s3`, `azurerm`, `gcs`, `oci`, `http` o `custom`), los comandos operativos (`plan`, `apply`, `refresh`, `destroy` y `state`) verifican que el directorio de trabajo haya sido inicializado contra ese backend en `.testform/cache/backend.json`.
+
+Si clonas el repositorio y ejecutas directamente `testform plan` o `testform apply` sin haber ejecutado `testform init`, Testform detiene la ejecución:
+
+```text
+╷
+│ Error: Backend initialization required: please run "testform init"
+│
+│ Run "testform init" to initialize the backend with the new configuration.
+╵
+```
+
 ## Validación de Atributos Obligatorios
 
-Si la configuración del backend carece de campos obligatorios, Testform valida los requerimientos de cada proveedor:
+Si la configuración del backend carece de campos obligatorios o credenciales, Testform valida los requerimientos de cada proveedor:
 
-- **Atributos interactivos:** Si falta `key`, Testform solicitará su valor en consola de forma interactiva:
+- **Falta de repositorio o token (Backend `github`):**
+  - Si faltan `owner` o `repository` (y tampoco se definen en `provider.github`):
+    ```text
+    ╷
+    │ Error: Missing repository configuration
+    │
+    │ The GitHub backend requires 'owner' and 'repository' (or 'repo').
+    ╵
+    ```
+  - Si no existe token en `~/.testform.d/credentials.json` ni en la variable configurada en `token_env` (por defecto `GITHUB_TOKEN`):
+    ```text
+    ╷
+    │ Error: GitHub token not found
+    │
+    │ Environment variable "GITHUB_TOKEN" is not set.
+    ╵
+    ```
+- **Atributos interactivos (`s3`):** Si falta `key`, Testform solicitará su valor en consola de forma interactiva:
   ```text
   key
     The path to the state file inside the bucket

@@ -65,8 +65,11 @@ Directives altering scenario orchestration:
 Resource discovery and status filtering with `testform query` and remote issue adoption with `testform import`.
 
 ### 10. [State](./state)
-State ledger (`testform.state`), distributed locking (`testform.state.lock`), and drift detection.
+State ledger (`testform.state`), distributed locking, and drift detection.
 
-### 11. [Test and Validate](./validate)
+### 11. [Backends](./backends)
+Local and remote state storage (`github`, `s3`, `azurerm`, `gcs`, `oci`, `http`, `custom`), mandatory `testform init` enforcement, and state migration.
+
+### 12. [Test and Validate](./validate)
 Static analysis with `testform validate` and speculative previews with `testform plan` prior to execution.
 

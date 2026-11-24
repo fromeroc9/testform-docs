@@ -33,6 +33,19 @@ Testform no continuara para evitar danar el archivo de estado.
 Espera a que el proceso anterior finalice.
 ```
 
+## Desactivar el Bloqueo en Lecturas (`-lock=false`)
+
+En pipelines de Pull Request donde se ejecuta únicamente `testform plan` para previsualizar cambios (especialmente cuando el backend requiere escritura para registrar el bloqueo, como `backend.github`, y el token de PR es de solo lectura), puedes omitir el lock explícitamente:
+
+```bash
+testform init -lock=false
+testform plan -lock=false
+```
+
+:::caution
+Nunca desactives el bloqueo durante `testform apply` o `testform destroy` en pipelines concurrentes, ya que expones el archivo de estado a condiciones de carrera.
+:::
+
 ## Liberacion Forzada (testform force-unlock)
 
 Si un pipeline de CI/CD fue cancelado abruptamente a nivel de sistema (por ejemplo, timeout de GitHub Actions o terminacion forzada del contenedor), el bloqueo puede quedar huerfano.

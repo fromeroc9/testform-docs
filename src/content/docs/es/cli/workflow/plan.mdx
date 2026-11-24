@@ -8,7 +8,7 @@ testform [opciones globales] plan [opciones]
 
 El comando `testform plan` genera un plan de ejecución. Evalúa tus archivos `.feature` locales contra el archivo de estado actual (`testform.state`) y la infraestructura remota, calculando con exactitud el conjunto de acciones necesarias para alinear las incidencias remotas con el código local.
 
-Es una **operación especulativa y de solo lectura** que no altera ningún recurso remoto.
+Es una **operación especulativa y de solo lectura** que no altera ningún recurso remoto. Si tu configuración usa un [backend remoto](/testform-docs/es/docs/language/backends/), recuerda ejecutar `testform init` previamente.
 
 ## Opciones del Comando
 
@@ -18,6 +18,8 @@ Es una **operación especulativa y de solo lectura** que no altera ningún recur
 | `-destroy` | `false` | Genera un plan para destruir todos los recursos gestionados en lugar de aplicar actualizaciones. |
 | `-refresh=false` | `true` | Omite la consulta a la API remota para detectar desviaciones fuera de banda antes de planificar. |
 | `-target=address` | — | Limita la planificación a una única identidad de recurso (por ejemplo: `login.case.feature.@tc-1`). Admite múltiples declaraciones. |
+| `-lock=false` | `true` | Desactiva la adquisición del bloqueo de estado durante el plan (útil en Pull Requests de solo lectura con backends como `github`). |
+| `-lock-timeout=0s` | `0s` | Tiempo máximo de espera/reintento si el estado está bloqueado por otro proceso. |
 | `-json` | `false` | Emite el plan en formato estructurado JSON. |
 | `-detailed-exitcode` | `false` | Devuelve códigos de salida detallados (`0` = plan vacío sin cambios, `2` = cambios pendientes de aplicar). |
 | `-watch`, `--watch` | `false` | Ejecuta el comando en modo continuo e interactivo, monitoreando archivos `.feature` y recalculando el diff en milisegundos mediante la caché incremental de AST. |
