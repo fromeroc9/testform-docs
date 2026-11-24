@@ -288,7 +288,7 @@ In `testform plan`, `testform apply`, and `testform refresh`:
   ```
 - **Agnostic Resource Block Declaration:** Stays **100% provider-agnostic**, using pure canonical domain types (`+ resource "testcase" "..." { ... }`).
 
-## Visual Verdict Banners & Native GitHub Auto-Close
+## Visual Verdict Banners in Executions
 For issue-tracking providers (GitHub, GitLab):
 - **GFM Markdown Banners:** `testrun` and `testplan` embed an execution verdict header directly into the Issue description:
   ```markdown
@@ -296,12 +296,14 @@ For issue-tracking providers (GitHub, GitLab):
   > Passed: 12 | Failed: 0 | Blocked: 0 | Skipped: 1 | Total: 13
   ```
 - **Task Checklist Synchronization:** Test cases render with task checkboxes (`- [x] #101 - **passed**`, `- [ ] #102 - **failed**`).
-- **Native Lifecycle (Auto-Close):** When the overall rollup verdict evaluates to `passed`, the remote Issue is automatically closed (`state: 'closed'`, `state_reason: 'completed'`). If any failure, blocker, or pending test exists, the Issue is maintained or reopened in `state: 'open'`.
 
-## Dynamic Project Status Synchronization (Zero Hardcoded Fields)
-- Testform **does not assume** fixed project column names.
-- If you declare a status column in `main.yml` (e.g. `Status` or `status`), the engine discovers the exact casing declared by the user and synchronizes the rollup verdict into that column.
-- If unconfigured, no synthetic field is injected into `custom_fields`.
+## Board-First Architecture (Sovereign Project Board Synchronization)
+Rather than fighting or micro-managing remote issue `state` (`open` / `closed`), Testform implements the **Board-First** model:
+- **The Project Board's `Status` Column is the Single Source of Truth**: This completely eliminates infinite drift loops with native provider workflows (such as GitHub Projects *"When Status is set to Done -> Close Issue"*).
+- **Primitive-Specific Rules**:
+  - `testcase`: Board column is populated strictly by the contract `Status` field. If unconfigured, the board column remains clean.
+  - `testrun` and `testplan`: The engine's autocalculated rollup verdict (`passed`, `failed`, `pending`, `skipped`) automatically updates the board's `Status` column; explicit `* field Status` written in the feature acts as an immediate manual override.
+  - `bug`: The scenario's `* set status` (`open`, `in_progress`, `resolved`, `closed`) travels implicitly and directly to the board's `Status` column, immune to global default values (`Status: "Done"`) or manual field overrides.
 
 ---
 

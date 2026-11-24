@@ -159,6 +159,35 @@ testform plan -target="pix.boleto.case.feature"
 
 ---
 
+## Path Flexibility in CLI `-target`
+
+When running commands such as `testform plan`, `testform apply`, or `testform diff` with the `-target` flag, the CLI intelligently matches file paths and logical identities without requiring manual formatting:
+
+1. **Path with container / scaffold folder**: Supports full relative filesystem paths as auto-completed by the shell (supporting both Unix `/` and Windows `\` slashes):
+   ```bash
+   testform plan -target="testcase/Magento/checkout.case.feature"
+   testform plan -target="testcase\Magento\checkout.case.feature"
+   testform plan -target="testcase/Magento/checkout.case.feature.@tc-01"
+   ```
+2. **Canonical scaffold-delimited address**:
+   ```bash
+   testform plan -target="Magento/checkout.case.feature"
+   testform plan -target="Magento/checkout.case.feature.@tc-01"
+   ```
+3. **Namespace-based address (`@ns`)**:
+   ```bash
+   testform plan -target="magento.checkout.case.feature"
+   testform plan -target="magento.checkout.case.feature.@tc-01"
+   ```
+4. **Individual Tag target**:
+   ```bash
+   testform plan -target="@tc-01"
+   ```
+
+The selector engine automatically detects and strips container prefixes (`testcase/`, `testruns/`, `testplans/`, `bugs/`) and reconciles them against the state ledger without duplicate creates or accidental destroys.
+
+---
+
 ## VS Code & Antigravity IDE Integration
 
 The official **Testform DSL** extension (`testform-vscode`) integrates natively with this model:

@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.4] - 2026-11-23
+
+### Added
+
+- **Bug Steps to Reproduce & Clean Defect Body:**
+  - Documented that Gherkin steps in bugs are rendered under `### 🐾 Steps to Reproduce`.
+  - Removed boilerplate descriptions when no scenario description is present.
+  - Documented the native GitHub attachment uploader (`uploads.github.com/user-attachments/assets`) for live image embedding during `testform apply`.
+- **Board-First 2-Status Synchronization Architecture (`docs/test-as-code/resources.mdx`):**
+  - Documented that status synchronization is 100% board-driven via the project's `Status` column in metadata (`meta['Status']`).
+  - Documented complete decoupling from remote issue `state` (`open` / `closed`) to eliminate fighting with GitHub Projects native automation workflows (e.g. auto-close on "Done").
+  - Documented scope-specific status rules:
+    - `testcase`: Governed purely by custom field `Status` (or leaves board column clean if undeclared).
+    - `testrun` & `testplan`: Autocalculated rollup verdicts (`passed`, `failed`, `pending`, `skipped`) travel directly to the board's `Status` column; manual `* field Status` serves as an explicit override.
+    - `bug`: Sovereign lifecycle status. `* set status` travels implicitly to the board's `Status` column and is immune to global defaults or field overrides.
+  - Documented explicit testrun status precedence and testplan synchronization: when a testrun is forced (e.g. `* field Status = skipped`), testplans linked via `Rule:` automatically reflect the forced status in plan rollups and summary execution tables.
+  - Documented automatic purging of legacy `state: "closed"` / `state: "open"` properties from the state ledger (`cleanAttributes`) and drift exclusion in `detectAttributeDrift`.
+- **Accurate Resource Canonical Targeting (`-target`) (`cli/workflow/plan.mdx`, `cli/workflow/apply.mdx`, `docs/language/canonical-addresses.mdx`):**
+  - Documented targeted plan/apply with `-target` supporting:
+    - Dot and slash hierarchical notation (e.g. `magento.cart.case.feature.@tc-01` or `testcase/Magento/cart.case.feature.@tc-01`).
+    - Relative filesystem paths with root convention directory prefixes (e.g. `testcase\Magento\checkout.case.feature` or `testcase/Magento/checkout.case.feature`).
+    - Multi-attribute evaluation (`r.address`, `r.path`, `r.physicalAddress`) preventing false unmatches in targeted operations.
+    - Anti-destruction protection (`matchedStateAddresses`) and automatic state address healing when migrating between path-based and namespace-based addresses.
+- **Resource API Documentation: `ParserScenario` and `ResourceContext` (`api/resources.mdx`):**
+  - Fully documented the typed signatures `(s: ParserScenario, context?: ResourceContext)` for `ResourceTemplate`.
+  - Added property reference tables for `ParserScenario` (`name`, `steps`, `tags`, `feature`, `rule`, `custom.fields`, `custom.set`, `custom.explicitFields`, `custom.groupScenarios`) and `ResourceContext` (`config`, `state`, `testDirectory`, `provider`, `variables`).
+- **Elimination of `scaffold:` in Manifest Configuration:**
+  - Updated resource configuration examples to use direct top-level properties: `directory`, `filename`, `identity`, `match`, `set`, and `fields`.
+
+---
+
 ## [1.3.3] - 2026-11-22
 
 ### Added

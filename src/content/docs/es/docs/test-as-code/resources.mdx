@@ -317,7 +317,7 @@ En la ejecución de `testform plan`, `testform apply` y `testform refresh`:
   ```
 - **Declaración del Bloque de Recurso:** Es **100% agnóstica**, utilizando el tipo canónico de dominio sin prefijos propietarios (`+ resource "testcase" "..." { ... }`).
 
-### 6. Banners Visuales de Veredicto y Cierre Automático Nativo
+### 6. Banners Visuales de Veredicto en Ejecuciones
 Para proveedores con seguimiento de tareas e issues (GitHub, GitLab):
 - **Banners Markdown GFM:** Los `testrun` y `testplan` incrustan un encabezado de veredicto con resumen métrico directamente en la descripción del Issue:
   ```markdown
@@ -325,12 +325,14 @@ Para proveedores con seguimiento de tareas e issues (GitHub, GitLab):
   > Passed: 12 | Failed: 0 | Blocked: 0 | Skipped: 1 | Total: 13
   ```
 - **Sincronización de Checklist:** Las tareas se renderizan con checkboxes interactivos (`- [x] #101 - **passed**`, `- [ ] #102 - **failed**`).
-- **Ciclo de Vida Nativo (Auto-Close):** Cuando el veredicto acumulado (*rollup*) evalúa a `passed`, el Issue remoto se cierra automáticamente (`state: 'closed'`, `state_reason: 'completed'`). Si existen fallos, bloqueos o pruebas pendientes, el Issue se mantiene o se reabre en `state: 'open'`.
 
-### 7. Sincronización Dinámica de Columnas de Proyecto (Sin Campos en Duro)
-- Testform **no asume** nombres de campos fijos en tus tableros de proyecto.
-- Si en tu configuración (`main.yml`) declaras un campo de estado (ejemplo: `Status` o `status`), el motor detecta la clave exacta respetando el casing del usuario y le asigna el veredicto rollup.
-- Si no configuras ninguna columna de estado, no se inyecta ningún campo artificial en `custom_fields`.
+### 7. Modelo Board-First (Sincronización Soberana del Tablero)
+En lugar de forzar y micro-gestionar el estado nativo del issue (`state: open/closed`), Testform adopta la arquitectura **Board-First**:
+- **La columna `Status` en el Tablero de Proyecto es la única fuente de la verdad**: Esto evita colisiones y bucles de *drift* infinitos con las automatizaciones nativas de GitHub Projects (como el flujo automático *"When Status is set to Done -> Close Issue"*).
+- **Reglas por primitivas**:
+  - `testcase`: El estado del tablero proviene exclusivamente del campo de contrato `Status`. Si no se define en la configuración, la columna en el tablero se mantiene limpia.
+  - `testrun` y `testplan`: El veredicto autocalculado del motor (`passed`, `failed`, `pending`, `skipped`) viaja automáticamente a la columna `Status` del tablero; si el usuario define explícitamente `* field Status` en el feature, ese valor manual tiene máxima prioridad.
+  - `bug`: El valor de `* set status` (`open`, `in_progress`, `resolved`, `closed`) viaja implícita y directamente a la columna `Status` del tablero, inmune a valores por defecto globales (`Status: "Done"`) o sobreescrituras manuales.
 
 ---
 

@@ -32,8 +32,8 @@ export interface ResourceTemplate {
    * Se envían directamente al manejador CRUD del provider (create, update, etc.).
    */
   attributes: 
-    | ((scenario: ParserScenario, context?: any) => Record<string, any>)
-    | Record<string, ((scenario: ParserScenario, context?: any) => any) | any>;
+    | ((scenario: ParserScenario, context?: ResourceContext) => Record<string, any>)
+    | Record<string, ((scenario: ParserScenario, context?: ResourceContext) => any) | any>;
 
   /**
    * Hooks opcionales del ciclo de vida para orquestar acciones
@@ -44,12 +44,48 @@ export interface ResourceTemplate {
   /**
    * Atributos internos persistidos directamente en el estado criptográfico (testform.state).
    */
-  state?: Record<string, ((scenario: ParserScenario, context?: any) => any) | any>;
+  state?: Record<string, ((scenario: ParserScenario, context?: ResourceContext) => any) | any>;
 
   /** Lista opcional de campos planos o sobreescrituras. */
   fields?: ResourceField[];
 }
 ```
+
+---
+
+## Tipos Fundamentales: `ParserScenario` y `ResourceContext`
+
+Para garantizar un desarrollo fuertemente tipado y con soporte completo de IntelliSense en el IDE, los evaluadores de `ResourceTemplate` reciben interfaces formales:
+
+### 1. `ParserScenario` (`scenario` o `s`)
+Representa el escenario Gherkin analizado por el AST de Testform:
+
+| Propiedad | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `name` | `string` | Título del escenario (`Scenario: Validar error...`). |
+| `steps` | `ParserStep[]` | Lista ordenada de pasos (`keyword`, `text`). |
+| `tags` | `string[]` | Etiquetas asignadas al escenario (`['@tc-01', '@smoke']`). |
+| `feature` | `ParserFeature` | Metadatos del Feature contenedor (`name`, `tags`, `description`). |
+| `rule` | `ParserRule?` | Bloque `Rule:` si el escenario está agrupado dentro de una regla. |
+| `uri` | `string` | Ruta al archivo `.feature` en disco. |
+| `location` | `number` | Número de línea donde inicia el escenario. |
+| `custom` | `object` | Contenedor de metadatos de dominio procesados: |
+| `custom.fields` | `Record<string, string>` | Campos de contrato contractuales (`project`, `priority`, etc.). |
+| `custom.explicitFields` | `Record<string, any>` | Campos escritos explícitamente a mano en el escenario (para detectar overrides). |
+| `custom.set` | `Record<string, any>` | Marcas de ejecución en tiempo de ejecución (`status`, `attach`, `trace`, `run`). |
+| `custom.groupScenarios`| `ParserScenario[]` | En un `testrun`, lista de escenarios hijos evaluados. |
+| `custom.testruns` | `string[]` | En un `testplan`, lista de rutas de testruns agrupados. |
+
+### 2. `ResourceContext` (`context`)
+Proporciona acceso a los servicios de ejecución del motor de Testform:
+
+| Propiedad | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `config` | `ConfigManager` | Configuración activa de `main.yml` (resuelve mapeos y categorías semánticas). |
+| `state` | `State` | Gestor del estado, permite consultar otros recursos (ej. buscar testruns para rollup). |
+| `testDirectory`| `string` | Ruta raíz del proyecto de pruebas. |
+| `provider` | `string` | Identificador del proveedor activo (`github`, `gitlab`, `local`). |
+| `variables` | `Record<string, any>` | Variables locales o de entorno resueltas. |
 
 ---
 

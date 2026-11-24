@@ -32,8 +32,8 @@ export interface ResourceTemplate {
    * Dispatched directly to the provider's CRUD resource handler (create, update, etc.).
    */
   attributes: 
-    | ((scenario: ParserScenario, context?: any) => Record<string, any>)
-    | Record<string, ((scenario: ParserScenario, context?: any) => any) | any>;
+    | ((scenario: ParserScenario, context?: ResourceContext) => Record<string, any>)
+    | Record<string, ((scenario: ParserScenario, context?: ResourceContext) => any) | any>;
 
   /**
    * Optional lifecycle hooks to orchestrate operations before or after CRUD events.
@@ -45,12 +45,48 @@ export interface ResourceTemplate {
    * and displayed in `testform plan`. Follows the "Set-First" principle: root level contains only
    * runtime execution marks (`* set`) while contract fields live inside `metadata = { ... }`.
    */
-  state?: Record<string, ((scenario: ParserScenario, context?: any) => any) | any>;
+  state?: Record<string, ((scenario: ParserScenario, context?: ResourceContext) => any) | any>;
 
   /** Optional list of flat fields or overrides. */
   fields?: ResourceField[];
 }
 ```
+
+---
+
+## Core Types: `ParserScenario` and `ResourceContext`
+
+To ensure robust, strongly-typed development with full IDE IntelliSense support, `ResourceTemplate` evaluators receive formal TypeScript interfaces:
+
+### 1. `ParserScenario` (`scenario` or `s`)
+Represents the parsed Gherkin scenario extracted by the Testform AST:
+
+| Property | Type | Description |
+| :--- | :--- | :--- |
+| `name` | `string` | Scenario title (`Scenario: Validate error...`). |
+| `steps` | `ParserStep[]` | Ordered list of steps (`keyword`, `text`). |
+| `tags` | `string[]` | Tags assigned to the scenario (`['@tc-01', '@smoke']`). |
+| `feature` | `ParserFeature` | Parent Feature metadata (`name`, `tags`, `description`). |
+| `rule` | `ParserRule?` | Containing `Rule:` block if grouped within a rule. |
+| `uri` | `string` | Path to the `.feature` file on disk. |
+| `location` | `number` | Line number where the scenario starts. |
+| `custom` | `object` | Container for parsed domain metadata: |
+| `custom.fields` | `Record<string, string>` | Contractual metadata fields (`project`, `priority`, etc.). |
+| `custom.explicitFields` | `Record<string, any>` | Fields written explicitly by hand in the scenario (to detect manual overrides). |
+| `custom.set` | `Record<string, any>` | Runtime execution marks (`status`, `attach`, `trace`, `run`). |
+| `custom.groupScenarios`| `ParserScenario[]` | In a `testrun`, list of child testcases evaluated. |
+| `custom.testruns` | `string[]` | In a `testplan`, list of grouped testrun file paths. |
+
+### 2. `ResourceContext` (`context`)
+Provides access to Testform runtime engine services:
+
+| Property | Type | Description |
+| :--- | :--- | :--- |
+| `config` | `ConfigManager` | Active `main.yml` configuration (resolves category status mappings). |
+| `state` | `State` | State ledger manager, allows cross-resource lookups (e.g. testruns in testplan rollup). |
+| `testDirectory`| `string` | Root path of the test workspace. |
+| `provider` | `string` | Active provider identifier (`github`, `gitlab`, `local`). |
+| `variables` | `Record<string, any>` | Resolved local and environment variables. |
 
 ---
 

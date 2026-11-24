@@ -159,6 +159,35 @@ testform plan -target="pix.boleto.case.feature"
 
 ---
 
+## Flexibilidad de Rutas en `-target` del CLI
+
+Al ejecutar comandos como `testform plan`, `testform apply` o `testform diff` con la bandera `-target`, el CLI resuelve de forma inteligente las rutas físicas y las identidades lógicas sin requerir conversiones manuales:
+
+1. **Ruta con carpeta contenedora / scaffold**: Admite rutas relativas de archivo completas tal como las autocompleta la terminal (con `/` o `\` de Windows):
+   ```bash
+   testform plan -target="testcase/Magento/checkout.case.feature"
+   testform plan -target="testcase\Magento\checkout.case.feature"
+   testform plan -target="testcase/Magento/checkout.case.feature.@tc-01"
+   ```
+2. **Dirección Canónica delimitada**:
+   ```bash
+   testform plan -target="Magento/checkout.case.feature"
+   testform plan -target="Magento/checkout.case.feature.@tc-01"
+   ```
+3. **Dirección por Namespace (`@ns`)**:
+   ```bash
+   testform plan -target="magento.checkout.case.feature"
+   testform plan -target="magento.checkout.case.feature.@tc-01"
+   ```
+4. **Target por Tag individual**:
+   ```bash
+   testform plan -target="@tc-01"
+   ```
+
+El selector detecta y remueve automáticamente los prefijos de scaffold (`testcase/`, `testruns/`, `testplans/`, `bugs/`) y vincula las operaciones con el ledger de estado sin duplicar recursos ni generar destrucciones accidentales.
+
+---
+
 ## Soporte en VS Code & Antigravity IDE
 
 La extensión oficial **Testform DSL** (`testform-vscode`) incluye soporte nativo para este modelo:
