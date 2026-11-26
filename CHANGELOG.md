@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.5] - 2026-11-26
+
+### Added
+
+- **`testform spec` Unified Authoring CLI Guides (`en/` & `es/` `cli/developer-tools/spec.mdx`, `cli/index.mdx`, `cli/developer-tools/index.mdx`):**
+  - Documented the unified `testform spec <resource> <action>` (`new`, `add`, `fill`, `set`, `delete`, `status`) workflow across `testcase`, `testrun`, `testplan`, and `bug`.
+  - Marked legacy `testform suite` pages (`cli/developer-tools/suite.mdx`) as deprecated with migration guidance to `testform spec`.
+- **Exploratory & Ad-Hoc Defect Documentation (`en/` & `es/` `docs/test-as-code/resources.mdx`, `docs/integration/ai-rules.mdx`):**
+  - Documented why `@bug` supports both formal regression traceability (`Rule:` + `@depends_on(@tc-*)`) and **exploratory / ad-hoc QA**: optional `Background:` / `* set run`, exemption from `@depends_on` via `@adhoc` / `@exploratory` / `@independent` on `Scenario:` (avoiding `Feature:` due to `no-feature-tags`) or `* set trace`, and optional `Given / When / Then / And / But` reproduction steps alongside `* set status`, `* set trace`, and `* set attach`.
+- **Mandatory `testform init` & Remote Backend Setup Guides (`en/` & `es/` `cli/workflow/init.mdx`, `docs/language/backends.mdx`, `docs/language/providers.mdx`, `docs/language/state.mdx`, `docs/guides/multi-cloud-backends.mdx`, `docs/guides/state-locking.mdx`, `docs/integration/ci-cd-github.mdx`, `docs/integration/ci-cd-gitlab.mdx`):**
+  - Documented mandatory `testform init` enforcement for remote backends, `github` backend missing repository/token diagnostics, backend state locking details, and updated CI/CD and multi-cloud backend examples.
+
+### Changed
+
+- **Alignment of `@depends_on` and Stacks Documentation (`en/` & `es/` `docs/language/meta-arguments/depends-on.mdx`, `docs/language/stacks.mdx`, `docs/getting-started/test-suite-automation.mdx`):**
+  - Replaced legacy `* set target = ...` examples with `@depends_on(@tc-*)` under `Rule:` blocks and updated test automation tutorials to reference `testform spec`.
+
+---
+
 ## [1.3.4] - 2026-11-23
 
 ### Added
