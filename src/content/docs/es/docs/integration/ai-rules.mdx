@@ -100,13 +100,14 @@ Copia el contenido correspondiente en la raíz de tu repositorio según el asist
 * **Adjuntos**: Únicamente permitidos en `Background:` (`* set attach = ...`). El estado del plan es autocalculado (*rollup*).
 * **Integridad**: Un mismo `@testrun` no debe asignarse a más de un plan maestro.
 
-### 4. Defectos y Bugs (`*.bug.feature`)
-* **Cabecera**: Debe iniciar con `@bug`.
-* **Background**: Permite opcionalmente `* set run = testruns/...run.feature` para vincular con la corrida ejecutada (opcional en exploratorias).
-* **Trazabilidad Defecto $\rightarrow$ Testcase**:
-  * Bajo `Rule: <path.case.feature>`, vincular con `@bg-01 @depends_on(@tc-01)` o `@bg-01 @tc-01`.
-  * Sin `Rule:`, usar dirección canónica `@bg-01 @depends_on("path.case.feature.@tc-01")` o defecto exploratorio `@bg-02`.
-* **Escenario**: Declara `* set status = open | in_progress | resolved | reopened | discarded | duplicate`, `* set attach = ...`, y `* set trace = ...`. Los campos de gobernanza se declaran con `* field <nombre> = <valor>`.
+### 4. Defectos y Bugs (`*.bug.feature`) — Soporte Exploratorio y Trazable
+* **Cabecera**: Debe iniciar con `@bug` (no coloques `@adhoc` ni `@smoke` en la línea `Feature:` por `no-feature-tags`).
+* **Background**: Permite opcionalmente `* set run = testruns/...run.feature` para vincular con la corrida ejecutada (en sesiones **exploratorias** puede omitirse por completo).
+* **Trazabilidad Defecto $\rightarrow$ Testcase u Opcionalidad Exploratoria**:
+  * Con caso conocido bajo `Rule: <path.case.feature>`: `@bg-01 @depends_on(@tc-01)` (o `@bg-01 @tc-01`).
+  * Sin `Rule:`: dirección canónica `@bg-01 @depends_on("path.case.feature.@tc-01")`.
+  * En **pruebas exploratorias**: agrega `@adhoc`, `@exploratory` o `@independent` en el `Scenario:` (ejemplo: `@bg-02 @adhoc`) o declara `* set trace` para omitir `@depends_on` sin advertencias de `bug-target-integrity`.
+* **Escenario**: A diferencia de `@testrun`/`@testplan`, un `@bug` **sí admite pasos opcionales `Given/When/Then/And/But`** de reproducción junto con `* set status = open | in_progress | resolved | reopened | discarded | duplicate`, `* set attach = ...`, `* set trace = ...` y `* field <nombre> = <valor>`.
 
 ---
 

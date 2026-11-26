@@ -100,13 +100,14 @@ Copy the respective template into your repository root based on the AI coding as
 * **Attachments**: Allowed strictly in `Background:` (`* set attach = ...`). Plan status is autocalculated via rollup.
 * **Integrity**: A single `@testrun` must not be assigned to multiple test plans.
 
-### 4. Bugs and Defects (`*.bug.feature`)
-* **Feature Header**: Must begin with `@bug`.
-* **Background Scope**: Optionally allows `* set run = testruns/...run.feature` to link the defect to the execution run (optional for exploratory testing).
-* **Defect-to-Testcase Traceability**:
-  * Under `Rule: <path.case.feature>`, link via `@bg-01 @depends_on(@tc-01)` or `@bg-01 @tc-01`.
-  * Without `Rule:`, link via canonical address `@bg-01 @depends_on("path.case.feature.@tc-01")` or exploratory `@bg-02`.
-* **Scenario Scope**: Declares `* set status = open | in_progress | resolved | reopened | discarded | duplicate`, `* set attach = ...`, and `* set trace = ...`. Contract fields are declared via `* field <name> = <val>`.
+### 4. Bugs and Defects (`*.bug.feature`) — Traceable & Exploratory Modes
+* **Feature Header**: Must begin with `@bug` (never put `@adhoc` or free tags on `Feature:` due to `no-feature-tags`).
+* **Background Scope**: Optionally declares `* set run = testruns/...run.feature` to link the origin run (may be omitted entirely for **exploratory** bugs).
+* **Defect-to-Testcase Traceability & Exploratory Exemption**:
+  * Linked under `Rule: <path.case.feature>`: `@bg-01 @depends_on(@tc-01)` (or `@bg-01 @tc-01`).
+  * Without `Rule:`: canonical address `@bg-01 @depends_on("path.case.feature.@tc-01")`.
+  * For **exploratory / ad-hoc bugs**: tag the `Scenario:` with `@adhoc`, `@exploratory`, or `@independent` (e.g. `@bg-02 @adhoc`) or provide `* set trace` so `bug-target-integrity` does not require `@depends_on`.
+* **Scenario Scope**: Unlike `@testrun`/`@testplan`, a `@bug` scenario **allows optional `Given/When/Then/And/But` reproduction steps** alongside `* set status = open | in_progress | resolved | reopened | discarded | duplicate`, `* set attach = ...`, `* set trace = ...`, and `* field <name> = <val>`.
 
 ---
 

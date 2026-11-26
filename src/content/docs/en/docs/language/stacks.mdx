@@ -3,20 +3,20 @@ title: "Execution Stacks & Suites"
 description: "Grouping, tagging, and organizing test runs and test plans into declarative execution suites."
 ---
 
-In Terraform, a *Stack* or *Configuration Module* groups resources to be provisioned and reconciled together. In Testform, this capability is realized through **`testrun`** (execution cycles) and **`testplan`** (master plans) scopes, managed via the `testform suite` command.
+In Terraform, a *Stack* or *Configuration Module* groups resources to be provisioned and reconciled together. In Testform, this capability is realized through **`testrun`** (execution cycles) and **`testplan`** (master plans) scopes, managed via the `testform spec` command.
 
 ---
 
-## Suite Generation by Tags (`bracket tags`)
+## Suite Generation by Tags (`--include`)
 
-Testform allows extracting scenarios matching specific tags and bundling them into a declarative `.run.feature` suite file:
+Testform allows extracting scenarios matching specific tags or files and bundling them into a declarative `.run.feature` suite file:
 
 ```bash
 # Extracts all scenarios tagged with @smoke across the workspace
-testform suite tags "[@smoke]" -title="Fast Smoke Regression"
+testform spec testrun new --include="smoke" --title="Fast Smoke Regression"
 
-# Extracts only @critical scenarios from a specific feature file
-testform suite tags "checkout.case.feature.[@critical]" -title="Critical Checkout Suite"
+# Extracts scenarios from a specific feature file
+testform spec testrun new --include="checkout.case.feature" --title="Critical Checkout Suite"
 ```
 
 The output is a declarative `.run.feature` file:
@@ -26,46 +26,46 @@ The output is a declarative `.run.feature` file:
 Feature: Fast Smoke Regression
 
   Rule: auth.case.feature
-    Scenario: Valid credentials login
+    Scenario: @tc-01
       * set status = pending
 
   Rule: checkout.case.feature
-    Scenario: Credit card checkout
+    Scenario: @tc-01
       * set status = pending
 ```
 
 ---
 
-## Target Addressing Strategies (`-target`)
+## Target Addressing Strategies (`--target`)
 
 When interacting with suites, you can address resources using three different strategies:
 
 1. **Identity Tag (@tr-N / @tp-N):**
    ```bash
-   testform suite -target="@tr-01" -fill
+   testform spec testrun fill --target="@tr-01"
    ```
 2. **Canonical Address:**
    ```bash
-   testform suite -target="specs/runs/smoke.run.feature.@tr-01" -fill
+   testform spec testrun fill --target="testruns/smoke.run.feature.@tr-01"
    ```
 3. **Relative File Path:**
    ```bash
-   testform suite -target="smoke.run.feature" -fill
+   testform spec testrun fill --target="smoke.run.feature"
    ```
 
 ---
 
-## Recording Execution Outcomes (`mark`)
+## Recording Execution Outcomes (`set`)
 
 Once a test finishes in your test runner (Playwright, Cypress, Supertest, or K6), you record the outcome in the feature file and reconcile with GitHub:
 
 ```bash
-testform suite -target="@tr-01" -mark="@tc-01=passed"
+testform spec testrun set --target="@tr-01" --case="auth.case.feature.@tc-01" --status=passed
 ```
 
 The engine updates the rule within the `.run.feature` file:
 ```gherkin
-Scenario: Valid credentials login
+Scenario: @tc-01
   * set status = passed
 ```
 

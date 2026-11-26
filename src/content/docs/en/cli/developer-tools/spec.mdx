@@ -1,0 +1,65 @@
+---
+title: "testform spec"
+---
+
+```bash
+testform spec <resource> <action> [options]
+```
+
+The `testform spec` command is the unified CLI tool to scaffold, structure, link, and update Gherkin specifications across all scopes (**`testcase`**, **`testrun`**, **`testplan`**, and **`bug`**), replacing the deprecated `testform suite` command.
+
+---
+
+## Supported Resources
+
+| Resource | File Pattern | Primary Purpose |
+| :--- | :--- | :--- |
+| **`testcase`** | `*.case.feature` | Author feature files and `@tc-*` scenarios or inspect state status. |
+| **`testrun`** | `*.run.feature` | Plan runs, link or autocomplete cases (`--fill`, `--include`), and record outcomes (`set`). |
+| **`testplan`** | `*.plan.feature` | Coordinate multiple `@testrun` suites into a master test plan and check rollups. |
+| **`bug`** | `*.bug.feature` | Track `@bg-*` defects linked via `@depends_on(@tc-*)` under `Rule:`, traces, and attachments. |
+
+---
+
+## Core Actions
+
+- **`new`**: Create a new specification file for the selected resource.
+- **`add`**: Append a scenario or linkage (`--case`, `--run`, `--title`) to an existing specification.
+- **`fill`**: Autocomplete empty `Rule:` blocks in a `testrun` with pending scenarios from `.case.feature`.
+- **`set`**: Record execution verdicts (`--status`), error traces (`--trace`), and attachments (`--attach`) in `testrun` or `bug`.
+- **`delete`**: Remove a scenario or specification file.
+- **`status`**: Display terminal status dashboards or reverse lookups (`--show-name`, `--show-detail`).
+
+---
+
+## Examples by Resource
+
+### 1. Test Cases (`testcase`)
+```bash
+testform spec testcase new --title="Shopping Cart"
+testform spec testcase add --target="cart.case.feature" --title="Add item with coupon"
+testform spec testcase status --target="@tc-01" --show-name
+```
+
+### 2. Test Runs (`testrun`)
+```bash
+testform spec testrun new --title="Sprint 42 Regression" --include="smoke"
+testform spec testrun fill --target="@tr-42"
+testform spec testrun set --target="@tr-42" --case="checkout.case.feature.@tc-01" --status=passed
+```
+
+### 3. Test Plans (`testplan`)
+```bash
+testform spec testplan new --title="Release v2.4 Plan"
+testform spec testplan add --target="@tp-01" --run="sprint42.run.feature"
+testform spec testplan status --target="@tp-01"
+```
+
+### 4. Defects (`bug`)
+```bash
+testform spec bug new --title="Sprint 42 Defects" --run="sprint42.run.feature"
+testform spec bug add --target="sprint42_bugs.bug.feature" --case="checkout.case.feature.@tc-01" --title="Gateway timeout" --trace="Timeout 30000ms" --attach="attachments/bugs/err.png"
+testform spec bug set --target="@bg-01" --status=resolved
+testform spec bug status --show-detail
+```
+> The `add` action generates the defect inside `Rule: checkout.case.feature` using `@bg-* @depends_on(@tc-01)` (`* set target` is deprecated).

@@ -178,18 +178,19 @@ Al igual que el `testrun` evalúa sus casos, el `testplan` calcula su estado acu
 
 ## 4. El Recurso `bug`
 
-El recurso `bug` modela la trazabilidad inmutable y el ciclo de vida de los defectos encontrados durante la ejecución de pruebas o sesiones exploratorias.
+El recurso `bug` es especial dentro de Testform: nació para cubrir tanto defectos vinculados a regresiones formales (`@testrun` / `@testcase`) como hallazgos de **pruebas exploratorias y ad-hoc**.
 
 - **Ubicación Estándar:** `tests/bugs/*.bug.feature` (configurable en `main.yml` bajo `resources.bug.directory`).
 - **Ubicación de Identidad:** Sobre cada `Scenario:` con prefijo `@bg-*` (ejemplo: `@bg-01` o `@bg-checkout-500`).
 - **Nivel de Unicidad:** Único dentro del archivo contenedor de bugs.
 - **Vínculo Opcional con Test Runs (`Background:`):**
-  - Puede incluir opcionalmente `* set run = testruns/sprint42.run.feature` en el `Background:` para vincular los defectos con la corrida que los originó. En pruebas exploratorias o ad-hoc, el `Background` puede omitirse.
-- **Trazabilidad Defecto $\rightarrow$ Caso de Prueba (Dos Formas Soportadas):**
-  - **Forma 1 (con `@depends_on`):** `@bg-01 @depends_on(@tc-01)` bajo `Rule: <path.case.feature>` (las comillas son opcionales).
-  - **Forma 2 (tags lado a lado):** `@bg-01 @tc-01` bajo `Rule: <path.case.feature>`.
-  - **Sin `Rule:`:** Admite dirección lógica completa `@bg-01 @depends_on("path/to.case.feature.@tc-01")` o defectos puramente exploratorios `@bg-02` sin target asignado.
-- **Marcas de Ciclo de Vida y Evidencias en `Scenario:`:**
+  - Puede incluir `* set run = testruns/sprint42.run.feature` en el `Background:` para vincular los defectos con la corrida que los originó. En pruebas exploratorias o ad-hoc, `* set run` (y el `Background:` completo) pueden omitirse.
+- **Trazabilidad Defecto $\rightarrow$ Caso de Prueba (`@depends_on` u Opcionalidad Exploratoria):**
+  - **Con `Rule:` y `@depends_on`:** `@bg-01 @depends_on(@tc-01)` bajo `Rule: <path.case.feature>` (o tags lado a lado `@bg-01 @tc-01`).
+  - **Sin `Rule:`:** Dirección lógica completa `@bg-01 @depends_on("path/to.case.feature.@tc-01")`.
+  - **Pruebas exploratorias (`@adhoc` / `@exploratory` / `@independent`):** La política `bug-target-integrity` exime de vincular un `@tc-*` cuando el escenario incluye uno de estos tags exploratorios sobre `Scenario:` o declara `* set trace`. *(Recuerda colocar `@adhoc` / `@exploratory` en el `Scenario:` y no en `Feature:`, por la regla `no-feature-tags`).*
+- **Pasos de Reproducción (`Given / When / Then`) y Marcas en `Scenario:`:**
+  - A diferencia de `@testrun` y `@testplan` (donde GWT está prohibido), un escenario `@bug` **sí admite pasos opcionales `Given / When / Then / And / But`** para documentar cómo reproducir un fallo exploratorio junto con las directivas `* set`:
   - `* set status = <estado>`: Estado del defecto (`open`, `in_progress`, `resolved`, `reopened`, `discarded`, `duplicate`).
   - `* set trace = <stack>`: Mensaje o traza del error detectado.
   - `* set attach = <archivo>`: Ruta del adjunto/captura de pantalla o evidencia del defecto.
@@ -232,6 +233,15 @@ Feature: Defectos encontrados en Checkout
       * set attach = "attachments/bugs/retry_fixed.png"
       * field severity = @minor
       * field bug_type = functional
+
+  # Hallazgo exploratorio independiente dentro o fuera de un Run (con pasos de reproducción)
+  @bg-03 @adhoc
+  Scenario: Selector de divisa desincroniza el total del carrito
+    Given que el usuario navega a la ficha de producto
+    When cambia la divisa dos veces seguidas antes de agregar al carrito
+    Then el subtotal del header muestra el monto en la divisa anterior
+    * set status = open
+    * set attach = "attachments/bugs/currency_drift.png"
 ```
 
 ### Ciclo de Vida de los Defectos
@@ -274,7 +284,7 @@ Feature: Defectos encontrados en Checkout
 | **`testcase`** | 1 archivo = N casos | Sobre cada `Scenario:` (`@tc-*`) | Unica en el archivo | `Scenario` individuales con `Given`, `When`, `Then` |
 | **`testrun`** | 1 archivo = 1 corrida | Sobre el `Feature:` (`@tr-*`) | Global en el repositorio | `Rule: archivo.case.feature` + `Scenario: @tc-*` |
 | **`testplan`** | 1 archivo = 1 plan | Sobre el `Feature:` (`@tp-*`) | Global en el repositorio | `Rule: archivo.run.feature` (coordinacion de runs) |
-| **`bug`** | 1 archivo = N defectos | Sobre cada `Scenario:` (`@bg-*`) | Unica en el archivo | `Scenario` con `set status`, `trace`, `attach`, `target` |
+| **`bug`** | 1 archivo = N defectos | Sobre cada `Scenario:` (`@bg-*`) | Unica en el archivo | `Scenario` con `@depends_on`, `set status`, `trace`, `attach` |
 
 ---
 
@@ -287,12 +297,12 @@ Para mantener la claridad y coherencia con herramientas de Infrastructure-as-Cod
   - `testcase`: Especificación pura sin marcas de ejecución (0 `* set`). No expone `status` en primera plana.
   - `testrun`: `status` (rollup de ejecución), `duration`, `attach`, `trace`, `testcases = { ... }`.
   - `testplan`: `status` (rollup del plan), `attach`, `testruns = { ... }`.
-  - `bug`: `status` (por defecto `'open'`), `trace`, `attach`, `testcase`, `testrun`.
+  - `bug`: `status` (por defecto `'open'`), `trace`, `attach`, `testcase` (vía `@depends_on`), `testrun`.
 - **Bloque `metadata = { ... }`:** Contiene todos los campos de contrato de negocio definidos en `main.yml` (declarados con `* field` o etiquetas `@tag`), como `project`, `module`, `assignees`, `priority`, etc.
 
 ### 2. Aislamiento en Memoria (`s.custom.set` vs `s.custom.fields`)
 El parser de Testform separa en dos estructuras independientes:
-- `s.custom.set`: Almacena exclusivamente las marcas de ejecución del engine (`status`, `duration`, `attach`, `trace`, `run`, `target`).
+- `s.custom.set`: Almacena exclusivamente las marcas de ejecución del engine (`status`, `duration`, `attach`, `trace`, `run`, y alias heredados como `evidence` o `target`, hoy deprecados en favor de `* set attach` y `@depends_on(...)`).
 - `s.custom.fields`: Almacena exclusivamente los campos contractuales de negocio.
 - **Sin colisiones:** Si un equipo define un campo de negocio llamado `status` o `Status` en `main.yml` (por ejemplo, el estado de Jira: "Done", "In Review", "To Do"), viajará limpiamente dentro de `metadata = { "Status" = "Done" }` sin sobreescribir ni interferir con el veredicto de ejecución (`+ status = "passed"`).
 

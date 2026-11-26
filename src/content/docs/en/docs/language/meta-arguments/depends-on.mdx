@@ -50,6 +50,9 @@ Rule: tests/features/checkout.case.feature
 
 The engine automatically resolves the reference against the `@tc-01` scenario inside the `Rule:` file, enabling instant **Go-to-Definition (F12)** and **Hover** previews in VS Code. The shorthand side-by-side syntax `@bg-01 @tc-01` is also fully supported.
 
+> [!CAUTION]
+> **Deprecated syntax (`* set target`):** Linking defects via `* set target = ...` or `* set case = ...` steps inside `@bug` scenarios is deprecated. Always declare defect-to-case relationships using `@depends_on(@tc-*)` under an enclosing `Rule: <file.case.feature>` (or `@depends_on("path/file.case.feature.@tc-*")`).
+
 ---
 
 ## Topological DAG Ordering

@@ -178,18 +178,19 @@ Just as a `testrun` evaluates its test cases, a `testplan` calculates its overal
 
 ## 4. The `bug` Resource
 
-The `bug` resource models defect tracking, execution failures, and issue resolutions linked directly to test runs or exploratory QA sessions.
+The `bug` resource is special in Testform: it was designed to capture both regression defects linked to formal executions (`@testrun` / `@testcase`) and findings discovered during **exploratory / ad-hoc QA sessions**.
 
 - **Standard Location:** `tests/bugs/*.bug.feature` (configurable in `main.yml` via `resources.bug.directory`).
 - **Identity Tag Placement:** Directly above each `Scenario:` with `@bg-*` prefix (e.g. `@bg-01` or `@bg-checkout-500`).
 - **Uniqueness Scope:** Unique within that bug specification file.
 - **Optional Test Run Linkage (`Background:`):**
-  - Can optionally specify `* set run = testruns/sprint42.run.feature` in `Background:` to link defects to the run that produced them. For exploratory or ad-hoc bugs, `Background:` may be omitted.
-- **Defect-to-Testcase Traceability (Two Supported Forms):**
-  - **Form 1 (with `@depends_on`):** `@bg-01 @depends_on(@tc-01)` under `Rule: <path.case.feature>` (quotes are optional).
-  - **Form 2 (side-by-side tags):** `@bg-01 @tc-01` under `Rule: <path.case.feature>`.
-  - **Without `Rule:`:** Supports full logical address `@bg-01 @depends_on("path/to.case.feature.@tc-01")` or exploratory defects `@bg-02` without testcase target.
-- **Defect Lifecycle Marks & Evidence in `Scenario:`:**
+  - Can include `* set run = testruns/sprint42.run.feature` in `Background:` to link defects to the run that produced them. For exploratory or ad-hoc testing, `* set run` (and the entire `Background:` block) may be omitted.
+- **Defect-to-Testcase Traceability (`@depends_on` & Exploratory Mode):**
+  - **With `Rule:` and `@depends_on`:** `@bg-01 @depends_on(@tc-01)` under `Rule: <path.case.feature>` (or side-by-side tags `@bg-01 @tc-01`).
+  - **Without `Rule:`:** Full logical address `@bg-01 @depends_on("path/to.case.feature.@tc-01")`.
+  - **Exploratory bugs (`@adhoc` / `@exploratory` / `@independent`):** The `bug-target-integrity` policy waives the `@tc-*` requirement when the scenario carries one of these exploratory tags on `Scenario:` or declares `* set trace`. *(Place `@adhoc` / `@exploratory` on `Scenario:`, never on `Feature:`, to comply with `no-feature-tags`).*
+- **Optional Reproduction Steps (`Given / When / Then`) & Lifecycle Marks in `Scenario:`:**
+  - Unlike `@testrun` and `@testplan` (where GWT is prohibited), a `@bug` scenario **allows optional `Given / When / Then / And / But` steps** to document exploratory reproduction alongside `* set` marks:
   - `* set status = <status>`: Defect resolution status (`open`, `in_progress`, `resolved`, `reopened`, `discarded`, `duplicate`).
   - `* set trace = <stack>`: Error message or stack trace description.
   - `* set attach = <file>`: Screenshot, video recording, or defect evidence path.
@@ -232,6 +233,15 @@ Feature: Defects found in Checkout
       * set attach = "attachments/bugs/retry_fixed.png"
       * field severity = @minor
       * field bug_type = functional
+
+  # Standalone exploratory finding (optional Run, no @tc-* target, with BDD reproduction steps)
+  @bg-03 @adhoc
+  Scenario: Currency selector desyncs mini-cart subtotal
+    Given the user is on a configurable product page
+    When the currency selector is toggled twice before adding to cart
+    Then the mini-cart header retains the previous currency total
+    * set status = open
+    * set attach = "attachments/bugs/currency_drift.png"
 ```
 
 ### Defect Lifecycle Statuses
@@ -258,7 +268,7 @@ Feature: Defects found in Checkout
     "testcase": "tests/features/checkout.case.feature.@tc-pay-01",
     "testrun": "testruns/sprint42_regression.run.feature",
     "trace": "PaymentGatewayException: Timeout waiting for gateway ACK in 30000ms",
-    "evidence": ["evidence/checkout_timeout.png"],
+    "attach": ["attachments/bugs/checkout_timeout.png"],
     "metadata": {
       "severity": "critical",
       "priority": "high"
@@ -274,7 +284,7 @@ Feature: Defects found in Checkout
 | **`testcase`** | 1 file = N test cases | Above each `Scenario:` (`@tc-*`) | Unique within file | Isolated `Scenario` blocks with `Given`, `When`, `Then` |
 | **`testrun`** | 1 file = 1 test run | Above the `Feature:` (`@tr-*`) | Global across repo | `Rule: file.case.feature` + `Scenario: @tc-*` |
 | **`testplan`** | 1 file = 1 test plan | Above the `Feature:` (`@tp-*`) | Global across repo | `Rule: file.run.feature` (testrun coordination) |
-| **`bug`** | 1 file = N defects | Above each `Scenario:` (`@bg-*`) | Unique within file | `Scenario` with `target`, `status`, `trace`, `evidence` |
+| **`bug`** | 1 file = N defects | Above each `Scenario:` (`@bg-*`) | Unique within file | `Scenario` with `@depends_on`, `set status`, `trace`, `attach` |
 
 ---
 

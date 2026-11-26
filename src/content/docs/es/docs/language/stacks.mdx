@@ -2,20 +2,20 @@
 title: "Stacks y Suites de Ejecución"
 ---
 
-En Terraform, un *Stack* o *Configuration Module* agrupa recursos para ser desplegados en conjunto. En Testform, esta capacidad se implementa a través de los scopes **`testrun`** (ciclos de ejecución) y **`testplan`** (planes maestros), gestionados mediante el comando `testform suite`.
+En Terraform, un *Stack* o *Configuration Module* agrupa recursos para ser desplegados en conjunto. En Testform, esta capacidad se implementa a través de los scopes **`testrun`** (ciclos de ejecución) y **`testplan`** (planes maestros), gestionados mediante el comando `testform spec`.
 
 ---
 
-## Generación de Suites por Etiquetas (`bracket tags`)
+## Generación de Suites por Etiquetas (`--include`)
 
-Testform permite extraer escenarios que compartan una etiqueta y empaquetarlos en un archivo de suite `.run.feature`:
+Testform permite extraer escenarios que compartan una etiqueta o archivo y empaquetarlos en un archivo de suite `.run.feature`:
 
 ```bash
 # Extrae todos los escenarios marcados con @smoke en el workspace
-testform suite tags "[@smoke]" -title="Regresión Rápida de Smoke"
+testform spec testrun new --include="smoke" --title="Regresión Rápida de Smoke"
 
-# Extrae solo escenarios @critical de un feature específico
-testform suite tags "checkout.case.feature.[@critical]" -title="Checkout Crítico"
+# Extrae escenarios críticos de un feature específico
+testform spec testrun new --include="checkout.case.feature" --title="Checkout Crítico"
 ```
 
 El resultado es un archivo declarativo `.run.feature`:
@@ -25,46 +25,46 @@ El resultado es un archivo declarativo `.run.feature`:
 Feature: Regresión Rápida de Smoke
 
   Rule: auth.case.feature
-    Scenario: Login exitoso con credenciales válidas
+    Scenario: @tc-01
       * set status = pending
 
   Rule: checkout.case.feature
-    Scenario: Pago con tarjeta de crédito
+    Scenario: @tc-01
       * set status = pending
 ```
 
 ---
 
-## Estrategias de Dirección (`-target`)
+## Estrategias de Dirección (`--target`)
 
 Al interactuar con suites, puedes referenciar el recurso mediante 3 estrategias:
 
 1. **Tag de Identidad (@tr-N / @tp-N):**
    ```bash
-   testform suite -target="@tr-01" -fill
+   testform spec testrun fill --target="@tr-01"
    ```
 2. **Dirección Canónica:**
    ```bash
-   testform suite -target="specs/runs/smoke.run.feature.@tr-01" -fill
+   testform spec testrun fill --target="testruns/smoke.run.feature.@tr-01"
    ```
 3. **Ruta Relativa:**
    ```bash
-   testform suite -target="smoke.run.feature" -fill
+   testform spec testrun fill --target="smoke.run.feature"
    ```
 
 ---
 
-## Registro de Estado de Ejecución (`mark`)
+## Registro de Estado de Ejecución (`set`)
 
 Una vez ejecutada la prueba en tu runner (Playwright, Cypress, Supertest o K6), actualizas el estado en el archivo y sincronizas con GitHub:
 
 ```bash
-testform suite -target="@tr-01" -mark="@tc-01=passed"
+testform spec testrun set --target="@tr-01" --case="auth.case.feature.@tc-01" --status=passed
 ```
 
 El motor actualiza la línea en el feature:
 ```gherkin
-Scenario: Login exitoso con credenciales válidas
+Scenario: @tc-01
   * set status = passed
 ```
 Y al ejecutar `testform apply`, la tarjeta en **GitHub Projects V2** se mueve automáticamente a la columna **Done**.

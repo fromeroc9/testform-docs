@@ -49,6 +49,9 @@ Rule: tests/features/checkout.case.feature
 
 El motor resuelve automáticamente el enlace hacia el escenario `@tc-01` definido dentro del archivo `Rule:`, habilitando navegación **Go-to-Definition (F12)** y previsualizaciones **Hover** directas en VS Code. También se admite la forma abreviada `@bg-01 @tc-01`.
 
+> [!CAUTION]
+> **Sintaxis deprecada (`* set target`):** Declarar la relación mediante un paso `* set target = ...` o `* set case = ...` dentro de escenarios `@bug` está obsoleto y ya no se recomienda. Utiliza siempre `@depends_on(@tc-*)` (idealmente bajo `Rule: <archivo.case.feature>`) o la forma completa `@depends_on("ruta/archivo.case.feature.@tc-*")`.
+
 ---
 
 ## Orden de Ejecución Topológico (DAG)
