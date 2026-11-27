@@ -149,10 +149,11 @@ provider:
     token: "XYZ..."
 ```
 
-:::tip[Strict Validation Rules (Terraform Parity)]
-When `required_providers` is declared, the Testform CLI enforces strict whitelisting:
+:::tip[Strict Validation Rules & Semver Lockfile Resolution (Terraform Parity)]
+When `required_providers` is declared, the Testform CLI enforces strict whitelisting and deterministic version locking:
 1. **Undeclared Provider:** If you configure a block `provider.jira`, but did not declare `jira` in `required_providers`, Testform aborts with `Error: Undeclared provider "jira"`.
 2. **Uninstalled Provider:** If you declare a remote provider but haven't run `testform init`, Testform aborts with `Error: Provider "gitlab" is not installed. Run "testform init"`.
+3. **Semver Constraint Resolution & `--upgrade`:** Constraints (`>=`, `<`, `~>`) in `version` are evaluated against remote Git tags (when no `?ref=` is pinned), NPM registry versions, or built-in provider versions. `testform init` reuses locked entries in `.testform.lock` automatically unless `--upgrade` is passed.
 :::
 
 ---

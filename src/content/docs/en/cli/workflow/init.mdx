@@ -29,21 +29,32 @@ It is always safe to run `testform init` multiple times to re-synchronize backen
 
 ## Real Execution Example
 
-### Standard Initialization with Provider Download
+### Full Initialization (Backend + Recursive Git Modules + Provider Plugins)
 
 ```bash
 $ testform init
 Initializing the backend...
 
-Successfully configured the backend "local"! Testform will automatically
+Successfully configured the backend "oci"! Testform will automatically
 use this backend unless the backend configuration changes.
 
-Initializing provider plugins...
-- Installing gitlab from git::https://gitlab.mycompany.com/qa/providers.git//gitlab.ts?ref=v1.2.0...
-- Installed gitlab v1.2.0 (entrypoint: gitlab.ts)
+Initializing modules...
+Downloading git::ssh://git@github.com/credicorp-internal/oci-mod-kms-key.git?ref=v1.0.0 for iac_mod_oci_kms_key...
+- iac_mod_oci_kms_key in .testform/modules/iac_mod_oci_kms_key
+Downloading git::https://github.com/credicorp-internal/iac-mod-oci-global-data.git?ref=v1 for iac_mod_oci_kms_key.kms_global_data...
+- iac_mod_oci_kms_key.kms_global_data in .testform/modules/iac_mod_oci_kms_key.kms_global_data
 
-Testform has created/updated the lock file .testform.lock.hcl to record the provider selections.
-Include this file in your version control repository.
+Initializing provider plugins...
+- Finding builtin/github versions matching ">= 1.0.0, < 2.0.0"...
+- Installing builtin/github v1.1.0-beta.9...
+- Installed builtin/github v1.1.0-beta.9
+- Finding git::https://gitlab.mycompany.com/qa/providers.git versions matching ">= 1.0.0"...
+- Installing gitlab v1.2.0 (entrypoint: gitlab.ts)...
+
+Testform has created/updated the lock file .testform.lock to record the provider
+selections it made above. Include this file in your version control repository
+so that Testform can guarantee to make the same selections by default when you
+run "testform init" in the future.
 
 Testform has been successfully initialized!
 
@@ -51,10 +62,20 @@ You may now begin working with Testform. Try running "testform plan" to see
 any changes that are required for your test management resources. All Testform commands
 should now work.
 
-If you ever set or change modules, providers or backend configuration for Testform,
+If you ever set or change modules or backend configuration for Testform,
 rerun this command to reinitialize your working directory. If you forget, other
 commands will detect it and remind you to do so if necessary.
 ```
+
+> **Dependency lockfile reuse & `--upgrade`:** On subsequent `testform init` runs without `--upgrade`, Testform checks `.testform.lock` / `.testform/cache/lock.json` and logs `- Reusing previous version of <source> from the dependency lock file` when the locked version still satisfies the declared constraints. Pass `testform init --upgrade` to re-resolve tags and packages against the newest matching versions.
+
+## Recursive Module Installation (`Initializing modules...`)
+
+When `module:` blocks are declared in `main.yml`, domain config files, or inside downloaded modules, `testform init` performs a real clone and generates `.testform/modules/modules.json`:
+
+- **Remote Git modules (`git::https://...`, `git::ssh://...`, `//subpath`, `?ref=`):** Cloned via `git clone --depth 1` into `.testform/modules/<name>/`. If `version` specifies a semver constraint without a pinned `?ref=`, Testform resolves the highest matching Git tag automatically.
+- **Nested child modules (`<parent>.<child>`):** Any modules declared inside an installed module are cloned recursively into `.testform/modules/<parent>.<child>/` with cycle protection.
+- **Local modules (`./...`):** Indexed directly from their relative workspace path inside `.testform/modules/modules.json`.
 
 ## Provider Plugin Installation (`required_providers`)
 
@@ -93,9 +114,9 @@ During `Initializing provider plugins...`, Testform reads the `testform.required
        zephyr: "@mycompany/testform-provider-zephyr"
    ```
 
-### The Lockfile (`.testform.lock.hcl`)
+### The Lockfile (`.testform.lock`)
 
-Upon installation, `testform init` computes SHA-256 hashes using the `h1:<base64>` format and writes them into `.testform.lock.hcl`:
+Upon installation, `testform init` computes SHA-256 hashes using the `h1:<base64>` format and writes them into `.testform.lock` (alongside `.testform/cache/lock.json`):
 
 ```hcl
 # This file is maintained automatically by "testform init".

@@ -57,9 +57,11 @@ module:
 ```
 
 El formato de URL sigue la convención estándar de Terraform:
-- **Prefijo:** `git::https://...`
+- **Prefijo:** `git::https://...` o `git::ssh://...`
 - **Subdirectorio:** `//ruta/subdirectorio`
-- **Versión o Tag:** `?ref=v1.2.0` o `?ref=main`
+- **Versión o Tag:** `?ref=v1.2.0` o `?ref=main` (si se omite y defines un constraint `version`, `testform init` resuelve automáticamente el tag semver más alto compatible)
+
+Durante `testform init`, los módulos se clonan de forma real y recursiva en `.testform/modules/<nombre>/`. Cualquier submódulo declarado dentro de un módulo instalado se resuelve como `<padre>.<hijo>` en `.testform/modules/<padre>.<hijo>/` y se registra en el manifiesto `.testform/modules/modules.json` para su resolución en tiempo de ejecución.
 
 ---
 

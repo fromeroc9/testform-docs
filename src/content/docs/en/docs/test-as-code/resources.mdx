@@ -191,7 +191,7 @@ The `bug` resource is special in Testform: it was designed to capture both regre
   - **Exploratory bugs (`@adhoc` / `@exploratory` / `@independent`):** The `bug-target-integrity` policy waives the `@tc-*` requirement when the scenario carries one of these exploratory tags on `Scenario:` or declares `* set trace`. *(Place `@adhoc` / `@exploratory` on `Scenario:`, never on `Feature:`, to comply with `no-feature-tags`).*
 - **Optional Reproduction Steps (`Given / When / Then`) & Lifecycle Marks in `Scenario:`:**
   - Unlike `@testrun` and `@testplan` (where GWT is prohibited), a `@bug` scenario **allows optional `Given / When / Then / And / But` steps** to document exploratory reproduction alongside `* set` marks:
-  - `* set status = <status>`: Defect resolution status (`open`, `in_progress`, `resolved`, `reopened`, `discarded`, `duplicate`).
+  - `* set status = <status>`: Defect resolution status (`open`, `in_progress`, `resolved`, `closed`).
   - `* set trace = <stack>`: Error message or stack trace description.
   - `* set attach = <file>`: Screenshot, video recording, or defect evidence path.
   - Contract governance fields: Declared via `* field <name> = <value>` (e.g. `* field severity = @critical`, `* field bug_type = functional`). Fields with `source: "tag"` are declared as `@tag` labels.
@@ -248,12 +248,10 @@ Feature: Defects found in Checkout
 
 | Status | Meaning | CLI Terminal Display |
 | :--- | :--- | :--- |
-| **`open`** *(or `failed`, `new`)* | Active unresolved defect | <span style="color:#fa5252">● open</span> |
-| **`in_progress`** *(or `pending`)* | Investigation, fix, or retest in progress | <span style="color:#fab005">⧖ in progress</span> |
-| **`resolved`** *(or `passed`, `closed`)* | Verified and closed defect | <span style="color:#12b886">✔ resolved</span> |
-| **`reopened`** | Previously resolved bug that failed retest | <span style="color:#fd7e14">↻ reopened</span> |
-| **`discarded`** *(or `wont_fix`)* | Rejected, not reproducible, or by design | <span style="color:#868e96">⊘ discarded</span> |
-| **`duplicate`** | Redundant report of an existing defect | <span style="color:#be4bdb">⧉ duplicate</span> |
+| **`open`** | Active defect newly reported or pending triage | <span style="color:#fa5252">● open</span> |
+| **`in_progress`** | Investigation, fix, or retest actively underway | <span style="color:#fab005">⧖ in progress</span> |
+| **`resolved`** | Defect patched and verified fixed | <span style="color:#12b886">✔ resolved</span> |
+| **`closed`** | Defect permanently verified and closed | <span style="color:#868e96">✔ closed</span> |
 
 ### Ledger State Structure (`testform.state`)
 

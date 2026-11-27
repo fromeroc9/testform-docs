@@ -58,9 +58,11 @@ module:
 ```
 
 The URL adheres to standard Terraform module syntax:
-- **Prefix:** `git::https://...`
+- **Prefix:** `git::https://...` or `git::ssh://...`
 - **Subdirectory:** `//path/submodule`
-- **Branch / Tag:** `?ref=v1.2.0` or `?ref=main`
+- **Branch / Tag:** `?ref=v1.2.0` or `?ref=main` (if omitted and `version` constraints are set, `testform init` resolves the highest matching Git semver tag)
+
+During `testform init`, modules are cloned recursively into `.testform/modules/<name>/`. Nested child modules declared inside remote or local modules are also resolved recursively into `.testform/modules/<parent>.<child>/` and indexed inside `.testform/modules/modules.json` so `@module(...)` and expression references work identically across nested hierarchies.
 
 ---
 

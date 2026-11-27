@@ -191,7 +191,7 @@ El recurso `bug` es especial dentro de Testform: nació para cubrir tanto defect
   - **Pruebas exploratorias (`@adhoc` / `@exploratory` / `@independent`):** La política `bug-target-integrity` exime de vincular un `@tc-*` cuando el escenario incluye uno de estos tags exploratorios sobre `Scenario:` o declara `* set trace`. *(Recuerda colocar `@adhoc` / `@exploratory` en el `Scenario:` y no en `Feature:`, por la regla `no-feature-tags`).*
 - **Pasos de Reproducción (`Given / When / Then`) y Marcas en `Scenario:`:**
   - A diferencia de `@testrun` y `@testplan` (donde GWT está prohibido), un escenario `@bug` **sí admite pasos opcionales `Given / When / Then / And / But`** para documentar cómo reproducir un fallo exploratorio junto con las directivas `* set`:
-  - `* set status = <estado>`: Estado del defecto (`open`, `in_progress`, `resolved`, `reopened`, `discarded`, `duplicate`).
+  - `* set status = <estado>`: Estado del defecto (`open`, `in_progress`, `resolved`, `closed`).
   - `* set trace = <stack>`: Mensaje o traza del error detectado.
   - `* set attach = <archivo>`: Ruta del adjunto/captura de pantalla o evidencia del defecto.
   - Campos de gobernanza de contrato: Se declaran mediante `* field <nombre> = <valor>` (ejemplo: `* field severity = @major`, `* field bug_type = functional`). Si un campo tiene `source: "tag"`, se declara como etiqueta `@tag`.
@@ -248,12 +248,10 @@ Feature: Defectos encontrados en Checkout
 
 | Estado | Significado | Representacion CLI |
 | :--- | :--- | :--- |
-| **`open`** *(o `failed`, `new`)* | Defecto activo y no resuelto | <span style="color:#fa5252">● open</span> |
-| **`in_progress`** *(o `pending`)* | Defecto en investigacion, reparacion o retest | <span style="color:#fab005">⧖ in progress</span> |
-| **`resolved`** *(o `passed`, `closed`)* | Defecto verificado y corregido | <span style="color:#12b886">✔ resolved</span> |
-| **`reopened`** | Defecto previamente resuelto que volvio a manifestarse | <span style="color:#fd7e14">↻ reopened</span> |
-| **`discarded`** *(o `wont_fix`)* | Defecto rechazado, no reproducible o por diseño | <span style="color:#868e96">⊘ discarded</span> |
-| **`duplicate`** | Defecto reportado que duplica otro caso existente | <span style="color:#be4bdb">⧉ duplicate</span> |
+| **`open`** | Defecto activo reportado o pendiente de triaje | <span style="color:#fa5252">● open</span> |
+| **`in_progress`** | Defecto en investigacion, reparacion o retest | <span style="color:#fab005">⧖ in progress</span> |
+| **`resolved`** | Defecto corregido y verificado | <span style="color:#12b886">✔ resolved</span> |
+| **`closed`** | Defecto cerrado definitivamente | <span style="color:#868e96">✔ closed</span> |
 
 ### Estructura en el Estado (`testform.state`)
 

@@ -25,7 +25,7 @@ Copy the respective template into your repository root based on the AI coding as
       * @testcase in *.case.feature: scenarios require @tc-* identity and Given/When/Then steps. Zero '* set' marks (use standard steps or '* field <name> = <val>' for contract metadata).
       * @testrun @tr-* in *.run.feature: execution suites with Rule: or direct canonical scenario addresses. Suite execution marks in Background: ('* set duration = "X.Xs"', '* set attach = "..."', '* set trace = "..."'). Suite status is autocalculated (never manual set status in Background). Scenarios strictly declare '* set status = <passed|failed|pending|blocked|skipped|undefined|ambiguous>'.
       * @testplan @tp-* in *.plan.feature: master suites grouped with Rule: blocks. Attachments allowed ONLY in Background.
-      * @bug in *.bug.feature: defect scenarios tagged @bg-* under Rule: <path.case.feature> using '@bg-01 @depends_on(@tc-01)' or '@bg-01 @tc-01'. Background allows optional '* set run = ...'. Scenarios declare '* set status = <open|in_progress|resolved|reopened|discarded|duplicate>', '* set attach = ...', '* set trace = ...', and contract fields via '* field <name> = <val>'.
+      * @bug in *.bug.feature: defect scenarios tagged @bg-* under Rule: <path.case.feature> using '@bg-01 @depends_on(@tc-01)' or '@bg-01 @tc-01'. Background allows optional '* set run = ...'. Scenarios declare '* set status = <open|in_progress|resolved|closed>', '* set attach = ...', '* set trace = ...', and contract fields via '* field <name> = <val>'.
     - Attachment Governance:
       * Follow scaffold.attach directory in main.yml.
       * * set is strictly FORBIDDEN in testcase specifications.
@@ -107,7 +107,7 @@ Copy the respective template into your repository root based on the AI coding as
   * Linked under `Rule: <path.case.feature>`: `@bg-01 @depends_on(@tc-01)` (or `@bg-01 @tc-01`).
   * Without `Rule:`: canonical address `@bg-01 @depends_on("path.case.feature.@tc-01")`.
   * For **exploratory / ad-hoc bugs**: tag the `Scenario:` with `@adhoc`, `@exploratory`, or `@independent` (e.g. `@bg-02 @adhoc`) or provide `* set trace` so `bug-target-integrity` does not require `@depends_on`.
-* **Scenario Scope**: Unlike `@testrun`/`@testplan`, a `@bug` scenario **allows optional `Given/When/Then/And/But` reproduction steps** alongside `* set status = open | in_progress | resolved | reopened | discarded | duplicate`, `* set attach = ...`, `* set trace = ...`, and `* field <name> = <val>`.
+* **Scenario Scope**: Unlike `@testrun`/`@testplan`, a `@bug` scenario **allows optional `Given/When/Then/And/But` reproduction steps** alongside `* set status = open | in_progress | resolved | closed`, `* set attach = ...`, `* set trace = ...`, and `* field <name> = <val>`.
 
 ---
 
