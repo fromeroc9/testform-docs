@@ -87,12 +87,16 @@ El servidor expone herramientas estructuradas validadas con JSON Schema para que
 |---|---|---|
 | **`testform_plan`** | `workspaceDir`, `target`, `detailedExitCode`, `json` | Evalúa las diferencias contra el estado (`testform.state`) y detecta drift de pruebas sin alterar el disco. |
 | **`testform_apply`** | `workspaceDir`, `target`, `autoApprove` | Reconcilia especificaciones declarativas y actualiza el ledger de estado y los proveedores remotos. |
+| **`testform_destroy`** | `workspaceDir`, `target`, `autoApprove`, `lock` | Destruye recursos gestionados en el proveedor remoto según la configuración y actualiza el estado. |
+| **`testform_diff`** | `workspaceDir`, `target`, `refresh` | Muestra diferencias legibles entre los archivos `.feature` locales y el estado consolidado. |
 | **`testform_validate`** | `workspaceDir`, `target`, `json` | Valida sintaxis Gherkin, etiquetas de identidad (`@tc-*`, `@tr-*`), schema `main.yml` y políticas de calidad. |
+| **`testform_import`** | `results`, `target`, `out`, `autoCreateBugs`, `address`, `issueNumber` | Importa resultados JUnit XML / Playwright JSON / Cucumber JSON a `.run.feature` o vincula un issue remoto existente. |
 | **`testform_query`** | `scope` (`testcase`, `testrun`, `testplan`, `bug`), `filter` | Consulta recursos filtrando por atributos como severidad, estado (`status=failed`) o etiquetas. |
 | **`testform_show`** | `workspaceDir`, `json` | Inspecciona el ledger de estado actual, recursos registrados, serial y outputs. |
+| **`testform_force_unlock`** | `lockId`, `force`, `statePath`, `workspaceDir` | Libera manualmente un bloqueo de estado (`lock`) atascado mediante su `lockId`. |
 | **`testform_status`** | `workspaceDir` | Proporciona una vista general inmediata del workspace: conteo de archivos, escenarios, candados y rutas scaffold. |
 | **`testform_scaffold`** | `type`, `name`, `title`, `folder`, `target`, `scenarios` | Genera especificaciones estandarizadas con numeración secuencial garantizada (`@tc-01`, `@tr-01`, etc.). |
-| **`testform_report`** | `type`, `format` (`md`, `json`, `html`, `xlsx`, `docx`), `target`, `out` | Genera reportes modulares de QA en múltiples formatos de ingeniería. |
+| **`testform_report`** | `type` (`testcase-summary`, `bidimensional`, `manual-vs-automated`, etc.), `format`, `filter`, `groupBy`, `secondaryGroupBy`, `fields`, `source`, `fromFiles`, `target`, `out` | Genera reportes modulares y matrices pivote 2D de QA en `md`, `json`, `csv`, `html`, `xlsx` o `docx`. |
 | **`testform_attach`** | `filePath`, `targetFeatureFile`, `scenarioName`, `copyToScaffold` | Inyecta adjuntos y evidencias respetando la gobernanza (`scaffold.attach` en `main.yml`). |
 
 ---

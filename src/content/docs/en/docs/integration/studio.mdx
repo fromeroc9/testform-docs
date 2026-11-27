@@ -1,0 +1,33 @@
+---
+title: "Testform Studio (Web & Desktop IDE)"
+description: "Official guide for Testform Studio: visual Test-as-Code authoring, JUnit/Playwright/Cucumber result import, Word/Excel export, SSE live sync, and CLI parity."
+---
+
+**Testform Studio** is the visual IDE interface (Next.js + Mantine) built to author, organize, validate, and synchronize **Test-as-Code** projects directly against local `.feature` files and your `testform.state` ledger with zero external database (**Zero-DB**).
+
+---
+
+## Core Capabilities
+
+- **Full Specification Authoring:** Visual and raw Gherkin editors for `.case.feature` (`@testcase`), `.run.feature` (`@testrun`), `.plan.feature` (`@testplan`), and `.bug.feature` (`@bug`), featuring Split View and per-tab error boundaries (`TabErrorBoundary`).
+- **Execution Results Import (`ImportResultsModal`):** Converts **JUnit XML**, **Playwright JSON**, or **Cucumber JSON** reports into `.run.feature` files (with optional automatic `.bug.feature` creation for failures) directly from the **Test Runs** explorer (`POST /api/projects/[id]/import`).
+- **Reports & Office Export:** Interactive visualizations for the **11 official reports** (including 2D pivot matrices) with one-click downloads in **CSV**, **JSON**, **Markdown (`.md`)**, **Excel (`.xlsx`)**, and **Word (`.docx`)** via `/api/projects/[id]/reports`.
+- **State & Drift Management:** Inspects local/remote state (`testform state pull`), computes speculative drift (`testform plan`), applies reconciled changes (`POST /api/projects/[id]/apply`), inspects `diff`, and releases stuck locks (`force-unlock`).
+- **Live Filesystem Sync (SSE):** Automatically subscribes to `/api/projects/[id]/events` to refresh the workspace whenever Testform CLI, MCP server, or VS Code modify files on disk.
+
+---
+
+## Studio CLI-Parity API Endpoints
+
+| API Route | Method | CLI Equivalent | Purpose |
+| :--- | :---: | :--- | :--- |
+| `/api/projects/[id]/validate` | `POST` | `testform validate --json` | Static validation of syntax, schema, and governance policies. |
+| `/api/projects/[id]/plan` | `POST` | `testform plan --json` | Local or remote speculative drift analysis without mutating state. |
+| `/api/projects/[id]/apply` | `POST` | `testform apply --auto-approve` | Declarative reconciliation against state and providers. |
+| `/api/projects/[id]/diff` | `POST` | `testform diff` | Human-readable diff between disk specs and `testform.state`. |
+| `/api/projects/[id]/destroy` | `POST` | `testform destroy --auto-approve` | Controlled teardown of remote-managed resources. |
+| `/api/projects/[id]/import` | `POST` | `testform import --results` | Ingest JUnit XML / Playwright / Cucumber reports or bind remote issues. |
+| `/api/projects/[id]/force-unlock` | `POST` | `testform force-unlock --force` | Force-release stuck state locks by `lockId`. |
+| `/api/projects/[id]/ephemeral` | `GET`/`POST` | `testform ephemeral` | Manage temporary CI/CD sandboxes (`list`, `up`, `down`). |
+| `/api/projects/[id]/reports` | `GET` | `testform report --format=...` | Export reports as JSON, CSV, MD, **XLSX**, or **DOCX**. |
+| `/api/projects/[id]/events` | `GET` | *(FS Watcher SSE)* | Real-time SSE stream (`workspace-changed`) for live UI refresh. |

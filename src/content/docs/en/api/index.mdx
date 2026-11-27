@@ -45,7 +45,20 @@ import {
   // Configuration & State Management
   Config,
   State,
-} from '@fromeroc9/testform@beta';
+} from '@fromeroc9/testform';
+
+// Dedicated SDK subpath for integrations (parsers, planner, drift detection, reports, diagnostics)
+import {
+  Parser,
+  TestcaseParser,
+  TestrunParser,
+  TestplanParser,
+  LocalBackend,
+  calculatePlan,
+  hashScenario,
+  detectAttributeDrift,
+  Diag,
+} from '@fromeroc9/testform/sdk';
 ```
 
 ---

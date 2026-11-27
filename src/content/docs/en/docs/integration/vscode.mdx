@@ -1,22 +1,21 @@
 ---
 title: "Visual Studio Code Extension"
-description: "Official guide for the Testform Visual Studio Code extension: LSP intelligence, full-screen Specs Hub Webview, native Test Explorer, state management, and standard language architecture."
+description: "Official guide for the Testform Visual Studio Code extension: LSP intelligence, Dual-Mode State & Files Explorer, native Test Explorer, Visual Plan Diff, and custom fields reporting."
 ---
 
 The official **Testform DSL for Visual Studio Code** extension (`fromeroc9.testform-dsl`) transforms your editor into a high-performance Integrated Development Environment (IDE) tailored for **Test-as-Code** workflows.
 
-It provides complete Language Server Protocol (LSP) intelligence, multi-layer variable autocompletion, native integration with the VS Code Test Explorer, a full-screen **Specs & Execution Hub** with a retractable export drawer, a unified dual-mode explorer (State & Files), visual state management, speculative plan execution, granular custom field reporting, and bilingual Gherkin formatting.
+It provides complete Language Server Protocol (LSP) intelligence, multi-layer variable autocompletion, native integration with the VS Code Test Explorer, a unified dual-mode explorer (**State** & **Files**), visual state management, interactive plan diff previews, granular custom field reporting, and bilingual Gherkin formatting.
 
 ---
 
 ## What's New in Version 1.2.0
 
 - 🧩 **Dynamic Custom Field Detector (`field-detector`):** Real-time workspace scanner that analyzes `main.yml`, `resource.yml`, `testform.state`, and `.feature` files to automatically discover, catalog, and count active project custom fields.
-- 🗂️ **Unified Dual-Mode Explorer (State vs. Files):** Seamlessly switch between **State Mode** (`testform.state`) and **Files Mode** (`*.feature`) directly from the top navigation bar of the Explorer view, with instant "Copy Canonical Address" (`testform.state.copyAddress`).
+- 🗂️ **Unified Dual-Mode Explorer (State vs. Files):** Seamlessly switch between **State Mode** (`testform.state`) and **Files Mode** (`*.feature`) directly from the top navigation bar of the Explorer view (`testform.specs.openHub` focuses this view directly), with instant "Copy Canonical Address" (`testform.state.copyAddress`).
 - 📊 **Advanced Reports Explorer with Native Checkboxes:** Granularly select which custom fields to include or omit per report with native VS Code checkboxes, inline output format picker (`xlsx`, `md`, `docx`, `csv`, `json`), and one-click execution.
-- 📑 **Specs Hub Export Drawer:** Slide-out export drawer embedded in the Specs Hub Webview featuring report selection, format radio chips, and an interactive checklist of project custom fields with usage count badges.
-- 🐛 **Native Bug & Defect Tracking (`.bug.feature`):** First-class support for `@bug` resources, `@bg-X` identity tags, `tf-bug` template snippet, and dedicated `Bugs & Defects` category in State Explorer.
-- 🧠 **Context-Aware LSP Scope Detection:** Accurate scope classification (`testcase`, `testrun`, `testplan`, `bug`) enabling strict contextual suggestions for `Rule:` and `Scenario:` targets across 8 configurable insertion formats.
+- 🐛 **Native Bug & Defect Tracking (`.bug.feature`):** First-class support for `@bg-X` resources, `@bg-X` identity tags, `tf-bug` template snippet, and dedicated `Bugs & Defects` category in State Explorer.
+- 🧠 **Context-Aware LSP Scope Detection:** Accurate scope classification (`testcase`, `testrun`, `testplan`, `bug`) enabling strict contextual suggestions for `Rule:` and `Scenario:` targets across 7 canonical insertion formats (`tag`, `canonical`, `basename`, `namespace`, `tag-bare`, `slug-tag`, `name`).
 - 🚀 **Google Antigravity IDE & Open VSX Support:** Available on Open VSX Registry and pre-configured for direct 1-click installation/updating in Google Antigravity IDE.
 
 ---
@@ -65,7 +64,7 @@ Unlike extensions that register proprietary language identifiers and break ecosy
 ```text
 ┌────────────────────────────────────────────────────────────────────────┐
 │                   Visual Studio Code Extension Client                  │
-│    (Editor decorations, Test Controller, Tree Views, Specs Hub Webview)│
+│   (Decorations, Test Controller, Dual-Mode Tree Views, Plan Diff Panel)│
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │ JSON-RPC (IPC)
 ┌───────────────────────────────────▼────────────────────────────────────┐
@@ -136,39 +135,13 @@ The analyzer checks syntax in real-time, underlining potential issues:
 
 ---
 
-## Specs & Execution Hub (Full-Screen Webview Dashboard)
+## Unified Dual-Mode Explorer (State & Files)
 
-In version 1.0.0, test specifications have been relocated from the sidebar into a **full-screen Editor Tab Webview** optimized for spacious visualization and swift QA operations.
+Test specifications (`.case.feature`, `.run.feature`, `.plan.feature`, `.bug.feature`) and reconciled resources are managed directly from the native **State & Specs Explorer** sidebar view (`testform.views.state`) in two switchable modes:
 
-Open the hub via **`Testform: Open Test Cases, Runs & Plans Hub`** or the document icon on editor tab titles:
-
-```text
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│ TESTFORM SPECS & EXECUTION HUB                                                         │
-├────────────────────────────────────────────────────────────────────────────────────────┤
-│  [📋 12 Test Cases (48 Scenarios)]    [🚀 4 Test Runs]    [🎯 2 Test Plans]            │
-├────────────────────────────────────────────────────────────────────────────────────────┤
-│  Search & Filter: [ 🔍 filter by @smoke, auth, title...                             ]  │
-│  Tabs: [ (●) Test Cases ]   [ Test Runs ]   [ Test Plans ]                             │
-├────────────────────────────────────────────────────────────────────────────────────────┤
-│  ▼ modules/auth/login.case.feature                                                     │
-│    • @tc-1 Successful login with standard user                  [Jump to File] [Plan] │
-│    • @tc-2 Login attempt with locked out user                   [Jump to File] [Plan] │
-│    • @tc-3 Validation of empty login fields                     [Jump to File] [Plan] │
-│                                                                                        │
-│  ▼ tests/testrun/smoke.run.feature                                                     │
-│    • @tr-1 Smoke Test Suite SauceDemo                           [Jump to File] [Apply]│
-└────────────────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Specs Hub Highlights:
-1. **Live KPI Dashboard:** Instant metric cards showing total files and scenarios across `Test Cases`, `Test Runs`, and `Test Plans`.
-2. **Multi-Tab Architecture:** Dedicated views for base test cases (`*.case.feature`), execution suites (`*.run.feature`), and release milestones (`*.plan.feature`).
-3. **Instant Live Search & Filters:** Fast client-side filtering by keywords, feature titles, scenario names, and metadata tags (`@smoke`, `@auth`, `@critical`).
-4. **Direct Code Jump Navigation (`Jump to File`):** One click opens the target file in your editor and places your cursor on the exact scenario line.
-5. **Integrated Execution Triggers:** Speculative preview (`testform plan -target=...`) and apply reconciliation (`testform apply -target=...`) actions can be executed directly from individual rows.
-6. **Reactive Synchronization:** Watches workspace filesystem events; creating, modifying, or deleting `.feature` files immediately refreshes the dashboard without reloading.
-7. **Report Export Drawer:** Slide-out drawer at the top of the Specs Hub allowing you to choose report types (`testcase-summary`, `testrun-summary`, `testrun-detailed`, `defects`, `coverage`, `traceability`, etc.), output formats via radio chips (`xlsx`, `md`, `docx`, `csv`, `json`), and an interactive checklist of automatically detected project custom fields with live occurrence counters.
+1. **State Mode (`testform.explorer.switchToState`):** Displays `testform.state` grouped by resource scope (`Test Cases`, `Test Runs`, `Test Plans`, `Bugs`) with serial, outputs, and quick actions (`Copy Canonical Address`, `Inspect`, `Taint/Untaint`).
+2. **Files Mode (`testform.explorer.switchToFiles`):** Displays the physical tree of local `.feature` files on disk with instant jump-to-file navigation.
+3. **Quick Focus (`testform.specs.openHub`):** Focuses the unified explorer directly in the active mode, while the **Reports** sidebar view lets you check custom fields and export in `xlsx`, `docx`, `md`, `csv`, or `json` with one click.
 
 ---
 
@@ -398,7 +371,7 @@ Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS) and type `Testform`:
 | **Testform: Select Workspace** | `testform.workspace.select` | Switch between isolated workspaces (`default`, `staging`, `prod`). |
 | **Testform: Force Unlock State** | `testform.state.forceUnlock` | Releases stuck state locks with interactive ID input. |
 | **Testform: Generate Report** | `testform.report` | Exports quality reports (.md, .docx, .xlsx, .json, .csv). |
-| **Testform: Open Test Cases, Runs & Plans Hub** | `testform.specs.openHub` | Opens the full-screen visual dashboard. |
+| **Testform: Open Test Cases, Runs & Plans Hub** | `testform.specs.openHub` | Focuses the unified `testform.views.state` explorer in the active mode. |
 | **Testform: Show Providers Tree** | `testform.providers` | Displays configured providers and plugin trees. |
 | **Testform: List Declared Modules** | `testform.modules.list` | Lists declared and downloaded modules. |
 | **Testform: Update Modules** | `testform.modules.update` | Re-initializes and updates remote Git modules. |

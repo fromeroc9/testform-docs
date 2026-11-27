@@ -1,23 +1,22 @@
 ---
 title: "Extensión para Visual Studio Code"
-description: "Guía oficial de la extensión Testform para Visual Studio Code: LSP, Specs Hub Webview, Test Explorer nativo, gestión visual de estado y arquitectura de lenguaje estándar."
+description: "Guía oficial de la extensión Testform para Visual Studio Code: LSP, Explorador Unificado (Estado y Archivos), Test Explorer nativo, Plan Diff visual y reportes con custom fields."
 ---
 
 La extensión oficial **Testform DSL para Visual Studio Code** (`fromeroc9.testform-dsl`) convierte el editor en un entorno de desarrollo integrado (IDE) de nivel profesional para la metodología **Test-as-Code**. 
 
-Proporciona soporte completo para el protocolo Language Server (LSP), autocompletado inteligente de expresiones y variables, integración nativa con el Test Explorer de VS Code, un **Specs & Execution Hub** en pestaña completa con cajón interactivo de exportación, explorador unificado dual (Estado y Archivos), gestión visual del ledger de estado, ejecución de planes especulativos, reportes con selección granular de custom fields y formateo automático de especificaciones Gherkin.
+Proporciona soporte completo para el protocolo Language Server (LSP), autocompletado inteligente de expresiones y variables, integración nativa con el Test Explorer de VS Code, un explorador unificado dual (**Estado** y **Archivos**), gestión visual del ledger de estado, ejecución de planes especulativos con vista diff interactiva, reportes nativos con selección granular de custom fields y formateo automático de especificaciones Gherkin.
 
 ---
 
 ## Novedades en la Versión 1.2.0
 
 - 🧩 **Detector Dinámico de Custom Fields (`field-detector`):** Escaneo inteligente en tiempo real que analiza `main.yml`, `resource.yml`, `testform.state` y archivos `.feature` para descubrir y cuantificar los campos personalizados activos en el proyecto.
-- 🗂️ **Explorador Unificado Dual-Mode (State vs. Files):** Alterna fluidamente entre **Modo Estado** (`testform.state`) y **Modo Archivos de Especificaciones** (`*.feature`) desde la barra superior del State Explorer, con acción rápida para copiar direcciones canónicas (`testform.state.copyAddress`).
+- 🗂️ **Explorador Unificado Dual-Mode (State vs. Files):** Alterna fluidamente entre **Modo Estado** (`testform.state`) y **Modo Archivos de Especificaciones** (`*.feature`) desde la barra superior del State Explorer (`testform.specs.openHub` enfoca directamente esta vista), con acción rápida para copiar direcciones canónicas (`testform.state.copyAddress`).
 - 📊 **Gestión Avanzada de Reportes con Checkboxes Nativos:** Selección granular de qué custom fields incluir o excluir en cada reporte directamente desde el árbol lateral, selector interactivo de formato (`xlsx`, `md`, `docx`, `csv`, `json`), y botón de ejecución directa.
-- 📑 **Export Drawer en Specs Hub:** Nuevo cajón retráctil de exportación en el Specs Hub Webview con selector de reportes, formato en chips, y checklist interactivo de custom fields con contadores de frecuencia.
 - 🐛 **Soporte Nativo de Defectos & Bugs (`.bug.feature`):** Identificadores `@bg-X`, categoría dedicada de Bugs en State Explorer, snippets `tf-bug`, trazabilidad con `Rule:` y `@depends_on(@tc-X)` o `@bg-X @tc-X`, y marcas de ciclo de vida (`* set status`, `* set attach`, `* set trace`).
-- 🧠 **LSP Inteligente y Detección de Scope de Documento:** Clasificación contextual precisa (`testcase`, `testrun`, `testplan`, `bug`) para sugerencias estrictas en `Rule:` y `Scenario:`, con 8 formatos de inserción de target (`tag`, `canonical`, etc.).
-- 🚀 **Compatibilidad con Google Antigravity IDE & Open VSX:** Publicado en Open VSX y soporte de instalación directa para Google Antigravity IDE.
+- 🧠 **LSP Inteligente y Detección de Scope de Documento:** Clasificación contextual precisa (`testcase`, `testrun`, `testplan`, `bug`) para sugerencias estrictas en `Rule:` y `Scenario:`, con 7 formatos canónicos de inserción de target (`tag`, `canonical`, `basename`, `namespace`, `tag-bare`, `slug-tag`, `name`).
+- 🚀 **Google Antigravity IDE & Open VSX:** Publicado en Open VSX y soporte de instalación directa para Google Antigravity IDE.
 
 ---
 
@@ -65,7 +64,7 @@ A diferencia de extensiones que registran lenguajes propietarios rompiendo la co
 ```text
 ┌────────────────────────────────────────────────────────────────────────┐
 │                   Visual Studio Code Extension Client                  │
-│   (Decoraciones en editor, Test Controller, Vistas laterales, Specs Hub)│
+│   (Decoraciones, Test Controller, Vistas Nativas Dual-Mode, Plan Diff) │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │ JSON-RPC (IPC)
 ┌───────────────────────────────────▼────────────────────────────────────┐
@@ -136,39 +135,13 @@ El analizador valida el código mientras escribes y marca advertencias o errores
 
 ---
 
-## Specs & Execution Hub (Dashboard Webview en Pestaña Completa)
+## Explorador Unificado Dual-Mode (Estado y Archivos)
 
-En la versión 1.0.0, la gestión de especificaciones se trasladó desde el árbol lateral hacia un **Dashboard Webview a pantalla completa** optimizado para visualización y trabajo ágil.
+Las especificaciones (`.case.feature`, `.run.feature`, `.plan.feature`, `.bug.feature`) y los recursos conciliados se gestionan directamente desde la vista lateral nativa **State & Specs Explorer** (`testform.views.state`) en dos modos intercambiables:
 
-Abre el Hub ejecutando el comando **`Testform: Open Test Cases, Runs & Plans Hub`** o mediante el icono de documento en la barra de títulos:
-
-```text
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│ TESTFORM SPECS & EXECUTION HUB                                                         │
-├────────────────────────────────────────────────────────────────────────────────────────┤
-│  [📋 12 Test Cases (48 Scenarios)]    [🚀 4 Test Runs]    [🎯 2 Test Plans]            │
-├────────────────────────────────────────────────────────────────────────────────────────┤
-│  Search & Filter: [ 🔍 filter by @smoke, auth, title...                             ]  │
-│  Tabs: [ (●) Test Cases ]   [ Test Runs ]   [ Test Plans ]                             │
-├────────────────────────────────────────────────────────────────────────────────────────┤
-│  ▼ modules/auth/login.case.feature                                                     │
-│    • @tc-1 Inicio de sesión exitoso con usuario estándar        [Jump to File] [Plan] │
-│    • @tc-2 Intento de inicio de sesión con usuario bloqueado    [Jump to File] [Plan] │
-│    • @tc-3 Validación de campos vacíos en login                 [Jump to File] [Plan] │
-│                                                                                        │
-│  ▼ tests/testrun/smoke.run.feature                                                     │
-│    • @tr-1 Suite de Pruebas Smoke SauceDemo                     [Jump to File] [Apply]│
-└────────────────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Características Principales del Specs Hub:
-1. **Métricas KPI en Vivo:** Tarjetas con contadores en tiempo real de archivos y escenarios totales por categoría (`Test Cases`, `Test Runs`, `Test Plans`).
-2. **Organización Multi-Pestaña:** Navegación segmentada entre casos base (`*.case.feature`), suites de ejecución (`*.run.feature`) y planes de release (`*.plan.feature`).
-3. **Filtro y Búsqueda Instantánea:** Filtrado en el cliente por palabras clave, nombres de características, títulos de escenarios y etiquetas (`@smoke`, `@auth`, `@critical`, etc.).
-4. **Navegación con Salto Directo (`Jump to File`):** Un clic sobre cualquier caso abre el archivo correspondiente en el editor y posiciona el cursor en la línea exacta.
-5. **Acciones de Ejecución Focalizada:** Botones para ejecutar `testform plan -target=...` o `testform apply -target=...` sobre un escenario o suite específico directamente desde el dashboard.
-6. **Sincronización Reactiva:** Escucha los cambios del sistema de archivos; al crear, modificar o eliminar un archivo `.feature`, el Hub se actualiza automáticamente.
-7. **Cajón de Exportación de Reportes (Export Drawer):** Despliega un panel superior para seleccionar el tipo de reporte (`testcase-summary`, `testrun-summary`, `testrun-detailed`, `defects`, `coverage`, `traceability`, etc.), el formato de salida mediante chips visuales (`xlsx`, `md`, `docx`, `csv`, `json`), y un checklist reactivo con los custom fields detectados automáticamente en el proyecto, permitiendo generar y abrir el reporte con un solo clic.
+1. **Modo Estado (`testform.explorer.switchToState`):** Muestra el ledger `testform.state` organizado por recursos (`Test Cases`, `Test Runs`, `Test Plans`, `Bugs`) con serial, salidas y acciones rápidas (`Copy Canonical Address`, `Inspect`, `Taint/Untaint`).
+2. **Modo Archivos (`testform.explorer.switchToFiles`):** Muestra el árbol físico de `.feature` locales en disco con salto directo al editor.
+3. **Acceso Rápido (`testform.specs.openHub`):** Enfoca directamente el explorador unificado en el modo activo y la vista lateral de **Reports** permite marcar *custom fields* y exportar en `xlsx`, `docx`, `md`, `csv` o `json` con un clic.
 
 ---
 
@@ -398,7 +371,7 @@ Presiona `Ctrl+Shift+P` (o `Cmd+Shift+P` en macOS) y escribe `Testform`:
 | **Testform: Select Workspace** | `testform.workspace.select` | Alterna entre workspaces aislados (`default`, `staging`, `prod`). |
 | **Testform: Force Unlock State** | `testform.state.forceUnlock` | Libera bloqueos atascados en el backend de estado. |
 | **Testform: Generate Report** | `testform.report` | Genera reportes interactivos (Word, Excel, Markdown, etc.). |
-| **Testform: Open Test Cases, Runs & Plans Hub** | `testform.specs.openHub` | Abre el panel visual de control de especificaciones en pestaña completa. |
+| **Testform: Open Test Cases, Runs & Plans Hub** | `testform.specs.openHub` | Enfoca el Explorador Unificado (`testform.views.state`) de especificaciones y estado. |
 | **Testform: Show Providers Tree** | `testform.providers` | Muestra la jerarquía de proveedores y plugins configurados. |
 | **Testform: List Declared Modules** | `testform.modules.list` | Lista los módulos de pruebas disponibles. |
 | **Testform: Update Modules** | `testform.modules.update` | Actualiza módulos remotos en `.testform/modules/`. |
