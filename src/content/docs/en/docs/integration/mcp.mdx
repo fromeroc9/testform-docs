@@ -87,7 +87,7 @@ The server exposes structured, JSON-Schema-validated tools ensuring safe, determ
 |---|---|---|
 | **`testform_plan`** | `workspaceDir`, `target`, `detailedExitCode`, `json` | Evaluates diffs against the state ledger (`testform.state`) and detects test drift without modifying disk. |
 | **`testform_apply`** | `workspaceDir`, `target`, `autoApprove` | Reconciles declarative specifications and updates the state ledger and remote providers. |
-| **`testform_destroy`** | `workspaceDir`, `target`, `autoApprove`, `lock` | Destroys remote-managed Testform resources according to configuration and updates state. |
+| **`testform_destroy`** | `workspaceDir`, `target`, `autoApprove`, `lock`, `parallelism` | Destroys remote-managed Testform resources according to configuration (`--parallelism`) and updates state. |
 | **`testform_diff`** | `workspaceDir`, `target`, `refresh` | Displays human-readable differences between local `.feature` files and tracked state. |
 | **`testform_validate`** | `workspaceDir`, `target`, `json` | Validates Gherkin DSL syntax, identity tag formats (`@tc-*`, `@tr-*`), `main.yml` schema, and policy rules. |
 | **`testform_import`** | `results`, `target`, `out`, `autoCreateBugs`, `address`, `issueNumber` | Imports JUnit XML / Playwright JSON / Cucumber JSON results into `.run.feature` or binds an existing remote issue. |

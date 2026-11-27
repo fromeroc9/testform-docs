@@ -448,7 +448,8 @@ export interface IProviderIssueResult {
 | **`formatRemoteId(id)`** | Requerido | En plan, apply y state | Devuelve el formato legible del ticket (`#102` para GitHub/GitLab, `QA-102` para Jira). |
 | **`createIssue(payload)`** | Requerido | `testform apply` (acción `add`) | Crea el caso de prueba o ejecución en la API remota (HTTP POST) y retorna `IProviderIssueResult`. |
 | **`updateIssue(id, payload)`**| Requerido | `testform apply` (acción `change`) | Actualiza atributos modificados en la incidencia remota (HTTP PATCH/PUT). |
-| **`closeIssue(id)`** | Requerido | `testform destroy` / `replace` | Cierra o archiva la incidencia en la plataforma remota. |
+| **`closeIssue(id)`** | Requerido | `testform destroy` / `replace` | Cierra o archiva la incidencia en la plataforma remota (*fallback* si el borrado permanente no está disponible). |
+| **`deleteIssue(id)`** | *Opcional* | `testform destroy` / `replace` | Elimina permanentemente el ticket remoto (ej. GraphQL `deleteIssue` + limpieza en Project V2 en `GitHubProvider`). |
 | **`getIssue(id)`** | Requerido | `testform refresh` | Consulta la API remota por ID para detectar deriva (*drift*) entre Git y la nube. Retorna `null` si fue eliminado. |
 | **`listIssuesByLabel(label)`**| Requerido | Sincronización masiva | Obtiene las incidencias que contengan una etiqueta específica. |
 | **`getMilestoneByTitle(title)`**| Requerido | Asociación de sprints | Resuelve el nombre de un hito/sprint (e.g. "Sprint 2026-Q1") al ID numérico en la plataforma. |

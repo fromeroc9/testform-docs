@@ -447,7 +447,8 @@ export interface IProviderIssueResult {
 | **`formatRemoteId(id)`** | Required | During plan, apply & state | Returns human-readable ticket formatting (`#102` for GitHub/GitLab, `QA-102` for Jira). |
 | **`createIssue(payload)`** | Required | `testform apply` (action `add`) | Creates testcase or testrun in remote API (HTTP POST) and returns `IProviderIssueResult`. |
 | **`updateIssue(id, payload)`**| Required | `testform apply` (action `change`) | Updates modified fields in remote ticket (HTTP PATCH/PUT). |
-| **`closeIssue(id)`** | Required | `testform destroy` / `replace` | Closes or archives the ticket in the remote tracker. |
+| **`closeIssue(id)`** | Required | `testform destroy` / `replace` | Closes or archives the ticket in the remote tracker (fallback if permanent deletion is unavailable). |
+| **`deleteIssue(id)`** | *Optional* | `testform destroy` / `replace` | Permanently deletes the remote ticket (e.g., `GitHubProvider` GraphQL `deleteIssue` + Project V2 cleanup). |
 | **`getIssue(id)`** | Required | `testform refresh` | Queries remote issue by ID for drift detection. Returns `null` if deleted remotely. |
 | **`listIssuesByLabel(label)`**| Required | Bulk sync / recovery | Fetches existing issues matching a given label. |
 | **`getMilestoneByTitle(title)`**| Required | Sprint linking | Resolves a sprint name (e.g. "Sprint 2026-Q1") to remote ID. |

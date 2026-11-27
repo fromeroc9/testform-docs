@@ -7,52 +7,54 @@ title: "testform destroy"
 testform [global options] destroy [options]
 ```
 
-The `testform destroy` command is a convenient shorthand for `testform apply -destroy`. It destroys (closes or purges) all remote resources currently tracked in the state file for the given scope, without deleting your local `.feature` files.
+The `testform destroy` command permanently removes (or falls back to closing + unlinking from GitHub Projects V2 when repo deletion permissions are restricted) all remote resources currently tracked in the state file for the given scope, without deleting your local `.feature` files.
 
 ## Command Options
 
 | Option | Default | Description |
 | :--- | :--- | :--- |
-| `-auto-approve` | `false` | Skips interactive confirmation before destroying resources. |
-| `-target=address` | — | Limits destruction to a single resource instance (e.g. `login.case.feature.@tc-1`). |
-| `-lock=false` | `true` | Disables holding a state lock during destruction. |
-| `-no-color` | `false` | Disables color output. |
-| `-json` | `false` | Emits destruction events as JSON. |
+| `--auto-approve`, `-a` | `false` | Skips interactive confirmation before destroying resources. |
+| `--target=<address>` | — | Limits destruction to a single resource instance (e.g. `login.case.feature.@tc-1`). |
+| `--parallelism=<n>` | `1` | Limits the number of concurrent remote deletion operations. |
+| `--lock=false` | `true` | Disables holding a state lock during destruction. |
+| `--lock-timeout=<dur>` | `0s` | Duration to retry acquiring a state lock. |
+| `--input=false` | `true` | Disables interactive prompts (for non-interactive CI runs). |
+| `--no-color` | `false` | Disables color output. |
 
 ## Real Execution Example
 
 ```bash
-$ testform destroy -scope=testcase
-
-Testform will perform the following actions:
-
-  # login.case.feature.@tc-1 will be destroyed
-  - resource "testcase" "login_valid" {
-      - id        = 104
-      - title     = "Valid credentials allow login"
-    }
-
+$ testform destroy --target=testcase
+...
 Plan: 0 to add, 0 to change, 1 to destroy.
 
-Do you really want to destroy all resources?
-  Testform will destroy all your managed infrastructure, as shown above.
+Do you really want to destroy these resources?
+  Testform will destroy the tracked remote resources shown above.
   There is no undo. Only 'yes' will be accepted to confirm.
 
   Enter a value: yes
 
-testcase.login_valid: Destroying... [id=104]
-testcase.login_valid: Destruction complete after 1s
+github.testcase.login.case.feature.@tc-1: Destroying... [id=testform-demo:104]
+github.testcase.login.case.feature.@tc-1: Destruction complete after 2s [id=testform-demo:104]
 
-Destroy complete! Resources: 1 destroyed.
+Destroy complete! 1 resource(s) destroyed.
 ```
 
-## Targeting Specific Resources
+## Parallel & Targeted Destruction
+
+To speed up large cleanups across many issues:
+
+```bash
+testform destroy --auto-approve --parallelism 5
+```
 
 To destroy an isolated scenario without affecting the rest of your test suite:
 
 ```bash
-testform destroy -target="auth.case.feature.@tc-2"
+testform destroy --target="auth.case.feature.@tc-2"
 ```
+
+> **Provider Deletion Behavior (`github`, `gitlab`, `local`):** `GitHubProvider` uses GitHub's GraphQL `deleteIssue` mutation to permanently remove the issue from both the repository and linked GitHub Projects V2, `GitLabProvider` invokes `DELETE /projects/:id/issues/:issue_iid`, and `LocalProvider` deletes the issue record from `.testform/data.json` (also pruning stale `sub_issues` references). Missing issues (`404`/`410`) are treated idempotently, transient `5xx` GitHub API responses are automatically retried, and if remote repository/project permissions disallow issue deletion (for example, non-Owner roles in GitLab), Testform falls back to closing the issue (and removing its GitHub Project V2 item).
 
 ## Exit Codes
 

@@ -16,6 +16,7 @@ The `testform apply` command executes the actions proposed in a Testform plan. I
 | `-auto-approve` | `false` | Skips interactive approval prompt before applying (essential for CI/CD). |
 | `-destroy` | `false` | Destroys all managed resources in the active scope. |
 | `-target=address` | — | Limits execution to a single resource identity. |
+| `--parallelism=<n>` | `1` | Limits concurrent provider operations during apply batches. |
 | `-lock=false` | `true` | Disables state locking during execution. |
 | `-lock-timeout=0s` | `0s` | Duration to retry acquiring a state lock. |
 | `-json` | `false` | Emits execution events and progress as JSON. |

@@ -15,6 +15,7 @@ El comando `testform apply` ejecuta las acciones propuestas en un plan de Testfo
 | `-auto-approve` | `false` | Omite la solicitud interactiva de aprobación previa (imprescindible en CI/CD). |
 | `-destroy` | `false` | Destruye todos los recursos gestionados dentro del alcance activo. |
 | `-target=address` | — | Limita la ejecución a una identidad de recurso específica. |
+| `--parallelism=<n>` | `1` | Límite de operaciones concurrentes por lote contra el proveedor. |
 | `-lock=false` | `true` | Desactiva el bloqueo de estado durante la ejecución. |
 | `-lock-timeout=0s` | `0s` | Tiempo de reintento para adquirir el bloqueo de estado. |
 | `-json` | `false` | Emite eventos de ejecución y avance en formato JSON. |

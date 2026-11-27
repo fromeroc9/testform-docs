@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Testform Studio Guides (`en/` & `es/` `docs/integration/studio.mdx`, `docs/integration/index.mdx`):**
+  - Documented Testform Studio capabilities, execution results import (`ImportResultsModal`), `.docx`/`.xlsx` exports, real-time SSE workspace sync (`/events`), and CLI-parity API routes (`/apply`, `/destroy`, `/diff`, `/force-unlock`, `/import`, `/ephemeral`).
+
+### Changed
+
+- **Branding Cleanup (`en/` & `es/` `docs/language/backends.mdx`):**
+  - HTTP backend description now references Testform's own protocol instead of Terraform's, reflecting the `X-Testform-Lock-ID` header rename in the core CLI.
+- **CLI Workflow & Provider Destruction Docs (`en/` & `es/` `cli/workflow/destroy.mdx`, `cli/workflow/apply.mdx`, `docs/language/providers.mdx`):**
+  - Documented `--parallelism <n>` concurrency flag on `testform destroy` and `testform apply`, permanent deletion via `deleteIssue()` across `GitHubProvider` (GraphQL + Project V2 cleanup), `GitLabProvider` (`DELETE /projects/:id/issues/:issue_iid`), and `LocalProvider` (`.testform/data.json` + `sub_issues` pruning), with `closeIssue()` permission fallback and `404`/`5xx` resilience.
+- **MCP Integration Docs (`en/` & `es/` `docs/integration/mcp.mdx`):**
+  - Added `testform_import`, `testform_diff`, `testform_destroy` (including `parallelism`), `testform_force_unlock`, and updated `testform_report` matrix/filter parameters.
+- **SDK Reference (`en/` & `es/` `api/index.mdx`):**
+  - Documented the dedicated `@fromeroc9/testform/sdk` subpath entrypoint (`Parser`, `TestcaseParser`, `TestrunParser`, `TestplanParser`, `LocalBackend`, `calculatePlan`, `hashScenario`, `detectAttributeDrift`, `Diag`).
+- **VS Code Extension Guides (`en/` & `es/` `docs/integration/vscode.mdx`):**
+  - Replaced obsolete *Specs Hub Webview* references with the unified dual-mode native explorer (`testform.views.state`) and updated `targetFormat` documentation to reflect the 7 canonical formats.
+
+### Removed
+
+- **Deprecated `testform suite` Docs (`en/` & `es/` `cli/developer-tools/suite.mdx`):**
+  - Removed obsolete `testform suite` documentation pages superseded by `testform spec`.
+
+---
+
 ## [1.3.5] - 2026-11-26
 
 ### Added

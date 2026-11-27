@@ -87,7 +87,7 @@ El servidor expone herramientas estructuradas validadas con JSON Schema para que
 |---|---|---|
 | **`testform_plan`** | `workspaceDir`, `target`, `detailedExitCode`, `json` | Evalúa las diferencias contra el estado (`testform.state`) y detecta drift de pruebas sin alterar el disco. |
 | **`testform_apply`** | `workspaceDir`, `target`, `autoApprove` | Reconcilia especificaciones declarativas y actualiza el ledger de estado y los proveedores remotos. |
-| **`testform_destroy`** | `workspaceDir`, `target`, `autoApprove`, `lock` | Destruye recursos gestionados en el proveedor remoto según la configuración y actualiza el estado. |
+| **`testform_destroy`** | `workspaceDir`, `target`, `autoApprove`, `lock`, `parallelism` | Destruye recursos gestionados en el proveedor remoto (`--parallelism`) según la configuración y actualiza el estado. |
 | **`testform_diff`** | `workspaceDir`, `target`, `refresh` | Muestra diferencias legibles entre los archivos `.feature` locales y el estado consolidado. |
 | **`testform_validate`** | `workspaceDir`, `target`, `json` | Valida sintaxis Gherkin, etiquetas de identidad (`@tc-*`, `@tr-*`), schema `main.yml` y políticas de calidad. |
 | **`testform_import`** | `results`, `target`, `out`, `autoCreateBugs`, `address`, `issueNumber` | Importa resultados JUnit XML / Playwright JSON / Cucumber JSON a `.run.feature` o vincula un issue remoto existente. |

@@ -23,9 +23,9 @@ description: "Guía oficial de Testform Studio: autoría visual Test-as-Code, im
 | :--- | :---: | :--- | :--- |
 | `/api/projects/[id]/validate` | `POST` | `testform validate --json` | Validación estática de sintaxis, esquema y políticas. |
 | `/api/projects/[id]/plan` | `POST` | `testform plan --json` | Detección de drift local o remoto sin modificar estado. |
-| `/api/projects/[id]/apply` | `POST` | `testform apply --auto-approve` | Reconciliación declarativa contra estado y proveedores. |
+| `/api/projects/[id]/apply` | `POST` | `testform apply --auto-approve [--parallelism]` | Reconciliación declarativa contra estado y proveedores. |
 | `/api/projects/[id]/diff` | `POST` | `testform diff` | Diferencias legibles entre disco y `testform.state`. |
-| `/api/projects/[id]/destroy` | `POST` | `testform destroy --auto-approve` | Destrucción controlada de recursos remotos en estado. |
+| `/api/projects/[id]/destroy` | `POST` | `testform destroy --auto-approve [--parallelism]` | Destrucción controlada de recursos remotos en estado. |
 | `/api/projects/[id]/import` | `POST` | `testform import --results` | Ingesta de JUnit XML / Playwright / Cucumber o enlace de issues. |
 | `/api/projects/[id]/force-unlock` | `POST` | `testform force-unlock --force` | Liberación de bloqueos de estado atascados por `lockId`. |
 | `/api/projects/[id]/ephemeral` | `GET`/`POST` | `testform ephemeral` | Gestión de sandboxes temporales de CI/CD (`list`, `up`, `down`). |
